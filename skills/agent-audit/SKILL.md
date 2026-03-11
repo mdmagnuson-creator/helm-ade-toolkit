@@ -23,7 +23,6 @@ Ensures all agents in `$OPENCODE_CONFIG/agents/` follow the established conventi
 - User runs `/agent-audit` — compliance audit
 - User runs `/agent-audit --fix` — auto-remediate compliance issues
 - User runs `/agent-audit --gaps` — toolkit gap analysis for current project
-- User runs `/agent-audit --gaps --all` — gap analysis for all registered projects
 - Periodic maintenance check
 - After bulk agent updates
 - When Builder/Developer/Project Planner detect potential gaps (they can invoke this skill)
@@ -37,7 +36,6 @@ Ensures all agents in `$OPENCODE_CONFIG/agents/` follow the established conventi
 | `report` | No | Output format: `table`, `json`, `markdown` (default: table) |
 | `include_templates` | No | Also scan agent-templates/ (default: false) |
 | `gaps` | No | Run gap analysis instead of compliance audit (default: false) |
-| `all` | No | With --gaps, analyze all registered projects (default: false) |
 | `project` | No | With --gaps, analyze specific project path (default: current directory) |
 
 ## Compliance Criteria
@@ -46,6 +44,7 @@ Ensures all agents in `$OPENCODE_CONFIG/agents/` follow the established conventi
 
 | Criterion | Weight | Description |
 |-----------|--------|-------------|
+| Project Context Check | Required | Confirms `HELM_PROJECT_PATH` environment variable is available |
 | Project Config Loading | Required | References `docs/project.json` |
 | Conventions Loading | Required | References `docs/CONVENTIONS.md` |
 
@@ -61,7 +60,6 @@ Ensures all agents in `$OPENCODE_CONFIG/agents/` follow the established conventi
 | Criterion | Weight | Description |
 |-----------|--------|-------------|
 | Startup Section | Required | Has explicit "Startup" or "Project Context" section |
-| Active Project Check | Required | Verifies `activeProject` is set |
 
 ### Exemptions
 
@@ -118,7 +116,7 @@ Scanning: react-dev.md
   Type: Specialist
   
   Checking criteria:
-    [ ] Project Registry Check    - NOT FOUND
+    [ ] Project Context Check     - NOT FOUND
     [ ] Project Config Loading    - NOT FOUND  
     [ ] Conventions Loading       - NOT FOUND
     
@@ -147,9 +145,9 @@ Scanning: react-dev.md
   builder.md             Primary     ✅ Pass     -
   critic.md              Router      ✅ Pass     -
   tester.md              Router      ✅ Pass     -
-  react-dev.md           Specialist  ❌ Fail     registry, config, conventions
-  go-dev.md              Specialist  ❌ Fail     registry, config, conventions
-  vue-dev.md             Specialist  ❌ Fail     registry, config, conventions
+  react-dev.md           Specialist  ❌ Fail     context, config, conventions
+  go-dev.md              Specialist  ❌ Fail     context, config, conventions
+  vue-dev.md             Specialist  ❌ Fail     context, config, conventions
   session-status.md      Utility     ⊘ Exempt   -
   ...
 
@@ -187,7 +185,7 @@ Scanning: react-dev.md
       "name": "react-dev.md",
       "type": "specialist",
       "status": "non-compliant",
-      "missing": ["registry", "config", "conventions"],
+      "missing": ["context", "config", "conventions"],
       "fixCommand": "/agent-onboard $OPENCODE_CONFIG/agents/react-dev.md"
     }
   ]
@@ -244,8 +242,8 @@ Look for this pattern or similar:
 ```markdown
 ## Startup
 
-1. Read project registry
-2. Load project context
+1. Read `HELM_PROJECT_PATH` environment variable
+2. Load project context from `$HELM_PROJECT_PATH/docs/project.json`
 3. Check for project-specific overrides
 ```
 
@@ -265,6 +263,7 @@ Use these regex patterns to check compliance:
 
 | Criterion | Pattern |
 |-----------|---------|
+| Project Context Check | `HELM_PROJECT_PATH` |
 | Config Loading | `docs/project\.json` or `project\.json` |
 | Conventions | `CONVENTIONS\.md` |
 | Project Agents | `docs/agents/` |
@@ -341,12 +340,11 @@ Analyzes whether the toolkit has appropriate agents and skills for a project's s
 ### Step 1: Load Project Context
 
 ```bash
-# Read project manifest
-cat <project>/docs/project.json
+# Read project manifest (HELM_PROJECT_PATH set by Helm ADE)
+cat $HELM_PROJECT_PATH/docs/project.json
 
-# Read project capabilities (if separate from stack)
 # Check for any custom project agents
-ls <project>/docs/agents/ 2>/dev/null
+ls $HELM_PROJECT_PATH/docs/agents/ 2>/dev/null
 ```
 
 Extract:
@@ -477,57 +475,6 @@ For each template, check if the project stack matches any `applies_to` condition
 ═══════════════════════════════════════════════════════════════════════
 ```
 
-### Step 6: Multi-Project Analysis (`--all`)
-
-When `--all` is specified, analyze all projects in a workspace:
-
-```bash
-# Find all projects with docs/project.json
-find ~/code -maxdepth 2 -name "project.json" -path "*/docs/*" 2>/dev/null
-```
-
-For each project:
-1. Run gap analysis
-2. Aggregate results
-
-Output summary:
-
-```
-═══════════════════════════════════════════════════════════════════════
-                   TOOLKIT GAP ANALYSIS (ALL PROJECTS)
-═══════════════════════════════════════════════════════════════════════
-
-  Projects Analyzed: 5
-  Fully Covered: 2
-  Partial Coverage: 2
-  Gaps Detected: 1
-
-───────────────────────────────────────────────────────────────────────
-  PROJECT SUMMARY
-───────────────────────────────────────────────────────────────────────
-  
-  example-scheduler          ⚠️ Partial    Missing: aesthetic-critic
-  example-portal             ✅ Covered    -
-  helm-ade-toolkit      ✅ Covered    -
-  internal-api               ⚠️ Partial    Missing: go-tester template
-  mobile-app                 ❌ Gaps       Missing: react-native support
-
-───────────────────────────────────────────────────────────────────────
-  TOOLKIT-WIDE GAPS
-───────────────────────────────────────────────────────────────────────
-  
-  The following capabilities appear across projects but lack toolkit support:
-  
-  • React Native (1 project) — No react-native agents exist
-  • GraphQL (2 projects) — No graphql-critic agent exists
-  
-  Consider creating:
-    $OPENCODE_CONFIG/pending-updates/react-native-support.md
-    $OPENCODE_CONFIG/pending-updates/graphql-critic.md
-
-═══════════════════════════════════════════════════════════════════════
-```
-
 ## Creating Pending Updates from Gap Analysis
 
 When gaps are identified, the skill can generate pending update requests:
@@ -579,18 +526,6 @@ Analyzes the project in the current working directory.
 
 ```
 /agent-audit --gaps --project ~/code/example-scheduler
-```
-
-### Example 3: Analyze All Projects
-
-```
-/agent-audit --gaps --all
-```
-
-### Example 4: JSON Output for CI
-
-```
-/agent-audit --gaps --all --report json
 ```
 
 ## Integration with Other Agents

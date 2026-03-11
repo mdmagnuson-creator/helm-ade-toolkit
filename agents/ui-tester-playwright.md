@@ -73,20 +73,20 @@ See AGENTS.md. Never truncate test failure output — show complete errors and s
       > 📚 **SKILL: test-url-resolution** — Load this skill for full resolution logic.
       
       Resolve the base URL for tests using this priority chain:
-      1. `projects.json` → `testBaseUrl` (explicit per-project override)
+      1. `project.json` → `testBaseUrl` (explicit per-project override)
       2. `project.json` → `agents.verification.testBaseUrl` (explicit project config)
       3. Environment → `VERCEL_URL`, `DEPLOY_URL`, etc. (preview detection)
       4. `project.json` → `environments.staging.url` (staging config)
-      5. `projects.json` → `devPort` → `http://localhost:${devPort}`
+      5. `project.json` → `devPort` → `http://localhost:${devPort}`
       6. `null` → cannot test
       
       ```bash
       # Quick resolution (see test-url-resolution skill for full script)
-      TEST_URL=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .testBaseUrl // empty' $OPENCODE_CONFIG/projects.json)
+      TEST_URL=$(jq -r '.testBaseUrl // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
       [ -z "$TEST_URL" ] && TEST_URL=$(jq -r '.agents.verification.testBaseUrl // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
       [ -z "$TEST_URL" ] && [ -n "$VERCEL_URL" ] && TEST_URL="https://$VERCEL_URL"
       [ -z "$TEST_URL" ] && TEST_URL=$(jq -r '.environments.staging.url // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
-      [ -z "$TEST_URL" ] && DEV_PORT=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .devPort // empty' $OPENCODE_CONFIG/projects.json) && [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ] && TEST_URL="http://localhost:$DEV_PORT"
+      [ -z "$TEST_URL" ] && DEV_PORT=$(jq -r '.devPort // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null) && [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ] && TEST_URL="http://localhost:$DEV_PORT"
       ```
       
       **If TEST_URL cannot be resolved:**
@@ -99,7 +99,7 @@ See AGENTS.md. Never truncate test failure output — show complete errors and s
       - No preview environment detected
       
       Options:
-      1. Add testBaseUrl to projects.json
+      1. Add testBaseUrl to project.json
       2. Add environments.staging.url to project.json
       3. Set devPort for local development
       ```
@@ -998,14 +998,14 @@ Each UI area should have tests for:
 
 **Prerequisites:** The dev server must be running.
 
-> ⚠️ **CRITICAL: Always resolve test URL from project registry**
+> ⚠️ **CRITICAL: Always resolve test URL from project configuration**
 >
 > Use the URL resolution chain to determine the test target:
-> 1. `projects.json` → `testBaseUrl` (explicit override)
+> 1. `project.json` → `testBaseUrl` (explicit override)
 > 2. `project.json` → `agents.verification.testBaseUrl`
 > 3. Environment → `VERCEL_URL`, `DEPLOY_URL` (preview detection)
 > 4. `project.json` → `environments.staging.url`
-> 5. `projects.json` → `devPort` → `http://localhost:${devPort}`
+> 5. `project.json` → `devPort` → `http://localhost:${devPort}`
 >
 > **Trigger:** Before running any Playwright tests or checking dev server status.
 >
@@ -1018,7 +1018,7 @@ Each UI area should have tests for:
 >
 > Do NOT hardcode port numbers. Do NOT assume port 3000. Always resolve from the chain.
 
-When invoked by @builder, the server is already started. If running standalone, check `$OPENCODE_CONFIG/projects.json` for the project's `devPort` and ensure the server is running on that port.
+When invoked by @builder, the server is already started. If running standalone, check `docs/project.json` for the project's `devPort` and ensure the server is running on that port.
 
 Run the tests with list reporter:
 

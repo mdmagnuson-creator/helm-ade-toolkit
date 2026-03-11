@@ -98,18 +98,17 @@ Your job is to systematically test the target application following the testing 
 > **Trigger:** Before opening target URLs for exploration.
 >
 > **Get the correct port:**
-> 1. Read `$OPENCODE_CONFIG/projects.json`
-> 2. Find the project entry by path
-> 3. Use the `devPort` value (e.g., 4001, 4002, 5001)
+> 1. Read `docs/project.json`
+> 2. Use the `devPort` value (e.g., 4001, 4002, 5001)
 >
 > ```bash
-> # Example: Get port for a project
-> jq '.projects[] | select(.path | contains("project-name")) | .devPort' $OPENCODE_CONFIG/projects.json
+> # Example: Get port for the current project
+> jq '.devPort' docs/project.json
 > ```
 >
 > **Evidence:** Include resolved `devPort` in your findings metadata or run log.
 >
-> **Failure behavior:** If `devPort` cannot be resolved, stop and report the missing registry mapping; do not guess default ports.
+> **Failure behavior:** If `devPort` cannot be resolved, stop and report the missing configuration; do not guess default ports.
 
 ## Browser Interaction
 

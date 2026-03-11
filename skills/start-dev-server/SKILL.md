@@ -9,7 +9,7 @@ description: "Start the development server for a project and wait for it to be r
 
 ## Overview
 
-This skill starts the project's dev server(s) using configuration from `project.json` and `projects.json`, then waits for all services to be ready before returning.
+This skill starts the project's dev server(s) using configuration from `docs/project.json`, then waits for all services to be ready before returning.
 
 **For remote testing:** If a remote test URL is configured (preview deployment, staging), this skill can verify the remote environment is reachable instead of starting a local server.
 
@@ -63,7 +63,7 @@ cd "$projectPath"
 # 1. project.json → agents.verification.testBaseUrl (explicit override)
 # 2. Preview URL env vars (Vercel, Netlify, Railway, Render, Fly.io)
 # 3. project.json → environments.staging.url
-# 4. http://localhost:{devPort} (from projects.json)
+# 4. http://localhost:{devPort} (from project.json)
 
 TEST_BASE_URL=""
 
@@ -146,12 +146,12 @@ fi
 Before starting a local server, check if this project can run locally:
 
 ```bash
-# Check if devPort is null in projects.json
-DEV_PORT=$(cat $OPENCODE_CONFIG/projects.json | jq -r '.projects[] | select(.path == "'"$projectPath"'") | .devPort')
+# Check if devPort is null in project.json
+DEV_PORT=$(jq -r '.devPort // .apps[0].devPort // empty' "$projectPath/docs/project.json" 2>/dev/null)
 
-if [ "$DEV_PORT" = "null" ]; then
-  # devPort is null — check if there's a remote URL we can test against
-  echo "⚠️  Project has no local runtime (devPort: null)"
+if [ -z "$DEV_PORT" ] || [ "$DEV_PORT" = "null" ]; then
+  # devPort is not set — check if there's a remote URL we can test against
+  echo "⚠️  Project has no local runtime (devPort not configured)"
   
   # Re-check for any configured remote URL
   STAGING_URL=$(jq -r '.environments.staging.url // empty' docs/project.json 2>/dev/null)
@@ -168,7 +168,7 @@ if [ "$DEV_PORT" = "null" ]; then
 fi
 ```
 
-**If devPort is null:** This project cannot run locally (e.g., remote-only codebase, library, or cloud-native app without local dev). The skill will check for configured remote URLs and suggest alternatives.
+**If devPort is not configured:** This project cannot run locally (e.g., remote-only codebase, library, or cloud-native app without local dev). The skill will check for configured remote URLs and suggest alternatives.
 
 ### Step 0c: Desktop App Startup (if APP_TYPE=desktop)
 
@@ -278,19 +278,16 @@ fi
 
 ### Step 1: Load Project Configuration
 
-Read configuration from both sources:
+Read configuration from project.json:
 
 ```bash
-# Get dev port from projects.json (fallback for single-port projects)
-cat $OPENCODE_CONFIG/projects.json | jq '.projects[] | select(.path == "'"$projectPath"'") | {id, devPort}'
-
-# Get dev command and server config from project.json
-cat "$projectPath/docs/project.json" | jq '{commands: .commands, devServer: .devServer, environments: .environments}'
+# Get dev port and commands from project.json
+cat "$projectPath/docs/project.json" | jq '{devPort: .devPort, apps: .apps, commands: .commands, devServer: .devServer, environments: .environments}'
 ```
 
 **Extract (priority order):**
 1. **Multi-service (preferred):** `environments.development.services[]` — array of services with ports
-2. **Single port fallback:** `devPort` from projects.json + `commands.dev`
+2. **Single port fallback:** `devPort` from project.json + `commands.dev`
 3. **Single service fallback:** `devServer.port` + `commands.dev`
 
 ### Step 2: Determine Services to Start
@@ -301,7 +298,7 @@ cat "$projectPath/docs/project.json" | jq '{commands: .commands, devServer: .dev
 - Otherwise use the first service
 
 **If no services array, fallback:**
-- Use `devPort` from projects.json (per-app default port)
+- Use `devPort` from project.json (per-app default port)
 - Use `commands.dev` as the command
 
 ### Step 3: Ensure Dependencies Are Installed (AUTOMATIC)
@@ -515,17 +512,12 @@ fi
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `devPort` | integer | Dev server port (root level or in apps[]) |
 | `commands.dev` | string | Command to start dev server |
-| `devServer.port` | integer | Dev server port |
+| `devServer.port` | integer | Dev server port (legacy) |
 | `devServer.healthCheck` | string | Health check path |
 | `devServer.startupTimeout` | integer | Max wait time in ms |
 | `devServer.env` | object | Env vars to set |
-
-### projects.json fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `projects[].devPort` | integer | Fallback dev port (single-app projects) |
 
 ### project.json fields (desktop apps)
 

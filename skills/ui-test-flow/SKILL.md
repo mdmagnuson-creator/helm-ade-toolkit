@@ -152,7 +152,7 @@ Before running any Playwright tests:
 # 1. project.json → agents.verification.testBaseUrl (explicit override)
 # 2. Preview URL env vars (Vercel, Netlify, Railway, Render, Fly.io)
 # 3. project.json → environments.staging.url
-# 4. http://localhost:{devPort} (from projects.json)
+# 4. http://localhost:{devPort} (from project.json)
 
 TEST_BASE_URL=$(jq -r '.agents.verification.testBaseUrl // empty' docs/project.json)
 
@@ -175,7 +175,7 @@ if [ -z "$TEST_BASE_URL" ]; then
 fi
 
 if [ -z "$TEST_BASE_URL" ]; then
-  DEV_PORT=$(jq -r '.projects[] | select(.path == "'$(pwd)'") | .devPort' $OPENCODE_CONFIG/projects.json)
+  DEV_PORT=$(jq -r '.devPort // .apps[0].devPort // empty' docs/project.json 2>/dev/null)
   if [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ]; then
     TEST_BASE_URL="http://localhost:${DEV_PORT}"
   fi

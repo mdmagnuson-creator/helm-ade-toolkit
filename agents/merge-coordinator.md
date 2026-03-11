@@ -89,7 +89,7 @@ When user says "process" (or runs with `--auto` flag):
 #### Step 2: Prepare
 
 ```bash
-# Change to project directory (from projects.json)
+# Change to project directory (from HELM_PROJECT_PATH or context)
 cd <project-path>
 
 # Read project config to get default branch

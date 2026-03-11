@@ -16,6 +16,7 @@ package.json
 # Agent communication queues (instance-specific)
 project-updates/
 pending-updates/
+!skills/pending-updates/
 
 # Local user overrides (machine-specific)
 .local/toolkit-overrides.json

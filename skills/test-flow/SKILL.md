@@ -714,7 +714,7 @@ For each action in `postChangeActions[]`:
 
 **`pending-update`:**
 1. Resolve `targetProject` via `relatedProjects` in `project.json`
-2. Look up the target project path from `projects.json`
+2. Look up the target project path from the `relatedProjects` mapping
 3. Create a pending update file: `<target-project>/docs/pending-updates/YYYY-MM-DD-<source>-sync.md`
 4. Auto-commit the file to the target project repo:
    ```bash

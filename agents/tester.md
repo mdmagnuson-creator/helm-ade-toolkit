@@ -61,11 +61,11 @@ Use documentation lookup tools.
       > 📚 **SKILL: test-url-resolution** — Load this skill for full resolution logic.
       
       Resolve the base URL for E2E tests using this priority chain:
-      1. `projects.json` → `testBaseUrl` (explicit per-project override)
+      1. `project.json` → `testBaseUrl` (explicit per-project override)
       2. `project.json` → `agents.verification.testBaseUrl` (explicit project config)
       3. Environment → `VERCEL_URL`, `DEPLOY_URL`, etc. (preview detection)
       4. `project.json` → `environments.staging.url` (staging config)
-      5. `projects.json` → `devPort` → `http://localhost:${devPort}`
+      5. `project.json` → `devPort` → `http://localhost:${devPort}`
       6. `null` → cannot resolve URL (report error, do not silently skip)
       
       Save the resolved URL for the E2E phase.

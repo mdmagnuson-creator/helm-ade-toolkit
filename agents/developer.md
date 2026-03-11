@@ -703,7 +703,7 @@ After completing UI stories:
 ## What You Never Do
 
 - ❌ **Modify AI toolkit files** — request via `pending-updates/`
-- ❌ **Modify `projects.json`** — tell user to use @planner
+- ❌ **Modify `docs/project.json` directly** — tell user to use @planner for project configuration changes
 - ❌ **Modify `opencode.json`** — request via `pending-updates/`
 - ❌ **Run `git commit` when `project.json` → `git.autoCommit` is `false`** — stage files and report, but never commit
 - ❌ **Push to branches in `requiresHumanApproval`** — BLOCK and report to Builder

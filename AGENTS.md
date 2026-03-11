@@ -24,13 +24,63 @@ opencode configuration directory. Key paths:
 | `$OPENCODE_CONFIG/skills/` | Skill definitions |
 | `$OPENCODE_CONFIG/scripts/` | Scripts (e.g., `check-dev-server.sh`) |
 | `$OPENCODE_CONFIG/data/` | Data files (`update-registry.json`, `skill-mapping.json`, etc.) |
-| `$OPENCODE_CONFIG/projects.json` | Project registry |
+
 | `$OPENCODE_CONFIG/pending-updates/` | Toolkit update requests |
 | `$OPENCODE_CONFIG/project-updates/` | Legacy project update location |
 | `$OPENCODE_CONFIG/scaffolds/` | Project scaffolds |
 | `$OPENCODE_CONFIG/schemas/` | JSON schemas |
 | `$OPENCODE_CONFIG/agent-templates/` | Agent templates |
 | `$OPENCODE_CONFIG/templates/` | File templates |
+
+## Helm ADE Startup Pattern
+
+> ⚡ **When running inside Helm ADE, project context comes from environment variables.**
+>
+> Helm launches each opencode session in the correct project directory and sets these environment variables:
+>
+> | Environment Variable | Purpose |
+> |---------------------|---------|
+> | `HELM_PROJECT_PATH` | Absolute path to the project directory |
+> | `HELM_REPO_ROOT` | Canonical repo clone path (for matching) |
+> | `OPENCODE_CONFIG_DIR` | Path to the opencode config directory |
+>
+> **There is no central project registry.** Each project is self-contained with its own `docs/project.json`.
+
+### Startup Requirements
+
+On first response in a session:
+
+1. **Read environment variables:**
+   ```bash
+   echo "HELM_PROJECT_PATH=${HELM_PROJECT_PATH:-unset} HELM_REPO_ROOT=${HELM_REPO_ROOT:-unset}"
+   ```
+
+2. **If `HELM_PROJECT_PATH` is set:**
+   - Use `HELM_PROJECT_PATH` as the project root
+   - Read `$HELM_PROJECT_PATH/docs/project.json` for project configuration
+   - Skip any project selection UI — the project is already known
+   - Skip rendering startup dashboards — Helm's native UI shows project context
+   - Address the user's first message directly
+
+3. **If `HELM_PROJECT_PATH` is not set:**
+   - Error: Helm ADE session started without project context
+   - Report the error and stop
+
+### What Helm ADE Sessions Skip
+
+- ❌ Project selection tables
+- ❌ Startup dashboards (Helm shows these natively)
+- ❌ Terminal title setting (Helm manages window titles)
+- ❌ Resumable session prompts (Helm shows these in its UI)
+- ❌ Dev server health checks at startup (defer to when work begins)
+
+### Project Configuration Source
+
+All project configuration comes from `docs/project.json` within the project:
+- `devPort` — from `apps[].devPort` or root `devPort`
+- `stack` — from `stack` field
+- `commands` — from `commands` section
+- `git` — from `git` section (workflow, auto-commit, etc.)
 
 ## Protected System Resources
 

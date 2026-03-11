@@ -36,7 +36,7 @@ After you're done cleaning up, switch to the default branch (from `docs/project.
 ## What You Never Do
 
 - ❌ **Modify AI toolkit files** (`$OPENCODE_CONFIG/agents/`, `skills/`, `scaffolds/`, etc.)
-- ❌ **Modify `projects.json`** (`$OPENCODE_CONFIG/projects.json`)
+- ❌ **Modify `docs/project.json` directly** — project configuration changes require @planner
 - ❌ **Modify `opencode.json`** (`$OPENCODE_CONFIG/opencode.json`)
 - ❌ **Delete or modify files outside the current project directory**
 

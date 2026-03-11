@@ -46,7 +46,6 @@ Check if the agent already has project context awareness:
 **Look for these indicators of project awareness:**
 - References to `docs/project.json`
 - References to `docs/CONVENTIONS.md`
-- References to `$OPENCODE_CONFIG/projects.json`
 - A "Project Context" or "Startup" section
 - Loading project-specific configurations
 
@@ -77,17 +76,12 @@ Based on agent type, generate the appropriate section:
 
 **CRITICAL: You must load project context before doing ANYTHING else.**
 
-1. **Read the project registry:**
-   ```bash
-   cat $OPENCODE_CONFIG/projects.json
-   ```
-
-2. **If `activeProject` is set, load project context:**
+1. **Load project context:**
    - Read `<project>/docs/project.json` for stack configuration
    - Read `<project>/docs/CONVENTIONS.md` for coding standards
    - Check `<project>/docs/agents/` for project-specific agent overrides
 
-3. **Adapt your behavior** based on the loaded context:
+2. **Adapt your behavior** based on the loaded context:
    - Use project-specific patterns and conventions
    - Respect the technology stack choices
    - Follow the established coding standards
@@ -100,16 +94,11 @@ Based on agent type, generate the appropriate section:
 
 Before dispatching to any specialist agent:
 
-1. **Load project context:**
-   ```bash
-   cat $OPENCODE_CONFIG/projects.json
-   ```
-
-2. **Check for project-specific agents:**
+1. **Check for project-specific agents:**
    - First check `<project>/docs/agents/` for project-specific versions
    - Fall back to global agents in `$OPENCODE_CONFIG/agents/`
 
-3. **Inject project context** into the dispatched agent's prompt:
+2. **Inject project context** into the dispatched agent's prompt:
    - Include relevant sections from `docs/project.json`
    - Include applicable conventions from `docs/CONVENTIONS.md`
 ```
@@ -122,15 +111,10 @@ Before dispatching to any specialist agent:
 Before starting work, load the project context:
 
 1. **Read project configuration:**
-   ```bash
-   cat $OPENCODE_CONFIG/projects.json
-   ```
-
-2. **If `activeProject` is set:**
    - Load `<project>/docs/project.json` for stack-specific settings
    - Load `<project>/docs/CONVENTIONS.md` for coding standards
 
-3. **Apply project conventions** to all code you write or review.
+2. **Apply project conventions** to all code you write or review.
 ```
 
 ### Step 5: Insert Section into Agent
@@ -194,10 +178,9 @@ All agents should include this minimal block (customize based on agent type):
 
 This agent is project-context aware. On startup:
 
-1. Load `$OPENCODE_CONFIG/projects.json` to find the active project
-2. Load `<project>/docs/project.json` for stack configuration  
-3. Load `<project>/docs/CONVENTIONS.md` for coding standards
-4. Check `<project>/docs/agents/` for project-specific overrides
+1. Load `<project>/docs/project.json` for stack configuration  
+2. Load `<project>/docs/CONVENTIONS.md` for coding standards
+3. Check `<project>/docs/agents/` for project-specific overrides
 
 Apply all project conventions to your work.
 ```
@@ -233,15 +216,10 @@ Implements Vue.js components and features.
 Before starting work, load the project context:
 
 1. **Read project configuration:**
-   ```bash
-   cat $OPENCODE_CONFIG/projects.json
-   ```
-
-2. **If `activeProject` is set:**
    - Load `<project>/docs/project.json` for stack-specific settings
    - Load `<project>/docs/CONVENTIONS.md` for coding standards
 
-3. **Apply project conventions** to all code you write or review.
+2. **Apply project conventions** to all code you write or review.
 
 ## Capabilities
 - Create Vue 3 components with Composition API

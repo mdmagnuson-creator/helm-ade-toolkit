@@ -158,15 +158,14 @@ Invoke this agent when:
 
 **Prerequisites:** The dev server must be running. When invoked by @builder, the server is already started. If running standalone, you must start it yourself.
 
-> ⚠️ **CRITICAL: Always read port from project registry**
+> ⚠️ **CRITICAL: Always read port from project configuration**
 >
-> The canonical dev port for each project is stored in `$OPENCODE_CONFIG/projects.json` under `projects[].devPort`.
+> The canonical dev port for each project is stored in `docs/project.json` under `devPort`.
 > This is the **single source of truth** for which port each project uses.
 >
 > **BEFORE** accessing any URLs:
-> 1. Read `$OPENCODE_CONFIG/projects.json`
-> 2. Find the project entry by `id` or `path`
-> 3. Use the `devPort` value from that entry
+> 1. Read `docs/project.json`
+> 2. Use the `devPort` value from that file
 >
 > Do NOT hardcode port numbers. Do NOT assume a port. Always read it.
 
@@ -209,7 +208,7 @@ import { authenticate, loadEnvFile, getSupabaseAdmin, ensureTestUserData, DEFAUL
 // 1. project.json → agents.verification.testBaseUrl (explicit override)
 // 2. Preview URL env vars: VERCEL_URL, DEPLOY_URL, RAILWAY_PUBLIC_DOMAIN, etc.
 // 3. project.json → environments.staging.url
-// 4. http://localhost:{devPort} (from projects.json)
+// 4. http://localhost:{devPort} (from project.json)
 const BASE_URL = process.env.TEST_BASE_URL || /* resolve using priority chain */;
 
 async function captureElement() {

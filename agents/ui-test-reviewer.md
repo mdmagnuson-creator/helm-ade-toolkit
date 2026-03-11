@@ -163,22 +163,21 @@ Create/update `docs/e2e-areas.json` with this structure:
 
 ### Step 3: Navigate and Verify Each Area
 
-> ⚠️ **Required: Resolve dev port from project registry before navigation**
+> ⚠️ **Required: Resolve dev port from project configuration before navigation**
 >
-> The canonical dev port for each project is stored in `$OPENCODE_CONFIG/projects.json` under `projects[].devPort`.
+> The canonical dev port for each project is stored in `docs/project.json` under `devPort`.
 > This is the **single source of truth** for which port each project uses.
 >
 > **Trigger:** Before navigating any page in this workflow.
 >
 > **BEFORE** navigating to any pages:
-> 1. Read `$OPENCODE_CONFIG/projects.json`
-> 2. Find the project entry by `id` or `path`
-> 3. Resolve test base URL using this priority:
+> 1. Read `docs/project.json`
+> 2. Resolve test base URL using this priority:
 >    - `project.json` → `agents.verification.testBaseUrl` (explicit override)
 >    - Preview URL env vars: `VERCEL_URL`, `DEPLOY_URL`, `RAILWAY_PUBLIC_DOMAIN`, `RENDER_EXTERNAL_URL`, `FLY_APP_NAME`
 >    - `project.json` → `environments.staging.url`
->    - `http://localhost:{devPort}` (if devPort is not null)
-> 4. If no URL can be resolved, stop immediately:
+>    - `http://localhost:{devPort}` (from `project.json` → `devPort`)
+> 3. If no URL can be resolved, stop immediately:
 >    ```
 >    ⏭️  E2E review skipped: No test URL available (no testBaseUrl, preview URL, staging URL, or devPort)
 >    ```

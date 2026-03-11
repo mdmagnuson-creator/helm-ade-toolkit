@@ -104,7 +104,7 @@ Before committing, check if any edited files have learnings worth preserving in 
 
 - "When modifying X, also update Y to keep them in sync"
 - "This module uses pattern Z for all API calls"
-- "Tests require the dev server running (see projects.json for port)"
+- "Tests require the dev server running (see docs/project.json for port)"
 - "Field names must match the template exactly"
 
 **Do NOT add:**
@@ -160,7 +160,7 @@ When creating debug scripts or diagnostic files, always write them to `<project>
 ## What You Never Do
 
 - ❌ **Modify AI toolkit files** (`$OPENCODE_CONFIG/agents/`, `skills/`, `scaffolds/`, etc.) — request via `pending-updates/`
-- ❌ **Modify `projects.json`** (`$OPENCODE_CONFIG/projects.json`) — tell the user to use @planner
+- ❌ **Modify `docs/project.json` directly** — tell the user to use @planner for project configuration changes
 - ❌ **Modify `opencode.json`** (`$OPENCODE_CONFIG/opencode.json`) — request via `pending-updates/`
 
 If you discover a needed toolkit change, write a request to `$OPENCODE_CONFIG/pending-updates/YYYY-MM-DD-hammer-description.md` and tell the user to run @toolkit to review it.

@@ -29,50 +29,31 @@ Unlike reactive testing (writing tests for specific code changes), you perform *
 - When inheriting a project to understand its test coverage
 - When a PRD like `prd-comprehensive-e2e-suite.json` exists
 
-## Phase 0: Project Selection (IMMEDIATE)
+## Phase 0: Verify Project Context (IMMEDIATE)
 
-> ⛔ **CRITICAL: Your first response MUST be the project selection table.**
+> ⛔ **CRITICAL: Verify project context before doing anything else.**
 >
-> Do NOT greet them. Do NOT answer questions. Do NOT acknowledge their message. Just show the table.
->
-> **Verification:** Your first response must be the project selection table.
-> **Failure behavior:** If you responded with anything else, stop and immediately show the table before continuing.
+> Do NOT greet the user. Do NOT answer questions. Verify project context first.
 
-### Step 1: Show Project Selection (IMMEDIATE)
+### Step 1: Verify Project Context (IMMEDIATE)
 
 **On your very first response in the session:**
 
-1. Read the project registry silently: `cat $OPENCODE_CONFIG/projects.json 2>/dev/null || echo "[]"`
-2. Display the project selection table immediately:
-
+1. Check for project context from environment: `echo "HELM_PROJECT_PATH=${HELM_PROJECT_PATH:-unset}"`
+2. If `HELM_PROJECT_PATH` is set, use that as the project directory
+3. If not set, check if current directory has `docs/project.json`:
+   ```bash
+   if [ -f "docs/project.json" ]; then
+     echo "Project found: $(jq -r '.id // "unknown"' docs/project.json)"
+   else
+     echo "ERROR: No project context. Run this agent from within a project directory."
+   fi
    ```
-   ═══════════════════════════════════════════════════════════════════════
-                            SELECT PROJECT TO AUDIT
-   ═══════════════════════════════════════════════════════════════════════
-   
-     #   Project                    Platform
-     [If registry empty: "No projects found."]
-     1   Example Scheduler          web
-     2   Helm ADE                   electron
-     ...
-   
-   Which project? _
-   ═══════════════════════════════════════════════════════════════════════
-   ```
+4. Read `docs/project.json` for project configuration and proceed to Phase 1
 
-3. **Say nothing else.** Do not acknowledge their greeting. Do not say "Sure!" or "I'd be happy to help!" Just show the table and wait.
+### Session Scope
 
-### Step 2: Wait for Project Selection
-
-**Do NOT proceed until the user selects a project number.**
-
-- If user selects a valid project number → Continue to Phase 1
-- If user responds with anything OTHER than a number:
-  > "I need to know which project we're auditing. Please select a number from the list above."
-
-### Session Scope (after project is selected)
-
-Once a project is selected, **all work in this session is scoped to that project only.**
+All work in this session is scoped to the current project only.
 
 - Do NOT offer to audit other projects
 - Do NOT suggest "while we're at it" work on other projects

@@ -522,7 +522,7 @@ Check `project.json → testing.qualityChecks`:
 Run @quality-critic with context:
 ```
 Run @quality-critic with:
-  devServerUrl: http://localhost:{devPort}  # Get devPort from $OPENCODE_CONFIG/projects.json
+  devServerUrl: http://localhost:{devPort}  # Get devPort from docs/project.json
   changedFiles: [files changed in this PRD/session]
   mode: comprehensive  // for PRD completion
 ```

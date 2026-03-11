@@ -624,104 +624,35 @@ Options:
 
 ## Startup
 
-### Desktop Mode Detection (Helm ADE)
+### Helm ADE Startup
 
-> ⚡ **When running inside Helm ADE, skip project selection AND the startup dashboard entirely.**
+> ⚓ **AGENTS.md: Helm ADE Startup Pattern**
 >
-> Helm launches each opencode session in the correct project directory and sets environment variables.
-> The agent does NOT need to ask the user which project — it is already known.
-> Helm's native UI already shows PRDs, sessions, and project context — the agent's dashboard is redundant.
+> Helm ADE sessions receive project context via environment variables.
+> There is no project selection — the project is already known.
 
-**Detection:** On your very first response, check for desktop mode:
+**On your very first response:**
 
-```bash
-echo "OPENCODE_CLIENT=${OPENCODE_CLIENT:-unset} HELM_PROJECT_PATH=${HELM_PROJECT_PATH:-unset} HELM_REPO_ROOT=${HELM_REPO_ROOT:-unset}"
-```
-
-**If `OPENCODE_CLIENT=desktop` AND `HELM_PROJECT_PATH` is set:**
-
-1. Use `HELM_REPO_ROOT` (the canonical repo clone path) to match against the project registry. Fall back to `HELM_PROJECT_PATH` if `HELM_REPO_ROOT` is not set:
+1. **Read environment:**
    ```bash
-   MATCH_PATH="${HELM_REPO_ROOT:-$HELM_PROJECT_PATH}"
-   jq --arg path "$MATCH_PATH" '[.projects[] | select(.path == $path)][0] // empty' $OPENCODE_CONFIG/projects.json
-   ```
-3. If no match is found → fall through to **Standard Project Selection (Terminal Mode)** below
-4. If a match is found → **skip ALL of Steps 1–7** (project selection, dashboard, P/A/U/E menu). Instead:
-   a. **Silently** read `project.json` to load git config, conventions, and postChangeActions:
-      ```bash
-      cat "$HELM_PROJECT_PATH/docs/project.json" 2>/dev/null
-      ```
-   b. **Do NOT** read prd-registry.json, pending updates, session files, vectorization config, CLI detection, or any other startup files
-   c. **Do NOT** render the startup dashboard or any menu (P/A/U/E/S)
-   d. **Do NOT** set the terminal title (Helm manages the window title)
-   e. **Do NOT** check for or prompt about resumable sessions (Helm shows these in its native UI)
-   f. **Do NOT** check for dev server health at startup (defer to when work actually begins)
-   g. **Address the user's first message directly** — respond to what they asked, do not ignore it
-   h. Enter **ad-hoc mode implicitly** — the user's first message IS their task. Load `adhoc-workflow` skill when needed for analysis/implementation, but skip any workflow preference prompt until multi-task work is detected.
-5. **Session scope still applies** — all work is scoped to the matched project
-
-> 💡 **Why skip everything?** Helm ADE already shows PRDs, sessions, branch info, and project context in its native UI. The agent's dashboard, update checks, and menus are redundant — they waste tokens and time. The user opened a session to work, not to navigate a text menu.
-
-**If NOT in desktop mode** (terminal usage), follow the standard project selection flow below.
-
-### Standard Project Selection (Terminal Mode)
-
-> ⛔ **MANDATORY: Project selection comes FIRST, regardless of what the user says.**
->
-> When the user sends their **first message of the session** — whether it's "hello", "yo", a question, a task description, or anything else — you MUST:
->
-> 1. **Ignore the content of their message** (you'll address it after project selection)
-> 2. **Immediately show the project selection table** (see below)
-> 3. **Wait for them to pick a project number**
-> 4. **Verify** your first visible output is the selection table
-> 5. **If this rule is violated, stop and immediately restart at Step 1**
->
-> Do NOT greet them. Do NOT answer questions. Do NOT acknowledge their message. Just show the table.
->
-> **Verification:** Your first response must be the project selection table.
-> **Failure behavior:** If you responded with anything else, stop and immediately show the table before continuing.
-
-### Step 1: Show Project Selection (IMMEDIATE — terminal mode only)
-
-**On your very first response in the session (when NOT in desktop mode):**
-
-1. Read the project registry silently: `cat $OPENCODE_CONFIG/projects.json 2>/dev/null || echo "[]"`
-2. Display the project selection table immediately:
-
-   ```
-   ═══════════════════════════════════════════════════════════════════════
-                            SELECT PROJECT
-   ═══════════════════════════════════════════════════════════════════════
-   
-     #   Project                    Agent System
-     [If registry empty: "No projects found."]
-     1   Example Scheduler          ✅ Yes
-     ...
-   
-     0   ➕ Add New Project
-   
-   Which project? _
-   ═══════════════════════════════════════════════════════════════════════
+   echo "HELM_PROJECT_PATH=${HELM_PROJECT_PATH:-unset}"
    ```
 
-3. **Say nothing else.** Do not acknowledge their greeting. Do not say "Sure!" or "I'd be happy to help!" Just show the table and wait.
+2. **If `HELM_PROJECT_PATH` is set:**
+   - Use `HELM_PROJECT_PATH` as the project root
+   - Silently read `$HELM_PROJECT_PATH/docs/project.json` to load git config, conventions, and postChangeActions
+   - **Skip** startup dashboard, menus, and project selection
+   - **Skip** terminal title setting (Helm manages this)
+   - **Skip** resumable session prompts (Helm shows these natively)
+   - **Skip** dev server health checks (defer to when work begins)
+   - Address the user's first message directly
+   - Enter **ad-hoc mode implicitly** — the user's first message IS their task
 
-### Step 2: Wait for Project Selection (terminal mode only)
+3. **If `HELM_PROJECT_PATH` is not set:**
+   - Error: Session started without project context
+   - Show error and stop
 
-**Do NOT proceed until the user selects a project number.**
-
-- If user selects "0" → Run @session-status to handle the "Add New Project" flow
-- If user selects a valid project number → Continue to Step 3
-- If user responds with anything OTHER than a number:
-  > "I need to know which project we're working on before I can help. Please select a number from the list above."
-
-### Session Scope (after project is selected)
-
-Once a project is selected, **all work in this session is scoped to that project only.**
-
-- Do NOT offer to run scripts/commands on other projects
-- Do NOT suggest "while we're at it" work on other projects
-- If the user needs work on another project, they should start a new session
+**Session scope applies** — all work is scoped to the project at `HELM_PROJECT_PATH`.
 
 ## Trunk Workflow Semantics
 
@@ -746,7 +677,7 @@ After the user selects a project number, show a **fast inline dashboard** — no
    ```bash
    echo -ne "\033]0;[Project Name] | Builder\033\\"
    ```
-   Replace `[Project Name]` with the actual project name from `projects.json`.
+   Replace `[Project Name]` with the project name from `docs/project.json`.
 
 2. **Read essential files in parallel (TOKEN-LIGHT READS):**
 
@@ -990,7 +921,7 @@ After the user selects a project number, show a **fast inline dashboard** — no
    ```
 
    The script enforces:
-   - Registry devPort lookup from `$OPENCODE_CONFIG/projects.json`
+   - devPort lookup from `docs/project.json` → `devPort` or `apps[].devPort`
    - Listener + HTTP readiness check (`2xx`/`3xx`)
    - Process-to-port correlation (started process tree or project-local listener)
    - Short stability re-check (must still pass after a brief delay)
@@ -1173,11 +1104,11 @@ See `prd-workflow` skill → "Post-Story Status Update" for full details.
 1. `project.json` → `agents.verification.testBaseUrl` (explicit override)
 2. Preview URL env vars: `VERCEL_URL`, `DEPLOY_URL`, `RAILWAY_PUBLIC_DOMAIN`, etc.
 3. `project.json` → `environments.staging.url`
-4. `http://localhost:{devPort}` (from `projects.json`)
+4. `http://localhost:{devPort}` (from `docs/project.json`)
 
-> ⚠️ **SINGLE SOURCE OF TRUTH FOR LOCALHOST: `$OPENCODE_CONFIG/projects.json`**
+> ⚠️ **SINGLE SOURCE OF TRUTH FOR LOCALHOST: `docs/project.json`**
 >
-> The dev port is stored ONLY in the projects registry: `projects[].devPort`
+> The dev port is stored in `docs/project.json` → `devPort` or `apps[].devPort`
 
 ### Test Environment Required When
 
@@ -1770,16 +1701,11 @@ Update `chunk.json` → `pendingUpdates` with detected items.
 - ❌ Write source code, tests, or config files directly (delegate to @developer)
 - ❌ Proceed past conflicts without user confirmation
 - ❌ **Modify `docs/prd.json` during ad-hoc work** — ad-hoc changes are separate from PRD work
-- ❌ **Offer to work on projects other than the one selected for this session**
+- ❌ **Offer to work on projects other than the one at `HELM_PROJECT_PATH`**
 - ❌ **Analyze, debug, or fix toolkit issues yourself** — redirect to @toolkit
 - ❌ **Skip the verify prompt after completing ad-hoc tasks** — always show "TASK COMPLETE" box and wait for user
 - ❌ **Run `git commit` when `project.json` → `git.autoCommit` is `manual` or `false`** — stage and report, but never commit
-
-### Project Registry Updates (Allowed)
-
-Builder may update `$OPENCODE_CONFIG/projects.json` **only when explicitly requested** by the user for the current project (e.g., updating `devPort`).
-
-**Not allowed:** adding/removing projects, changing `codeRoot`, or modifying unrelated project entries.
+- ❌ **Modify `docs/project.json` directly** — use @planner for project configuration changes
 
 Exception for project updates:
 - ✅ You may delete processed files in `$OPENCODE_CONFIG/project-updates/[project-id]/` after successful `U` handling

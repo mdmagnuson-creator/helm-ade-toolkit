@@ -46,7 +46,6 @@ Ensures all agents in `$OPENCODE_CONFIG/agents/` follow the established conventi
 
 | Criterion | Weight | Description |
 |-----------|--------|-------------|
-| Project Registry Check | Required | References `$OPENCODE_CONFIG/projects.json` |
 | Project Config Loading | Required | References `docs/project.json` |
 | Conventions Loading | Required | References `docs/CONVENTIONS.md` |
 
@@ -236,7 +235,6 @@ Look for this pattern or similar:
 ```markdown
 ## Project Context
 
-- References to `$OPENCODE_CONFIG/projects.json`
 - References to `docs/project.json`
 - References to `docs/CONVENTIONS.md`
 ```
@@ -267,7 +265,6 @@ Use these regex patterns to check compliance:
 
 | Criterion | Pattern |
 |-----------|---------|
-| Registry Check | `projects\.json` |
 | Config Loading | `docs/project\.json` or `project\.json` |
 | Conventions | `CONVENTIONS\.md` |
 | Project Agents | `docs/agents/` |
@@ -482,11 +479,11 @@ For each template, check if the project stack matches any `applies_to` condition
 
 ### Step 6: Multi-Project Analysis (`--all`)
 
-When `--all` is specified, analyze all registered projects:
+When `--all` is specified, analyze all projects in a workspace:
 
 ```bash
-# Get all registered projects
-cat $OPENCODE_CONFIG/projects.json
+# Find all projects with docs/project.json
+find ~/code -maxdepth 2 -name "project.json" -path "*/docs/*" 2>/dev/null
 ```
 
 For each project:

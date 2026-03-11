@@ -41,33 +41,15 @@ The URL is resolved in this order (first match wins):
 
 | Priority | Source | Description |
 |----------|--------|-------------|
-| 1 | `projects.json` → `testBaseUrl` | Explicit per-project override in registry |
-| 2 | `project.json` → `agents.verification.testBaseUrl` | Explicit override in project config |
-| 3 | Environment variables | Auto-detected preview URLs (Vercel, Netlify, etc.) |
-| 4 | `project.json` → `environments.staging.url` | Configured staging environment |
-| 5 | `projects.json` → `devPort` | Local dev server (`http://localhost:${devPort}`) |
-| 6 | null | Cannot resolve — no testable environment |
+| 1 | `project.json` → `agents.verification.testBaseUrl` | Explicit override in project config |
+| 2 | Environment variables | Auto-detected preview URLs (Vercel, Netlify, etc.) |
+| 3 | `project.json` → `environments.staging.url` | Configured staging environment |
+| 4 | `project.json` → `devPort` | Local dev server (`http://localhost:${devPort}`) |
+| 5 | null | Cannot resolve — no testable environment |
 
 ## Steps
 
-### Step 1: Check Explicit Configuration (projects.json)
-
-```bash
-# Check for testBaseUrl in projects.json registry
-TEST_URL=$(jq -r --arg path "$PROJECT_PATH" \
-  '.projects[] | select(.path == $path) | .testBaseUrl // empty' \
-  $OPENCODE_CONFIG/projects.json)
-
-if [ -n "$TEST_URL" ]; then
-  echo "🌐 Test environment: Custom"
-  echo "   URL: $TEST_URL"
-  echo "   Source: testBaseUrl in projects.json"
-  export TEST_BASE_URL="$TEST_URL"
-  exit 0
-fi
-```
-
-### Step 2: Check Explicit Configuration (project.json)
+### Step 1: Check Explicit Configuration (project.json)
 
 ```bash
 # Check for testBaseUrl in project.json
@@ -157,7 +139,7 @@ if [ -n "$FLY_APP_NAME" ]; then
 fi
 ```
 
-### Step 4: Check Staging Configuration
+### Step 3: Check Staging Configuration
 
 ```bash
 # Check for staging URL in project.json
@@ -173,25 +155,24 @@ if [ -n "$STAGING_URL" ]; then
 fi
 ```
 
-### Step 5: Fall Back to Local Dev Server
+### Step 4: Fall Back to Local Dev Server
 
 ```bash
-# Check for devPort in projects.json
-DEV_PORT=$(jq -r --arg path "$PROJECT_PATH" \
-  '.projects[] | select(.path == $path) | .devPort // empty' \
-  $OPENCODE_CONFIG/projects.json)
+# Check for devPort in project.json
+DEV_PORT=$(jq -r '.devPort // .apps[0].devPort // empty' \
+  "$PROJECT_PATH/docs/project.json" 2>/dev/null)
 
 if [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ]; then
   TEST_URL="http://localhost:$DEV_PORT"
   echo "🌐 Test environment: Local dev server"
   echo "   URL: $TEST_URL"
-  echo "   Source: devPort in projects.json"
+  echo "   Source: devPort in project.json"
   export TEST_BASE_URL="$TEST_URL"
   exit 0
 fi
 ```
 
-### Step 6: Cannot Resolve — Report Error
+### Step 5: Cannot Resolve — Report Error
 
 ```bash
 echo "❌ Cannot determine test URL"
@@ -202,9 +183,9 @@ echo "   - No staging URL configured"
 echo "   - No preview environment detected"
 echo ""
 echo "   Options:"
-echo "   1. Add testBaseUrl to projects.json"
-echo "   2. Add environments.staging.url to project.json"
-echo "   3. Set devPort if you have a local server"
+echo "   1. Add agents.verification.testBaseUrl to docs/project.json"
+echo "   2. Add environments.staging.url to docs/project.json"
+echo "   3. Set devPort in docs/project.json if you have a local server"
 
 export TEST_BASE_URL=""
 exit 1
@@ -222,19 +203,7 @@ Copy this script for use in agents:
 
 PROJECT_PATH="${1:-.}"
 
-# 1. Check projects.json testBaseUrl
-TEST_URL=$(jq -r --arg path "$PROJECT_PATH" \
-  '.projects[] | select(.path == $path) | .testBaseUrl // empty' \
-  $OPENCODE_CONFIG/projects.json 2>/dev/null)
-
-if [ -n "$TEST_URL" ]; then
-  echo "🌐 Test environment: Custom (projects.json)"
-  echo "   URL: $TEST_URL"
-  export TEST_BASE_URL="$TEST_URL"
-  return 0 2>/dev/null || exit 0
-fi
-
-# 2. Check project.json agents.verification.testBaseUrl
+# 1. Check project.json for testBaseUrl
 TEST_URL=$(jq -r '.agents.verification.testBaseUrl // empty' \
   "$PROJECT_PATH/docs/project.json" 2>/dev/null)
 
@@ -245,7 +214,7 @@ if [ -n "$TEST_URL" ]; then
   return 0 2>/dev/null || exit 0
 fi
 
-# 3. Check preview environment variables
+# 2. Check preview environment variables
 for VAR in VERCEL_URL NEXT_PUBLIC_VERCEL_URL; do
   VAL="${!VAR}"
   if [ -n "$VAL" ]; then
@@ -302,9 +271,8 @@ if [ -n "$STAGING_URL" ]; then
 fi
 
 # 5. Fall back to localhost
-DEV_PORT=$(jq -r --arg path "$PROJECT_PATH" \
-  '.projects[] | select(.path == $path) | .devPort // empty' \
-  $OPENCODE_CONFIG/projects.json 2>/dev/null)
+DEV_PORT=$(jq -r '.devPort // .apps[0].devPort // empty' \
+  "$PROJECT_PATH/docs/project.json" 2>/dev/null)
 
 if [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ]; then
   TEST_URL="http://localhost:$DEV_PORT"
@@ -318,9 +286,9 @@ fi
 echo "❌ Cannot determine test URL"
 echo ""
 echo "   Options:"
-echo "   1. Add testBaseUrl to projects.json"
-echo "   2. Add environments.staging.url to project.json"
-echo "   3. Set devPort for local development"
+echo "   1. Add agents.verification.testBaseUrl to docs/project.json"
+echo "   2. Add environments.staging.url to docs/project.json"
+echo "   3. Set devPort in docs/project.json for local development"
 export TEST_BASE_URL=""
 return 1 2>/dev/null || exit 1
 ```
@@ -336,11 +304,8 @@ Before running tests, resolve the test URL:
 
 1. **Check explicit config:**
    ```bash
-   # Check projects.json for testBaseUrl
-   TEST_URL=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .testBaseUrl // empty' $OPENCODE_CONFIG/projects.json)
-   
-   # If not set, check project.json
-   [ -z "$TEST_URL" ] && TEST_URL=$(jq -r '.agents.verification.testBaseUrl // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
+   # Check project.json for testBaseUrl
+   TEST_URL=$(jq -r '.agents.verification.testBaseUrl // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
    ```
 
 2. **Check preview environment (if no explicit config):**
@@ -360,7 +325,7 @@ Before running tests, resolve the test URL:
 4. **Fall back to localhost:**
    ```bash
    if [ -z "$TEST_URL" ]; then
-     DEV_PORT=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .devPort // empty' $OPENCODE_CONFIG/projects.json)
+     DEV_PORT=$(jq -r '.devPort // .apps[0].devPort // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
      [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ] && TEST_URL="http://localhost:$DEV_PORT"
    fi
    ```

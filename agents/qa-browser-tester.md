@@ -18,30 +18,29 @@ See AGENTS.md. Never truncate test failure output — show complete errors and s
 
 ## Dev Server and Port Requirements
 
-> ⚠️ **Required: Resolve dev port from project registry before page inspection**
+> ⚠️ **Required: Resolve dev port from project configuration before page inspection**
 >
-> The canonical dev port for each project is stored in `$OPENCODE_CONFIG/projects.json` under `projects[].devPort`.
+> The canonical dev port for each project is stored in `docs/project.json` under `devPort` or `apps[].devPort`.
 > This is the **single source of truth** for which port each project uses.
 >
 > **Trigger:** Before inspecting pages or delegating browser test-writing tasks.
 >
 > **BEFORE** inspecting any pages or delegating to @ui-tester-playwright:
-> 1. Read `$OPENCODE_CONFIG/projects.json`
 > 📚 **SKILL: test-url-resolution** — Load this skill for full URL resolution.
 >
 > **Resolve test base URL using priority chain:**
-> 1. `projects.json` → `testBaseUrl` (explicit override)
+> 1. `project.json` → `testBaseUrl` (explicit override)
 > 2. `project.json` → `agents.verification.testBaseUrl` (explicit config)
 > 3. Environment → `VERCEL_URL`, `DEPLOY_URL`, etc. (preview detection)
 > 4. `project.json` → `environments.staging.url` (staging config)
-> 5. `projects.json` → `devPort` → `http://localhost:${devPort}`
+> 5. `project.json` → `devPort` → `http://localhost:${devPort}`
 > 6. `null` → cannot test
 >
 > **Evidence:** Include resolved `TEST_BASE_URL` in delegated task context.
 >
 > **Failure behavior:** If URL cannot be resolved, stop and report the resolution options.
 
-**Prerequisites:** The dev server must be running. When invoked by @builder or @qa, the server is already started. If running standalone, ensure the server is running at the port specified in `projects.json`.
+**Prerequisites:** The dev server must be running. When invoked by @builder or @qa, the server is already started. If running standalone, ensure the server is running at the port specified in `docs/project.json`.
 
 ## Your Task
 
@@ -176,7 +175,7 @@ Write the test to file: tests/qa/QA-001-form-submits-invalid-email.spec.ts
 The test should verify that the validation error appears and the form does NOT submit.
 ```
 
-**Note:** Replace `{devPort}` with the actual port number read from `$OPENCODE_CONFIG/projects.json`.
+**Note:** Replace `{devPort}` with the actual port number read from `docs/project.json`.
 
 ### 4. Update the Finding
 

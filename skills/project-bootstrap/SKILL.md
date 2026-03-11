@@ -18,7 +18,6 @@ Initialize a project with stack-agnostic configuration. For existing projects, a
 4. Generate `docs/project.json` manifest
 5. Set up agent system folder structure (default)
 6. Generate ARCHITECTURE.md and CONVENTIONS.md
-7. Update the global project registry
 
 **For New Projects (Spec-Driven):**
 1. Invoke **spec-analyzer** skill to extract requirements from spec/PRD
@@ -27,7 +26,6 @@ Initialize a project with stack-agnostic configuration. For existing projects, a
 4. Invoke **project-scaffold** skill to generate boilerplate (future)
 5. Generate project agents from templates (future)
 6. Generate ARCHITECTURE.md, CONVENTIONS.md, and initial PRD
-7. Update the global project registry
 
 ## Default Bootstrap Mode (Quick Intake)
 
@@ -2196,34 +2194,7 @@ After configuring related projects, add to the project's `docs/project.json`:
 
 ---
 
-## Step 11: Update Global Registry
-
-Add the project to `$OPENCODE_CONFIG/projects.json`:
-
-```json
-{
-  "id": "<kebab-case-name>",
-  "name": "<Display Name>",
-  "path": "<full-path>",
-  "description": "<description>",
-  "devPort": <port-number-or-null>,
-  "hasAgentSystem": true,
-  "projectManifest": "docs/project.json",
-  "prdRegistry": "docs/prd-registry.json" or null,
-  "sessionLocks": "docs/session-locks.json" or null
-}
-```
-
-**devPort assignment:**
-- Use the port from user's answer to question 2 (e.g., 3000, 5000, 5001, or custom)
-- If user selected "No local runtime" (option E), set `devPort: null`
-- When `devPort` is null, E2E tests and dev server startup are skipped for this project
-
-Set as `activeProject`.
-
----
-
-## Step 13: Summary
+## Step 11: Summary
 
 Display completion summary based on flow used:
 
@@ -2241,7 +2212,6 @@ Display completion summary based on flow used:
 ✅ Created: docs/CONVENTIONS.md (with infrastructure conventions)
 ✅ Created: docs/agents/ (project-specific agents)
 ✅ Created: AGENTS.md
-✅ Updated: $OPENCODE_CONFIG/projects.json
 ✅ Vectorization: Enabled (8,453 chunks indexed)
 
 Project "<Name>" is now ready!

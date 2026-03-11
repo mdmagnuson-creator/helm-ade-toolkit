@@ -34,37 +34,11 @@ Path: /Users/.../example-scheduler
 - Go directly to Step 1 (Gather Data)
 
 **If NO project context is provided** (e.g., user invoked @session-status directly):
-- Read `$OPENCODE_CONFIG/projects.json`
-- Display project selection table
-- Wait for user to select a project
+- Check `HELM_PROJECT_PATH` environment variable
+- If set: use that as the project path
+- If not set: Error — session-status requires project context in Helm ADE
 
-### Step 0b: Add New Project (Bootstrap Wizard)
-
-**If the user selects "0" (Add New Project), use the project-bootstrap skill.**
-
-Load the skill:
-```
-skill: project-bootstrap
-```
-
-The bootstrap wizard will:
-1. Support quick project creation from either a local folder or a GitHub repo URL
-2. Collect minimal intake (project name + pasted context with optional image attachments)
-3. Auto-detect stack where possible and fill project manifest defaults
-4. Generate `docs/project.json` manifest with stack + workflow configuration
-5. Set up agent system folder structure by default (no opt-in prompt)
-6. Update the global project registry
-
-**Follow the project-bootstrap skill instructions completely.** The skill handles:
-- Stack auto-detection (languages, frameworks, testing, linting, etc.)
-- Interactive confirmation of detected settings
-- Generation of all required files:
-  - `docs/project.json` (project manifest)
-  - `docs/prd-registry.json` (if agent system enabled)
-  - `docs/session-locks.json` (if agent system enabled)
-  - `AGENTS.md` (if doesn't exist)
-
-After bootstrap completes, set the new project as active and default directly into a PRD kickoff flow to define scope and architecture direction.
+> **Note:** In Helm ADE, there is no central project registry. Project context comes from environment variables or parent agent delegation.
 
 ### Step 1: Gather Data (After Project Selection)
 

@@ -332,14 +332,12 @@ For each story in priority order:
    - These fire after the per-story commit in Step 2.5 as part of Pipeline Step 4.5, not during the quality pipeline
    - No story-level flags needed — trigger conditions in `postChangeActions` determine what runs
 
-3. **Update heartbeat** periodically in session lock
-
-4. **Update story todo state (BEFORE commit):**
+3. **Update story todo state (BEFORE commit):**
    - Before implementation: mark current chunk `in_progress` via `todowrite` and update `session.json`
    - After implementation + required checks: mark chunk `completed` in both places
    - **⚠️ This must happen BEFORE Step 2.5 (commit)** to ensure state is included in the commit
 
-5. **Handle developer failures:**
+4. **Handle developer failures:**
    - If developer fails more than once on a story, analyze the PRD
    - Update `docs/prd.json` with clarifications if needed
    - If developer struggles with cleanup, run @wall-e
@@ -646,8 +644,6 @@ Report the final state:
 | Pushed only (no PR) | "Changes pushed to {pushTo}. Create PR when ready. Status: `in_progress`" |
 | PR created, awaiting human | "PR #{number} created. Human approval required to merge. Status: `pr_open`" |
 | PR created and merged | "PR #{number} merged to {createPrTo}. Status: `completed` (pending cleanup)" |
-
-Update session lock to appropriate status based on outcome.
 
 ---
 

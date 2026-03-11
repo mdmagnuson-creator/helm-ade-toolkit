@@ -21,7 +21,7 @@ This repo contains the agents, skills, schemas, and scaffolds that power Helm's 
 1. **First launch**: Helm clones this repo into its application support directory
 2. **Every launch**: Helm runs `git pull` to check for updates
 3. **Runtime**: Helm sets `XDG_CONFIG_HOME` so opencode reads agents/skills from the local clone
-4. **Isolation**: Each Helm installation has its own config (mutable state like `projects.json` is not in this repo)
+4. **Isolation**: Each Helm installation has its own config (mutable state like `applied-updates.json` is not in this repo)
 
 ## Manual Update Check
 

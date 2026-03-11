@@ -47,7 +47,7 @@ If `docs/project.json` exists, extract key information for criteria generation:
 If no `project.json` exists, note this and use defaults:
 ```
 ⚠️ No docs/project.json found. Using default criteria.
-   Run the bootstrap wizard to configure stack-specific settings.
+   Run project-bootstrap to configure stack-specific settings.
 ```
 
 ---

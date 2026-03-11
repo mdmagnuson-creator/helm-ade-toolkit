@@ -284,7 +284,6 @@ AVAILABLE COMMANDS
 ───────────────────────────────────────────────────────────────────────
   - Ask me to work on any task directly
   - No PRD selection required for this project
-  - Run bootstrap to set up agent system: select "0" from project menu
 
 ═══════════════════════════════════════════════════════════════════════
 ```
@@ -305,15 +304,13 @@ If the project has agent system but no `docs/project.json`:
 This project has the agent system but no stack configuration.
 AI agents won't know what commands to run or how the project is structured.
 
-Would you like to run the bootstrap wizard to generate project.json?
-  A. Yes, run bootstrap now
-  B. No, continue without it
-
+This project doesn't have docs/project.json yet.
+The project-bootstrap skill can generate it. Would you like to run it? (y/n)
 > _
 ═══════════════════════════════════════════════════════════════════════
 ```
 
-If user selects A, invoke the project-bootstrap skill in "existing project" mode.
+If user confirms, invoke the project-bootstrap skill.
 
 ### Step 5: Stale Session Handling
 

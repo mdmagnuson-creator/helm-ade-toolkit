@@ -42,105 +42,13 @@ After creation, default immediately to PRD kickoff so Planner can define scope a
 
 ---
 
-## Step 1: Determine Project Type
+## Entry Point
 
-Ask the user:
+This skill is invoked when Helm opens a project that doesn't have `docs/project.json` yet, or when the user explicitly requests bootstrap.
 
-```
-═══════════════════════════════════════════════════════════════════════
-                         ADD NEW PROJECT
-═══════════════════════════════════════════════════════════════════════
+**For existing repos (default):** Start at [Step 3: Auto-Detect Stack](#step-3-auto-detect-stack). Use `HELM_PROJECT_PATH` as the project root.
 
-Choose an option:
-
-  A. Add existing local project folder
-  B. Create new project (quick intake: name + context paste/images)
-  C. Create from GitHub repo URL (quick intake + clone)
-  D. Advanced/manual stack setup
-
-> _
-═══════════════════════════════════════════════════════════════════════
-```
-
-**Flow by choice:**
-- **Option A** → [Step 2a: Existing Project Path](#step-2a-existing-project-path)
-- **Option B** → [Step 2b: Quick New Project Creation](#step-2b-quick-new-project-creation)
-- **Option C** → [Step 2c: New Project from GitHub Repo](#step-2c-new-project-from-github-repo)
-- **Option D** → [Step 2d: Advanced Manual Stack Selection](#step-2d-advanced-manual-stack-selection)
-
----
-
-## Step 2a: Existing Project Path
-
-If Option A (existing project):
-
-```
-Enter the full path to your project:
-
-> _
-
-Example: ~/code/my-project
-```
-
-**Validate the path:**
-- Check folder exists: `ls <path>`
-- Check it's a git repo: `git -C <path> rev-parse --git-dir`
-
-If not a git repo, ask:
-```
-This folder is not a git repository. Initialize git? (y/n)
-```
-
-**Continue to:** [Step 3: Auto-Detect Stack](#step-3-auto-detect-stack)
-
----
-
-## Step 2b: Quick New Project Creation
-
-If Option B (quick new project):
-
-Ask for only the essentials:
-
-```
-Project name: _
-
-Paste project context (goals, scope, constraints). You can also drop image attachments now.
-> _
-```
-
-Then:
-1. Create `~/code/<project-name-kebab>`
-2. Initialize git
-3. Run spec analysis from the pasted context (+ images)
-4. Continue with stack recommendation and project setup
-
-Agent system is always enabled in this flow.
-
-## Step 2c: New Project from GitHub Repo
-
-If Option C (GitHub repo bootstrap):
-
-```
-Project name: _
-GitHub repo URL: _
-
-Paste project context (goals, scope, constraints). You can also drop image attachments now.
-> _
-```
-
-Then:
-1. Clone repository to `~/code/<project-name-kebab>`
-2. Read existing codebase for stack detection
-3. Merge user context with detected stack/capabilities
-4. Generate docs manifests and agent system files
-
-Agent system is always enabled in this flow.
-
-## Step 2d: Advanced Manual Stack Selection
-
-If Option D (manual stack selection):
-
-Use the existing advanced stack interview flow below.
+**For spec-driven new projects:** If the user provides a spec or PRD, start at [Step 2e: Spec-Driven Creation](#step-2e-spec-driven-creation-detailed). The project directory already exists (Helm created/cloned it).
 
 ---
 
@@ -148,7 +56,9 @@ Use the existing advanced stack interview flow below.
 
 If user explicitly requests deeper spec-driven analysis beyond quick intake, run the detailed flow below.
 
-### 2b.1: Invoke Spec Analyzer
+> **Note:** The project directory already exists — Helm created/cloned it before invoking this skill. Do not create directories or initialize git.
+
+### 2e.1: Invoke Spec Analyzer
 
 Load and invoke the `spec-analyzer` skill:
 
@@ -180,7 +90,7 @@ The spec-analyzer will:
 3. Present findings for confirmation
 4. Output a `RequirementsManifest` JSON
 
-### 2b.2: Invoke Stack Advisor
+### 2e.2: Invoke Stack Advisor
 
 Once spec analysis is complete, invoke the `stack-advisor` skill:
 
@@ -201,26 +111,7 @@ The stack-advisor will:
 4. Allow user to select or customize
 5. Output a `StackDecision` JSON
 
-### 2b.3: Project Creation
-
-Once stack is selected:
-
-```
-Project name: _
-(will be converted to kebab-case for folder name)
-
-Parent directory: ~/code
-(press Enter to accept default, or enter a different path)
-```
-
-Create the project:
-```bash
-mkdir -p <parent>/<project-name-kebab>
-cd <parent>/<project-name-kebab>
-git init
-```
-
-### 2b.4: Scaffold Generation
+### 2e.3: Scaffold Generation
 
 Based on the selected archetype from `StackDecision`, invoke the `project-scaffold` skill to generate boilerplate code:
 
@@ -239,7 +130,7 @@ The project-scaffold will:
 2. Process template variables from `StackDecision` and `RequirementsManifest`
 3. Generate all boilerplate files (package.json, config files, source code)
 4. Create database schema from entities (if applicable)
-5. Run post-scaffold commands (npm install, prisma generate, git init)
+5. Run post-scaffold commands (npm install, prisma generate)
 6. Output the list of generated files
 
 ### Available Scaffolds
@@ -250,9 +141,9 @@ The project-scaffold will:
 | `nextjs-prisma` | `nextjs-prisma` | Next.js 15 + Prisma + NextAuth.js + Tailwind v4 |
 | `go-api-postgres` | `go-chi-postgres` | Go Chi + PostgreSQL + JWT auth |
 
-**If scaffold not available:** Skip scaffold generation and continue to Step 2b.5. The user will need to manually set up their project structure.
+**If scaffold not available:** Skip scaffold generation and continue to Step 2e.4. The user will need to manually set up their project structure.
 
-### 2b.5: Generate Project Agents
+### 2e.4: Generate Project Agents
 
 Generate project-specific agent definitions from templates based on the selected stack. These agents contain project-tailored guidance that the global routers (critic, tester) will use instead of generic agents.
 
@@ -379,61 +270,6 @@ Use Supabase client for database operations.
    ```
 
 **Continue to:** [Step 9: Agent System Setup](#step-9-agent-system-setup)
-
----
-
-## Step 2d: Manual Stack Selection
-
-If Option D (manual stack selection):
-
-User knows their stack and just wants to set up the project structure.
-
-```
-═══════════════════════════════════════════════════════════════════════
-                      MANUAL PROJECT SETUP
-═══════════════════════════════════════════════════════════════════════
-
-Project name: _
-(will be converted to kebab-case for folder name)
-
-Parent directory: ~/code
-(press Enter to accept default, or enter a different path)
-```
-
-Create the project:
-```bash
-mkdir -p <parent>/<project-name-kebab>
-cd <parent>/<project-name-kebab>
-git init
-```
-
-Then ask about stack choices one by one:
-
-```
-───────────────────────────────────────────────────────────────────────
-FRONTEND
-───────────────────────────────────────────────────────────────────────
-
-  1. Next.js (React, full-stack)
-  2. Remix (React, edge-focused)
-  3. Nuxt (Vue, full-stack)
-  4. SvelteKit (Svelte, full-stack)
-  5. Vite + React (SPA)
-  6. Vite + Vue (SPA)
-  7. Astro (content-focused)
-  8. None (API only)
-
-> _
-```
-
-Continue through:
-- **Backend** (if not fullstack frontend)
-- **Database** — Supabase, Postgres, PlanetScale, MongoDB, etc.
-- **Auth** — Based on previous choices
-- **Styling** — Tailwind, CSS Modules, etc.
-- **Testing** — Jest/Vitest, Playwright/Cypress
-
-After collecting choices, **continue to:** [Step 9: Agent System Setup](#step-9-agent-system-setup)
 
 ---
 
@@ -1362,13 +1198,13 @@ const { data: users } = await supabase.from('users').select();
 
 The data for file generation comes from different sources depending on how the project was created:
 
-| Source | For Existing Projects | For Spec-Driven New Projects | For Manual New Projects |
-|--------|----------------------|------------------------------|------------------------|
-| Stack info | Auto-detected from files | `StackDecision` from stack-advisor | User selections |
-| Features | Auto-detected + user confirmation | `RequirementsManifest` from spec-analyzer | User selections |
-| Entities | N/A (existing code) | `RequirementsManifest.entities` | N/A |
-| User stories | N/A | `RequirementsManifest.userStories` | N/A |
-| Infrastructure | Step 8b-8d questions | Defaults based on stack, can customize later | Step 8b-8d questions |
+| Source | For Existing Projects | For Spec-Driven New Projects |
+|--------|----------------------|------------------------------|
+| Stack info | Auto-detected from files | `StackDecision` from stack-advisor |
+| Features | Auto-detected + user confirmation | `RequirementsManifest` from spec-analyzer |
+| Entities | N/A (existing code) | `RequirementsManifest.entities` |
+| User stories | N/A | `RequirementsManifest.userStories` |
+| Infrastructure | Step 8b-8d questions | Defaults based on stack, can customize later |
 
 ### 10a: Generate `docs/project.json`
 
@@ -1597,7 +1433,7 @@ For detailed information, see:
 
 ## Step 10g: Generate Initial PRD (for spec-driven new projects)
 
-If the project was created via spec-driven flow (Option B), generate an initial PRD from the extracted user stories:
+If the project was created via spec-driven flow (Step 2e), generate an initial PRD from the extracted user stories:
 
 ### From RequirementsManifest
 
@@ -2041,7 +1877,7 @@ How many sample rows per table?
 
 ## Step 10j: Configure Related Projects
 
-Ask about relationships to other registered projects. This enables agents to find companion projects (e.g., documentation sites, marketing sites, API backends) without guessing based on names.
+Ask about relationships to companion projects. This enables agents to find companion projects (e.g., documentation sites, marketing sites, API backends) without guessing based on names.
 
 ```
 ═══════════════════════════════════════════════════════════════════════
@@ -2056,18 +1892,14 @@ Related projects help agents automatically find:
   • API backends (for contract alignment)
   • Admin dashboards (for operational features)
 
-Registered projects:
-  1. helm-ade-toolkit (AI toolkit)
-  2. helm-ade (SaaS application)
-  3. helm-api (Go API backend)
-  4. opencode-toolkit-website (documentation)
-
-Select related projects (comma-separated numbers, or 'skip'):
+Does this project have related companion projects?
+If so, describe them (e.g., "this project's API backend is in the helm-api repo")
+Or type 'skip' to configure later.
 > _
 ═══════════════════════════════════════════════════════════════════════
 ```
 
-### For Each Selected Project
+### For Each Related Project
 
 Ask about the relationship type:
 
@@ -2294,51 +2126,9 @@ Project "<Name>" is ready for development!
 ═══════════════════════════════════════════════════════════════════════
 ```
 
-### For Manual New Projects
-
-```
-═══════════════════════════════════════════════════════════════════════
-                      PROJECT CREATED
-═══════════════════════════════════════════════════════════════════════
-
-✅ Created: <project-path>/
-✅ Stack:   <selected stack summary>
-
-Files generated:
-  docs/project.json          Project manifest
-  docs/prd-registry.json     PRD registry
-  docs/ARCHITECTURE.md       Architecture overview
-  docs/CONVENTIONS.md        Coding conventions
-  docs/agents/               Project-specific agents
-  docs/skills/               Project-specific skills
-  AGENTS.md                  Quick reference
-
-📦 Generated agents (in docs/agents/):
-   - <list based on selected stack>
-
-🎯 Generated skills (in docs/skills/):
-   - <list based on detected capabilities>
-
-Project "<Name>" is ready!
-
-📝 Next steps (default):
-  1. Start PRD kickoff with @planner to define project scope
-  2. Add architecture recommendations in the PRD
-  3. Move PRD to ready and start implementation with @builder
-
-═══════════════════════════════════════════════════════════════════════
-```
-
 ---
 
 ## Error Handling
-
-### Path doesn't exist
-```
-❌ Path not found: ~/code/nonexistent
-
-Please check the path and try again.
-```
 
 ### Not a git repo (and user declines init)
 ```
@@ -2357,7 +2147,7 @@ You can:
 
 What would you like to do?
   A. Overwrite with fresh detection
-  B. Keep existing and just add to registry
+  B. Keep existing configuration
   C. Cancel
 
 > _
@@ -2367,18 +2157,7 @@ What would you like to do?
 
 ## Quick Mode
 
-For experienced users, support a quick mode:
-
-```bash
-# In the future, could support:
-# @bootstrap /path/to/project --quick
-```
-
-This would:
-1. Auto-detect everything possible
-2. Use sensible defaults for unknowns
-3. Skip all confirmation prompts
-4. Generate files immediately
+Quick mode auto-detects everything possible, uses sensible defaults for unknowns, skips confirmation prompts, and generates files immediately.
 
 ---
 

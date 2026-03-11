@@ -120,7 +120,6 @@ When planning work starts, verify each write target is in this allowlist. If a r
 | `docs/completed/` | Archived completed PRDs |
 | `docs/abandoned/` | Abandoned PRDs |
 | `docs/prd-registry.json` | PRD registry |
-| `docs/session-locks.json` | Session coordination |
 | `docs/planner-state.json` | Planner todo/session resume state |
 | `docs/project.json` | Planning metadata and project considerations |
 | `.tmp/` | Project-local temporary planning artifacts |
@@ -552,7 +551,6 @@ See AGENTS.md for format. Your filename prefix: `YYYY-MM-DD-planner-`
 | Draft PRDs | `docs/drafts/prd-[name].md` |
 | Ready PRDs | `docs/prds/prd-[name].md` + `.json` |
 | PRD Registry | `docs/prd-registry.json` |
-| Session Locks | `docs/session-locks.json` |
 | Bug PRD | `docs/bugs/prd-bugs.json` |
 | Completed PRDs | `docs/completed/YYYY-MM-DD/` |
 | Abandoned PRDs | `docs/abandoned/` |

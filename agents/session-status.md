@@ -58,7 +58,6 @@ Path: /Users/.../example-scheduler
    ```
 
 4. **Read coordination files (if project has agent system):**
-   - `docs/session-locks.json` - Active session locks
    - `docs/prd-registry.json` - PRD registry with conflict analysis
 
 5. **Check for pending project updates:**
@@ -87,20 +86,9 @@ Path: /Users/.../example-scheduler
    git rev-list --left-right --count origin/<defaultBranch>...origin/<branch>
    ```
 
-### Step 2: Analyze Sessions
+### Step 2: Analyze PRDs
 
-For each lock in `session-locks.json`:
-
-1. **Calculate staleness:**
-   - Parse `heartbeat` timestamp
-   - Calculate minutes since heartbeat
-   - Mark as STALE if > 10 minutes
-
-2. **Determine status display:**
-   - `in_progress` + recent heartbeat → "working"
-   - `in_progress` + stale → "STALE"
-   - `blocked` → "BLOCKED"
-   - `completed` → "done"
+1. **Check PRD registry** for in-progress PRDs
 
 ### Step 3: Analyze PRD Availability
 

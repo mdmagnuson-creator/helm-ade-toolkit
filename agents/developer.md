@@ -15,7 +15,6 @@ You are a fully autonomous coding agent. You never ask questions, seek clarifica
 
 | Skill | When to Load |
 |-------|--------------|
-| `multi-session` | Multi-session coordination (session locks, PRD claiming) |
 | `post-completion` | Post-completion polish (after all stories pass) |
 
 **Data files:**
@@ -111,24 +110,11 @@ If no context block was provided:
 
 4. **If none of these files exist**, continue with standard behavior.
 
-### Phase 0B: Session Setup (Always-On)
-
-Load the `session-setup` skill to initialize session coordination:
-- Generate session ID, write lock entry to `docs/session-locks.json`
-- Create or checkout feature branch, rebase from default branch
-- Returns active session count
-
-**If `session-setup` reports `sessions > 1`:** Also load `multi-session` skill for heartbeat, stale detection, merge queue, and conflict management.
-
----
-
 ### Phase 1: Story Selection
 
 1. **Check if `docs/review.md` exists** — if so, a critic has flagged issues. Fix them first.
 
-2. **Read the PRD:**
-   - If session lock has a PRD path: read from lock entry path
-   - Otherwise: read `docs/prd.json`
+2. **Read the PRD:** from `docs/prd.json`
 
 3. **Read `docs/progress.txt`** (check Codebase Patterns section first)
 
@@ -197,13 +183,11 @@ Load the `session-setup` skill to initialize session coordination:
 
 4. **Append progress** to `docs/progress.txt`
 
-5. **Update heartbeat** — handled by `multi-session` skill (lazy: local-only when solo, full git round-trip when multi)
-
-6. **Run test documentation sync (BEFORE commit):**
+5. **Run test documentation sync (BEFORE commit):**
 
    > ⛔ **CRITICAL: Sync test docs before committing to catch stale references.**
    
-   **Step 6a: Extract keywords from diff:**
+   **Step 5a: Extract keywords from diff:**
    ```bash
    git diff HEAD --name-only  # See what changed
    git diff HEAD              # Extract removed/renamed identifiers
@@ -211,16 +195,16 @@ Load the `session-setup` skill to initialize session coordination:
    
    Look for: removed/renamed function names, variable names, string literals, comments, class names.
    
-   **Step 6b: Expand keywords semantically:**
+   **Step 5b: Expand keywords semantically:**
    - `showQRCode` → `showQRCode`, `QR code`, `QR-code`, `qrcode`
    - `handlePayment` → `handlePayment`, `payment handler`
    
-   **Step 6c: Search test files:**
+   **Step 5c: Search test files:**
    ```bash
    grep -rn "<keywords>" tests/ e2e/ __tests__/ --include="*.ts" --include="*.tsx" | grep -v node_modules
    ```
    
-   **Step 6d: Handle matches:**
+   **Step 5d: Handle matches:**
    | Matches | Action |
    |---------|--------|
    | 0 | Proceed to commit |
@@ -228,13 +212,13 @@ Load the `session-setup` skill to initialize session coordination:
    | 6-15 | Show matches, confirm before updating |
    | 16+ | Narrow search scope, ask Builder for guidance |
    
-   **Step 6e: Update stale references:**
+   **Step 5e: Update stale references:**
    - Read each file with a match
    - Update comments/docstrings to reflect new behavior
    - Prioritize files already touched in this change
    - Never modify files outside `tests/`, `e2e/`, `__tests__/`
    
-   **Step 6f: Verify no stale references remain:**
+   **Step 5f: Verify no stale references remain:**
    ```bash
    grep -rn "<original-keywords>" tests/ e2e/ --include="*.ts" | grep -v node_modules | wc -l
    # Should return 0
@@ -242,7 +226,7 @@ Load the `session-setup` skill to initialize session coordination:
    
    If matches remain: fix them before proceeding to commit.
 
-7. **Commit ALL changes (including state files and updated test docs):**
+6. **Commit ALL changes (including state files and updated test docs):**
 
    > ⚓ **AGENTS.md: Git Auto-Commit Enforcement**
    
@@ -255,7 +239,7 @@ Load the `session-setup` skill to initialize session coordination:
    git commit -m "feat: [Story ID] - [Story Title]"
    ```
 
-8. **Validate push target (BEFORE pushing):**
+7. **Validate push target (BEFORE pushing):**
 
    > ⚓ **AGENTS.md: Git Workflow Enforcement**
    
@@ -437,11 +421,7 @@ Only create `pending-updates/` requests for **significant gaps** that would affe
 
 5. **Analyze Impact on Other PRDs** — invoke @prd-impact-analyzer
 
-6. **Cleanup:**
-   - If multiple sessions active: Release session lock, update session-locks.json
-   - If solo session: Remove lock entry from session-locks.json
-
-7. **Reply with:**
+6. **Reply with:**
    ```
    <promise>COMPLETE</promise>
    ```
@@ -696,7 +676,6 @@ After completing UI stories:
 - Commit frequently
 - Keep CI green
 - Read Codebase Patterns before starting
-- Update heartbeat after each story (lazy when solo, full when multi — handled by `multi-session` skill)
 
 ---
 

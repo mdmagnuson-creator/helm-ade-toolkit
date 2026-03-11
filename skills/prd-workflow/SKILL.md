@@ -172,26 +172,7 @@ Update `docs/prd-registry.json`:
 - Set `startedAt: <now>`
 - Store `currentStory` as work progresses
 
-### Step 5: Create Session Lock
-
-Create/update entry in `docs/session-locks.json`:
-
-```json
-{
-  "sessions": [
-    {
-      "sessionId": "builder-abc123",
-      "prdId": "prd-error-logging",
-      "currentStory": "US-001",
-      "status": "in_progress",
-      "startedAt": "2026-02-19T16:30:00Z",
-      "heartbeat": "2026-02-19T16:30:00Z"
-    }
-  ]
-}
-```
-
-### Step 6: Set Execution Branch
+### Step 5: Set Execution Branch
 
 If `trunk + branchless`:
 
@@ -806,9 +787,7 @@ If `state: "MERGED"`:
    - Check if conflict risks have changed
    - Update registry accordingly
 
-7. **Remove session lock** from `docs/session-locks.json`
-
-8. **Report and offer to open:**
+6. **Report and offer to open:**
    ```
    ✅ Cleaned up merged PRD: [prd-name]
    

@@ -190,7 +190,6 @@ Builder workflows are defined in loadable skills. Load the appropriate skill **o
 
 | Skill | When to Load | Size | Token Impact |
 |-------|--------------|------|--------------|
-| `session-setup` | Always — load at session start for session coordination | 4KB | ~1K tokens |
 | `session-log` | Reference in-line — rarely need full skill | 13KB | ~3K tokens |
 | `adhoc-workflow` | User enters ad-hoc mode | 61KB | ~15K tokens |
 | `prd-workflow` | User selects a PRD to build | 34KB | ~9K tokens |
@@ -778,11 +777,6 @@ After the user selects a project number, show a **fast inline dashboard** — no
    - If `git.agentWorkflow` is not configured, workflows that require git push/PR will BLOCK
    - See AGENTS.md § Git Workflow Enforcement for error formats
    - Builder should prompt user to configure during first blocked operation
-
-   **Session coordination (always-on):**
-   - Session setup always runs on Developer startup (via `session-setup` skill)
-   - `session-locks.json` is created lazily on first run if missing (`{"sessions":[]}`)
-   - Full coordination (heartbeat, merge queue) activates only when multiple sessions detected
 
 4.5 **Check for platform skill suggestions (one-time):**
    - Read `$OPENCODE_CONFIG/data/skill-mapping.json`
@@ -1733,27 +1727,6 @@ You may **read** toolkit files to understand how agents work, but you must **nev
 ## Requesting Toolkit Updates
 
 See AGENTS.md for format. Your filename prefix: `YYYY-MM-DD-builder-`
-
----
-
-## Session Lock Format
-
-> ℹ️ Session locks are always active. The `session-setup` skill creates `session-locks.json` lazily on first run.
-
-```json
-{
-  "sessions": [
-    {
-      "sessionId": "builder-abc123",
-      "prdId": "prd-error-logging",
-      "currentStory": "US-003",
-      "status": "in_progress",
-      "startedAt": "2026-02-19T16:30:00Z",
-      "heartbeat": "2026-02-19T17:15:00Z"
-    }
-  ]
-}
-```
 
 ---
 

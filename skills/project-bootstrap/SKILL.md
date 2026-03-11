@@ -1480,15 +1480,7 @@ Compile all detected and confirmed information into the manifest:
 }
 ```
 
-### 10c: Generate `docs/session-locks.json` (if agent system)
-
-```json
-{
-  "sessions": []
-}
-```
-
-### 10d: Generate `docs/ARCHITECTURE.md`
+### 10c: Generate `docs/ARCHITECTURE.md`
 
 Use the template from `$OPENCODE_CONFIG/templates/ARCHITECTURE.md`.
 
@@ -2207,7 +2199,6 @@ Display completion summary based on flow used:
 
 ✅ Created: docs/project.json (with stack, features, integrations)
 ✅ Created: docs/prd-registry.json
-✅ Created: docs/session-locks.json
 ✅ Created: docs/ARCHITECTURE.md
 ✅ Created: docs/CONVENTIONS.md (with infrastructure conventions)
 ✅ Created: docs/agents/ (project-specific agents)
@@ -2266,7 +2257,6 @@ Files generated:
   docs/stack-decision.json   Stack selection rationale
   docs/drafts/prd-mvp.md     Initial PRD with <N> user stories
   docs/prd-registry.json     PRD registry
-  docs/session-locks.json    Session coordination
   docs/ARCHITECTURE.md       Architecture overview
   docs/CONVENTIONS.md        Coding conventions
   docs/agents/               Project-specific agents
@@ -2317,7 +2307,6 @@ Project "<Name>" is ready for development!
 Files generated:
   docs/project.json          Project manifest
   docs/prd-registry.json     PRD registry
-  docs/session-locks.json    Session coordination
   docs/ARCHITECTURE.md       Architecture overview
   docs/CONVENTIONS.md        Coding conventions
   docs/agents/               Project-specific agents

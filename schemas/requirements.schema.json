@@ -1,0 +1,560 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/requirements.schema.json",
+  "title": "Requirements Manifest",
+  "description": "Structured requirements extracted from a project spec or PRD for stack recommendation and scaffolding",
+  "type": "object",
+  "required": ["productType", "businessModel", "scale", "features"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema"
+    },
+    "specSource": {
+      "type": "object",
+      "description": "Information about where the spec came from",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["text", "file", "url", "interactive"],
+          "description": "How the spec was provided"
+        },
+        "path": {
+          "type": "string",
+          "description": "File path or URL if applicable"
+        },
+        "analyzedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the spec was analyzed"
+        }
+      }
+    },
+    "productType": {
+      "type": "string",
+      "enum": ["saas", "api", "cli", "mobile", "desktop", "library", "static"],
+      "description": "Primary product category",
+      "enumDescriptions": {
+        "saas": "Web application with user accounts, usually subscription-based",
+        "api": "Backend API service without frontend",
+        "cli": "Command-line tool",
+        "mobile": "Mobile application (iOS, Android, or cross-platform)",
+        "desktop": "Desktop application (Electron, Tauri, native)",
+        "library": "Reusable code library or package",
+        "static": "Static website (marketing, docs, landing pages)"
+      }
+    },
+    "businessModel": {
+      "type": "string",
+      "enum": ["b2b", "b2c", "b2b2c", "internal", "open-source"],
+      "description": "Business model and target market",
+      "enumDescriptions": {
+        "b2b": "Business-to-business (companies as customers)",
+        "b2c": "Business-to-consumer (individuals as customers)",
+        "b2b2c": "Platform serving both businesses and their end consumers",
+        "internal": "Internal tool for organization use",
+        "open-source": "Open-source project"
+      }
+    },
+    "scale": {
+      "type": "object",
+      "description": "Expected scale and growth trajectory",
+      "required": ["initial"],
+      "properties": {
+        "initial": {
+          "type": "string",
+          "enum": ["mvp", "small", "medium", "large"],
+          "description": "Initial scale at launch"
+        },
+        "target": {
+          "type": "string",
+          "enum": ["small", "medium", "large", "enterprise"],
+          "description": "Target scale within 1-2 years"
+        },
+        "userEstimate": {
+          "type": "string",
+          "enum": ["<1k", "1k-10k", "10k-100k", "100k-1M", ">1M"],
+          "description": "Estimated number of users at target scale"
+        },
+        "requestsPerSecond": {
+          "type": "string",
+          "enum": ["<10", "10-100", "100-1k", "1k-10k", ">10k"],
+          "description": "Estimated peak requests per second"
+        },
+        "dataVolume": {
+          "type": "string",
+          "enum": ["<1GB", "1-10GB", "10-100GB", "100GB-1TB", ">1TB"],
+          "description": "Estimated data storage needs"
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "description": "Required and optional features",
+      "properties": {
+        "authentication": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "methods": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["email", "oauth", "sso", "magic-link", "phone", "passkey", "api-key"]
+              },
+              "description": "Authentication methods needed"
+            },
+            "multiTenant": {
+              "type": "boolean",
+              "default": false,
+              "description": "Whether organizations/teams/workspaces are needed"
+            },
+            "roles": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Role types needed (e.g., admin, member, viewer)"
+            },
+            "mfa": {
+              "type": "boolean",
+              "default": false,
+              "description": "Whether MFA is required"
+            }
+          }
+        },
+        "payments": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "model": {
+              "type": "string",
+              "enum": ["subscription", "one-time", "usage-based", "marketplace", "credits", "freemium"]
+            },
+            "currency": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Currencies to support"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["invoices", "trials", "coupons", "refunds", "team-billing", "metered", "tiered-pricing"]
+              }
+            }
+          }
+        },
+        "realtime": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "type": {
+              "type": "string",
+              "enum": ["websocket", "sse", "polling", "long-polling"]
+            },
+            "useCases": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "What realtime is used for (e.g., chat, notifications, live updates)"
+            }
+          }
+        },
+        "fileStorage": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["images", "documents", "videos", "audio", "any"]
+              }
+            },
+            "maxSize": {
+              "type": "string",
+              "description": "Maximum file size (e.g., '10MB', '1GB')"
+            },
+            "processing": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["thumbnails", "transcoding", "compression", "ocr", "virus-scan"]
+              }
+            }
+          }
+        },
+        "ai": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["llm", "embeddings", "image-generation", "speech-to-text", "text-to-speech", "classification", "custom-ml"]
+              }
+            },
+            "providers": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Preferred AI providers (e.g., openai, anthropic, google)"
+            },
+            "useCases": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "What AI is used for (e.g., chatbot, search, recommendations)"
+            }
+          }
+        },
+        "email": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["transactional", "marketing", "newsletters", "digests"]
+              }
+            },
+            "volume": {
+              "type": "string",
+              "enum": ["low", "medium", "high"],
+              "description": "Expected email volume"
+            }
+          }
+        },
+        "search": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "type": {
+              "type": "string",
+              "enum": ["basic", "fulltext", "semantic", "hybrid"]
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["filters", "facets", "autocomplete", "typo-tolerance", "synonyms", "highlighting"]
+              }
+            }
+          }
+        },
+        "analytics": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["product", "marketing", "business-intelligence", "custom-dashboards"]
+              }
+            }
+          }
+        },
+        "i18n": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "languages": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Languages to support"
+            },
+            "rtl": {
+              "type": "boolean",
+              "default": false,
+              "description": "Right-to-left language support"
+            }
+          }
+        },
+        "offline": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "strategy": {
+              "type": "string",
+              "enum": ["cache-first", "network-first", "full-offline"],
+              "description": "Offline strategy"
+            }
+          }
+        },
+        "notifications": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "channels": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["in-app", "push", "email", "sms", "slack", "webhook"]
+              }
+            }
+          }
+        },
+        "scheduling": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["cron-jobs", "delayed-jobs", "recurring", "calendar", "appointments"]
+              }
+            }
+          }
+        },
+        "export": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "formats": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["csv", "pdf", "excel", "json", "xml"]
+              }
+            }
+          }
+        },
+        "audit": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["activity-log", "change-history", "access-log", "data-export"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "integrations": {
+      "type": "array",
+      "description": "Third-party integrations needed",
+      "items": {
+        "type": "object",
+        "required": ["name", "purpose"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Integration name (e.g., stripe, slack, github)"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "What the integration is used for"
+          },
+          "required": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether this integration is required for MVP"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["inbound", "outbound", "bidirectional"],
+            "description": "Direction of data flow"
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Technical and business constraints",
+      "properties": {
+        "compliance": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["gdpr", "hipaa", "soc2", "pci-dss", "ccpa", "iso27001", "fedramp"]
+          },
+          "description": "Compliance requirements"
+        },
+        "hosting": {
+          "type": "string",
+          "enum": ["cloud", "self-hosted", "hybrid", "edge", "on-premise"],
+          "description": "Hosting preference"
+        },
+        "regions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required deployment regions"
+        },
+        "budget": {
+          "type": "string",
+          "enum": ["minimal", "moderate", "flexible", "enterprise"],
+          "description": "Budget constraints"
+        },
+        "timeline": {
+          "type": "string",
+          "enum": ["urgent", "normal", "flexible"],
+          "description": "Timeline pressure"
+        },
+        "teamSize": {
+          "type": "string",
+          "enum": ["solo", "small", "medium", "large"],
+          "description": "Development team size"
+        },
+        "teamExpertise": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Languages/frameworks the team knows well"
+        },
+        "existingInfrastructure": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Existing infrastructure to integrate with (e.g., AWS, existing databases)"
+        },
+        "performance": {
+          "type": "object",
+          "properties": {
+            "latencyTarget": {
+              "type": "string",
+              "description": "Target latency (e.g., '<100ms', '<500ms')"
+            },
+            "availability": {
+              "type": "string",
+              "enum": ["99%", "99.9%", "99.99%", "99.999%"],
+              "description": "Availability SLA target"
+            }
+          }
+        }
+      }
+    },
+    "entities": {
+      "type": "array",
+      "description": "Core domain entities extracted from the spec",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Entity name (e.g., User, Project, Task)"
+          },
+          "description": {
+            "type": "string",
+            "description": "What this entity represents"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "type": { "type": "string" },
+                "required": { "type": "boolean" },
+                "description": { "type": "string" }
+              }
+            },
+            "description": "Known fields for this entity"
+          },
+          "relationships": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "target": { "type": "string" },
+                "type": {
+                  "type": "string",
+                  "enum": ["one-to-one", "one-to-many", "many-to-many"]
+                },
+                "description": { "type": "string" }
+              }
+            },
+            "description": "Relationships to other entities"
+          }
+        }
+      }
+    },
+    "userStories": {
+      "type": "array",
+      "description": "User stories extracted from the spec",
+      "items": {
+        "type": "object",
+        "required": ["id", "title"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Story identifier (e.g., US-001)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Brief story title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Full story description"
+          },
+          "persona": {
+            "type": "string",
+            "description": "User persona for this story"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["must-have", "should-have", "nice-to-have"],
+            "description": "Story priority for MVP"
+          },
+          "complexity": {
+            "type": "string",
+            "enum": ["trivial", "simple", "moderate", "complex", "epic"],
+            "description": "Estimated complexity"
+          }
+        }
+      }
+    },
+    "nonFunctionalRequirements": {
+      "type": "object",
+      "description": "Non-functional requirements",
+      "properties": {
+        "security": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Security requirements"
+        },
+        "accessibility": {
+          "type": "string",
+          "enum": ["wcag-a", "wcag-aa", "wcag-aaa"],
+          "description": "Accessibility compliance level"
+        },
+        "seo": {
+          "type": "boolean",
+          "description": "Whether SEO is important"
+        },
+        "mobile": {
+          "type": "string",
+          "enum": ["responsive", "mobile-first", "native-app", "pwa"],
+          "description": "Mobile strategy"
+        },
+        "browser": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Browsers to support"
+        }
+      }
+    },
+    "openQuestions": {
+      "type": "array",
+      "description": "Questions that need clarification",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question": { "type": "string" },
+          "context": { "type": "string" },
+          "suggestedAnswers": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "impact": {
+            "type": "string",
+            "description": "How the answer affects stack choice"
+          }
+        }
+      }
+    }
+  }
+}

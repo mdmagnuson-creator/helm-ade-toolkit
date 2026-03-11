@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: {{projectName}}-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: {{projectName}}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: {{projectName}}-api
+    ports:
+      - "{{devPort}}:{{devPort}}"
+    environment:
+      - PORT={{devPort}}
+      - ENV=development
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/{{projectName}}?sslmode=disable
+      - JWT_SECRET=dev-secret-change-in-prod
+      - JWT_EXPIRY=24h
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

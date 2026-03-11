@@ -1,0 +1,33 @@
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import { SessionProvider } from 'next-auth/react';
+import { auth } from '@/lib/auth/config';
+import './globals.css';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+});
+
+export const metadata: Metadata = {
+  title: '{{projectNamePascal}}',
+  description: '{{description}}',
+};
+
+export default async function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const session = await auth();
+
+  return (
+    <html lang="en" className={inter.variable}>
+      <body className="min-h-screen bg-white font-sans text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100">
+        <SessionProvider session={session}>
+          {children}
+        </SessionProvider>
+      </body>
+    </html>
+  );
+}

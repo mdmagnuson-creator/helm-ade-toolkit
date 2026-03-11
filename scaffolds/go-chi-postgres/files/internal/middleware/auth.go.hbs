@@ -1,0 +1,64 @@
+package middleware
+
+import (
+	"context"
+	"net/http"
+	"strings"
+
+	"{{moduleName}}/internal/config"
+
+	"github.com/golang-jwt/jwt/v5"
+)
+
+// Auth returns a middleware that validates JWT tokens
+func Auth(cfg *config.Config) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Get token from Authorization header
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, `{"error":"Missing authorization header"}`, http.StatusUnauthorized)
+				return
+			}
+
+			// Extract token from "Bearer <token>"
+			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+			if tokenString == authHeader {
+				http.Error(w, `{"error":"Invalid authorization format"}`, http.StatusUnauthorized)
+				return
+			}
+
+			// Parse and validate token
+			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+				// Validate signing method
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, jwt.ErrSignatureInvalid
+				}
+				return []byte(cfg.JWTSecret), nil
+			})
+
+			if err != nil || !token.Valid {
+				http.Error(w, `{"error":"Invalid token"}`, http.StatusUnauthorized)
+				return
+			}
+
+			// Extract claims
+			claims, ok := token.Claims.(jwt.MapClaims)
+			if !ok {
+				http.Error(w, `{"error":"Invalid token claims"}`, http.StatusUnauthorized)
+				return
+			}
+
+			// Get user ID from claims
+			userID, ok := claims["sub"].(string)
+			if !ok {
+				http.Error(w, `{"error":"Invalid token subject"}`, http.StatusUnauthorized)
+				return
+			}
+
+			// Add user ID to context
+			ctx := context.WithValue(r.Context(), "userID", userID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}

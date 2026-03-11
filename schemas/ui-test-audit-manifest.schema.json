@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mdmagnuson-creator/yo-go/main/schemas/ui-test-audit-manifest.schema.json",
+  "title": "UI Test Audit Manifest",
+  "description": "Schema for tracking comprehensive E2E test audits",
+  "type": "object",
+  "required": ["version", "generatedAt", "project", "execution", "categories", "summary"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "examples": ["1.0.0"]
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when manifest was generated"
+    },
+    "project": {
+      "type": "object",
+      "required": ["name", "platform"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Project name from project.json"
+        },
+        "platform": {
+          "type": "string",
+          "enum": ["web", "electron", "mobile", "hybrid"],
+          "description": "Application platform type"
+        },
+        "baseUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Base URL for test execution",
+          "examples": ["http://localhost:3000"]
+        },
+        "prdSource": {
+          "type": "string",
+          "description": "Path to PRD if tests were derived from a PRD",
+          "examples": ["docs/prds/prd-comprehensive-e2e-suite.json"]
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "required": ["maxRetries", "commitAfterPass", "continueOnFailure"],
+      "properties": {
+        "maxRetries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 5,
+          "description": "Maximum retry attempts per test"
+        },
+        "retryDelayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1000,
+          "description": "Delay between retries in milliseconds"
+        },
+        "commitAfterPass": {
+          "type": "boolean",
+          "default": true,
+          "description": "Commit after each passing test"
+        },
+        "continueOnFailure": {
+          "type": "boolean",
+          "default": true,
+          "description": "Continue to next test even if current fails permanently"
+        },
+        "screenshotOnFailure": {
+          "type": "boolean",
+          "default": true,
+          "description": "Capture screenshot on test failure"
+        },
+        "parallelWorkers": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Number of parallel test workers (1 = sequential)"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1000,
+          "default": 30000,
+          "description": "Default test timeout in milliseconds"
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "description": "Test categories grouping related tests",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "tests"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "description": "Category identifier (lowercase, hyphenated)",
+            "examples": ["auth", "onboarding", "dashboard"]
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable category name",
+            "examples": ["Authentication", "Onboarding", "Dashboard"]
+          },
+          "description": {
+            "type": "string",
+            "description": "Category description"
+          },
+          "tests": {
+            "type": "array",
+            "description": "Tests in this category",
+            "items": {
+              "$ref": "#/$defs/test"
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total", "passed", "failed", "skipped", "pending"],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of tests"
+        },
+        "passed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of passed tests"
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of permanently failed tests"
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of skipped tests"
+        },
+        "pending": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of tests not yet executed"
+        },
+        "blocked": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Number of tests blocked by dependencies"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When audit execution started"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When audit execution completed"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total execution duration in milliseconds"
+        }
+      }
+    },
+    "commits": {
+      "type": "array",
+      "description": "Commits made during audit",
+      "items": {
+        "type": "object",
+        "required": ["hash", "testId", "timestamp"],
+        "properties": {
+          "hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{7,40}$",
+            "description": "Git commit hash"
+          },
+          "testId": {
+            "type": "string",
+            "description": "Test ID that was committed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Commit message"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When commit was made"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "test": {
+      "type": "object",
+      "required": ["id", "name", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z]+-\\d{3}$",
+          "description": "Unique test identifier",
+          "examples": ["auth-001", "dashboard-015"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable test name",
+          "examples": ["User can log in with valid credentials"]
+        },
+        "file": {
+          "type": "string",
+          "description": "Path to test file",
+          "examples": ["e2e/auth/login.spec.ts"]
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"],
+          "default": "medium",
+          "description": "Test priority level"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "running", "passed", "failed", "skipped", "blocked"],
+          "default": "pending",
+          "description": "Current test status"
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Number of execution attempts"
+        },
+        "lastError": {
+          "type": ["string", "null"],
+          "description": "Error message from last failed attempt"
+        },
+        "lastRun": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp of last execution"
+        },
+        "commitHash": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{7,40}$",
+          "description": "Git commit hash when test passed"
+        },
+        "screenshot": {
+          "type": ["string", "null"],
+          "description": "Path to failure screenshot",
+          "examples": ["test-results/auth-001-failure.png"]
+        },
+        "duration": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Test execution duration in milliseconds"
+        },
+        "storyId": {
+          "type": "string",
+          "description": "PRD story ID if derived from PRD",
+          "examples": ["US-001"]
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Test IDs this test depends on",
+          "examples": [["auth-001"]]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for filtering/grouping",
+          "examples": [["smoke", "regression", "critical-path"]]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "$schema": "https://opencode.ai/schemas/prd.json",
+  "id": "prd-multi-platform-apps",
+  "title": "Multi-Platform App Support & Electron Testing",
+  "status": "complete",
+  "createdAt": "2026-02-27",
+  "completedAt": "2026-02-27",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Extend apps schema with platforms array",
+      "description": "As a toolkit maintainer, I need the `apps` schema to support a `platforms` array so projects can declare which platforms each app targets.",
+      "status": "complete",
+      "acceptanceCriteria": [
+        "Add `platforms` property to app schema (array of platform identifiers)",
+        "Define platform enum: `browser`, `server`, `macos`, `windows`, `linux`, `ios`, `android`, `tvos`, `watchos`",
+        "Add `platformMetadata` object for platform-specific config (bundle IDs, signing, notarization, etc.)",
+        "Existing projects without `platforms` continue to work (backwards compatible)",
+        "Schema validates correctly with `ajv` or equivalent"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-002",
+      "title": "Add desktop and mobile app types",
+      "description": "As a toolkit maintainer, I need new `type` values for desktop and mobile apps so the schema can distinguish them from web apps.",
+      "status": "complete",
+      "acceptanceCriteria": [
+        "Add `desktop` and `mobile` to `type` enum",
+        "Add framework enum values for desktop: `electron`, `tauri`, `neutralino`",
+        "Add framework enum values for mobile: `react-native`, `flutter`, `expo`, `capacitor`, `ionic`",
+        "Add framework enum values for native: `swift`, `kotlin`, `swiftui`",
+        "Add `runtime` field for mobile apps (e.g., `hermes`, `jsc` for React Native)",
+        "Schema validates projects with new types correctly"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-003",
+      "title": "Add per-app testing configuration",
+      "description": "As a toolkit maintainer, I need apps to declare their testing framework per-platform so Builder knows which testing skill to load.",
+      "status": "complete",
+      "acceptanceCriteria": [
+        "Add `testing` object to app schema with `framework` and `testDir` properties",
+        "Testing framework enum includes: `playwright`, `playwright-electron`, `detox`, `maestro`, `appium`, `xcuitest`, `espresso`",
+        "Builder can read `apps[*].testing.framework` to determine skill to load",
+        "Falls back to project-level `testing` config if app-level not specified"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-004",
+      "title": "Add platform metadata for signing and notarization",
+      "description": "As a toolkit maintainer, I need platform metadata to include signing and notarization configuration so agents can understand app distribution requirements.",
+      "status": "complete",
+      "acceptanceCriteria": [
+        "macOS metadata includes: `bundleId`, `teamId`, `category`, `entitlements`, `notarize` (boolean), `signingIdentity`",
+        "Windows metadata includes: `appId`, `certificateSubject`, `signTool`",
+        "Linux metadata includes: `appId`, `category`, `desktop` (freedesktop entry fields)",
+        "iOS metadata includes: `bundleId`, `teamId`, `provisioningProfile`, `capabilities`",
+        "Android metadata includes: `packageName`, `keystoreAlias`, `minSdkVersion`, `targetSdkVersion`",
+        "Schema validates all platform metadata correctly"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-005",
+      "title": "Create skill-mapping.json and schema",
+      "description": "As a toolkit maintainer, I need a centralized skill-mapping file so agents can look up which skills apply to which frameworks/platforms without duplicating logic.",
+      "status": "complete",
+      "acceptanceCriteria": [
+        "Create `data/skill-mapping.json` with framework→skill mappings",
+        "Create `schemas/skill-mapping.schema.json` to validate the mapping file",
+        "Include `platformSkills` section mapping frameworks to their testing skills",
+        "Include `testingFrameworkSkills` section mapping testing frameworks to skills",
+        "Include `detectBy` hints for each mapping (e.g., `[\"framework\", \"package.json\"]`)",
+        "Agents can read this file at runtime to determine skill loading"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-006",
+      "title": "Create e2e-electron skill",
+      "description": "As a tester agent, I need an `e2e-electron` skill that teaches me how to write and run Playwright tests for Electron apps.",
+      "status": "complete",
+      "acceptanceCriteria": [
+        "Create `skills/e2e-electron/SKILL.md` with Electron testing patterns",
+        "Include setup instructions (Playwright Electron API)",
+        "Include example test structure",
+        "Include common gotchas (main process vs renderer, app lifecycle)",
+        "Include launch configuration patterns",
+        "Define triggers: `apps[*].framework === 'electron'` OR `apps[*].testing.framework === 'playwright-electron'`"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "low"
+    },
+    {
+      "id": "US-007",
+      "title": "Update e2e-playwright agent to load electron skill",
+      "description": "As the e2e-playwright agent, I need to detect when I'm testing an Electron app and load the appropriate skill.",
+      "status": "complete",
+      "acceptanceCriteria": [
+        "e2e-playwright agent reads `data/skill-mapping.json` for skill lookup",
+        "e2e-playwright agent checks `project.json` for Electron apps",
+        "When Electron detected, load `e2e-electron` skill before writing tests",
+        "Pass relevant app config (path, main entry, etc.) to skill context",
+        "Works for both explicit config and fallback detection (electron in package.json)"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-008",
+      "title": "Update tester agent routing for platform-specific tests",
+      "description": "As the tester agent, I need to route to the correct testing sub-agent based on app platform and testing framework.",
+      "status": "complete",
+      "acceptanceCriteria": [
+        "Tester reads `apps` from `project.json`",
+        "Tester reads `data/skill-mapping.json` for routing decisions",
+        "For Electron apps, route E2E requests to e2e-playwright with electron skill hint",
+        "For mobile apps (future), route to appropriate agent (stub routing logic)",
+        "Includes detection fallback: scan for `electron` in package.json if not in apps config"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-009",
+      "title": "Add skill suggestion capability to Builder/Planner",
+      "description": "As Builder or Planner, when I detect an app platform that has a matching skill not currently loaded, I should suggest adding it.",
+      "status": "complete",
+      "acceptanceCriteria": [
+        "Builder reads `data/skill-mapping.json` during startup",
+        "Builder detects missing skill config during startup or E2E phase",
+        "Builder outputs suggestion: \"Detected Electron app. Consider adding `e2e-electron` skill for E2E testing.\"",
+        "Planner reads `data/skill-mapping.json` when creating PRDs",
+        "Planner includes skill recommendation in PRD when relevant platforms detected"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "low"
+    }
+  ],
+  "metadata": {
+    "totalStories": 9,
+    "estimatedComplexity": "medium",
+    "affectedAreas": [
+      "schemas/project.schema.json",
+      "schemas/skill-mapping.schema.json",
+      "data/skill-mapping.json",
+      "skills/e2e-electron/",
+      "agents/e2e-playwright.md",
+      "agents/tester.md",
+      "agents/builder.md",
+      "agents/planner.md"
+    ]
+  }
+}

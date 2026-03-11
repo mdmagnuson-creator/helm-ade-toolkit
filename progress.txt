@@ -1,0 +1,30 @@
+## Codebase Patterns
+- Use `golangci-lint` via `make lint` for code quality checks
+- All commits must pass `go build ./...` and `go test ./...`
+- JSON tags required for structs used in json.Marshal/Unmarshal
+
+---
+
+## [2026-02-09] - PR #5 Watch - Lint Fixes COMPLETED
+- Monitoring PR #5 for build failures and comments
+- Found 15 lint issues, fixed 12 new issues (3 pre-existing in oauth/store.go left as-is)
+- Files changed:
+  - mcp/codevec/interfaces.go: Added JSON tags to ServiceCall struct
+  - mcp/codevec/lambda.go: Fixed appendAssign, formatted with gofmt
+  - mcp/codevec/redis.go: Fixed appendAssign, formatted with gofmt
+  - mcp/codevec/websocket.go: Fixed variable shadowing, formatted with gofmt
+  - mcp/codevec/https.go: Added nolint directive for test-only function, formatted with gofmt
+  - mcp/codevec/codevec.go: Fixed struct literal conversion
+  - mcp/cmd/indexer/main.go: Refactored to use run() function pattern to avoid exitAfterDefer
+- All tests pass: `go test ./...` ✓
+- Build succeeds: `go build ./...` ✓
+- Remaining lint issues are in pre-existing oauth/store.go (not part of this PR)
+
+**Learnings for future iterations:**
+- The project uses golangci-lint with strict rules
+- JSON structs need explicit tags for json.Marshal/Unmarshal
+- Watch for variable shadowing in nested scopes
+- Format code with gofmt before committing
+- Use run() function pattern to avoid exitAfterDefer issues
+- appendAssign requires assigning to the same slice variable
+---

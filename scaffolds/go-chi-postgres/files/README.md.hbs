@@ -1,0 +1,156 @@
+# {{projectNamePascal}}
+
+{{description}}
+
+## Getting Started
+
+### Prerequisites
+
+- Go 1.22+
+- PostgreSQL 15+ (or Docker)
+- [golang-migrate](https://github.com/golang-migrate/migrate) for migrations
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd {{projectName}}
+   ```
+
+2. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+3. Start PostgreSQL (using Docker):
+   ```bash
+   make docker-up
+   ```
+
+4. Run migrations:
+   ```bash
+   make migrate-up
+   ```
+
+5. Start the server:
+   ```bash
+   make run
+   ```
+
+6. The API is now running at [http://localhost:{{devPort}}](http://localhost:{{devPort}})
+
+### Using Air for Hot Reload
+
+Install [Air](https://github.com/cosmtrek/air) for automatic reloading:
+
+```bash
+go install github.com/cosmtrek/air@latest
+make dev
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `make run` | Run the server |
+| `make dev` | Run with hot reload |
+| `make build` | Build the binary |
+| `make test` | Run tests |
+| `make test-coverage` | Run tests with coverage |
+| `make lint` | Run linter |
+| `make fmt` | Format code |
+| `make migrate-up` | Run migrations |
+| `make migrate-down` | Rollback last migration |
+| `make docker-up` | Start Docker services |
+| `make docker-down` | Stop Docker services |
+| `make docker-build` | Build Docker image |
+
+## API Documentation
+
+### Health Endpoints
+
+```bash
+# Health check
+curl http://localhost:{{devPort}}/health
+
+# Readiness check
+curl http://localhost:{{devPort}}/ready
+```
+
+### Authentication
+
+```bash
+# Register
+curl -X POST http://localhost:{{devPort}}/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123","name":"John Doe"}'
+
+# Login
+curl -X POST http://localhost:{{devPort}}/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
+
+# Get current user (protected)
+curl http://localhost:{{devPort}}/api/v1/auth/me \
+  -H "Authorization: Bearer <token>"
+```
+
+## Tech Stack
+
+- [Go](https://go.dev/) - Programming language
+- [Chi](https://github.com/go-chi/chi) - HTTP router
+- [pgx](https://github.com/jackc/pgx) - PostgreSQL driver
+- [golang-migrate](https://github.com/golang-migrate/migrate) - Database migrations
+- [zerolog](https://github.com/rs/zerolog) - Structured logging
+- [validator](https://github.com/go-playground/validator) - Struct validation
+- [jwt](https://github.com/golang-jwt/jwt) - JWT authentication
+{{#if capabilities.payments}}
+- [stripe-go](https://github.com/stripe/stripe-go) - Stripe SDK
+{{/if}}
+{{#if capabilities.ai}}
+- [go-openai](https://github.com/sashabaranov/go-openai) - OpenAI SDK
+{{/if}}
+
+## Project Structure
+
+```
+{{projectName}}/
+├── cmd/
+│   └── server/
+│       └── main.go           # Application entry point
+├── internal/
+│   ├── config/
+│   │   └── config.go         # Configuration loading
+│   ├── database/
+│   │   ├── database.go       # Database connection
+│   │   └── queries.go        # SQL queries
+│   ├── handlers/
+│   │   ├── auth.go           # Auth handlers
+│   │   └── health.go         # Health check handlers
+│   ├── middleware/
+│   │   ├── auth.go           # JWT auth middleware
+│   │   └── logging.go        # Request logging
+│   ├── models/
+│   │   ├── errors.go         # Error definitions
+│   │   └── user.go           # User model
+│   └── routes/
+│       └── routes.go         # Route definitions
+├── migrations/
+│   ├── 000001_init.up.sql    # Initial schema
+│   └── 000001_init.down.sql  # Rollback
+├── scripts/
+│   └── migrate.sh            # Migration helper
+├── docs/                     # Documentation
+├── .env.example              # Environment template
+├── docker-compose.yml        # Docker services
+├── Dockerfile                # Container build
+├── go.mod                    # Go dependencies
+├── Makefile                  # Build commands
+└── README.md                 # This file
+```
+
+## License
+
+MIT

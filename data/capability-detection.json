@@ -1,0 +1,140 @@
+{
+  "$schema": "../schemas/capability-detection.schema.json",
+  "description": "Rules for detecting new capabilities added to a project based on code changes",
+  "rules": [
+    {
+      "capability": "payments",
+      "indicators": [
+        { "type": "package", "names": ["@stripe/stripe-js", "stripe", "@lemonsqueezy/lemonsqueezy.js"] },
+        { "type": "import", "patterns": ["from 'stripe'", "from '@stripe/"] },
+        { "type": "api_call", "patterns": ["stripe.checkout", "stripe.customers", "stripe.subscriptions"] }
+      ],
+      "integration": {
+        "name": "stripe",
+        "purpose": "Payment processing"
+      }
+    },
+    {
+      "capability": "email",
+      "indicators": [
+        { "type": "package", "names": ["resend", "@sendgrid/mail", "nodemailer", "@react-email/components"] },
+        { "type": "import", "patterns": ["from 'resend'", "from '@sendgrid/mail'", "from 'nodemailer'"] }
+      ],
+      "integration": {
+        "name": "resend",
+        "purpose": "Transactional emails"
+      }
+    },
+    {
+      "capability": "ai",
+      "indicators": [
+        { "type": "package", "names": ["openai", "@anthropic-ai/sdk", "langchain", "@langchain/core", "ai"] },
+        { "type": "import", "patterns": ["from 'openai'", "from '@anthropic-ai/sdk'", "from 'langchain'"] },
+        { "type": "api_call", "patterns": ["openai.chat.completions", "anthropic.messages"] }
+      ],
+      "integration": {
+        "name": "openai",
+        "purpose": "AI/LLM integration"
+      }
+    },
+    {
+      "capability": "i18n",
+      "indicators": [
+        { "type": "package", "names": ["next-intl", "i18next", "react-intl", "react-i18next"] },
+        { "type": "file", "patterns": ["messages/*.json", "locales/*.json", "i18n/"] }
+      ]
+    },
+    {
+      "capability": "marketing",
+      "indicators": [
+        { "type": "file", "patterns": ["app/(marketing)/", "pages/marketing/", "app/pricing/", "app/features/"] }
+      ]
+    },
+    {
+      "capability": "supportDocs",
+      "indicators": [
+        { "type": "file", "patterns": ["app/support/", "app/help/", "support-articles/"] },
+        { "type": "migration", "patterns": ["support_articles", "help_articles", "documentation"] }
+      ]
+    },
+    {
+      "capability": "realtime",
+      "indicators": [
+        { "type": "package", "names": ["socket.io", "ws", "pusher-js", "@supabase/realtime-js"] },
+        { "type": "import", "patterns": ["supabase.channel(", ".on('INSERT'", ".on('UPDATE'"] }
+      ],
+      "integration": {
+        "name": "supabase-realtime",
+        "purpose": "Realtime subscriptions"
+      }
+    },
+    {
+      "capability": "multiTenant",
+      "indicators": [
+        { "type": "migration", "patterns": ["organizations", "tenants", "workspaces", "org_id", "tenant_id"] },
+        { "type": "code", "patterns": ["getOrganization(", "currentTenant", "orgId", "tenantId"] }
+      ]
+    },
+    {
+      "capability": "api",
+      "indicators": [
+        { "type": "file", "patterns": ["app/api/v1/", "app/api/v2/", "routes/api/"] },
+        { "type": "code", "patterns": ["@openapi", "swagger", "openapi.json"] }
+      ]
+    },
+    {
+      "capability": "analytics",
+      "indicators": [
+        { "type": "package", "names": ["posthog-js", "@vercel/analytics", "mixpanel-browser", "@segment/analytics-next"] },
+        { "type": "import", "patterns": ["from 'posthog-js'", "from '@vercel/analytics'"] }
+      ],
+      "integration": {
+        "name": "posthog",
+        "purpose": "Product analytics"
+      }
+    },
+    {
+      "capability": "storage",
+      "indicators": [
+        { "type": "package", "names": ["@aws-sdk/client-s3", "@supabase/storage-js", "uploadthing"] },
+        { "type": "import", "patterns": ["from '@aws-sdk/client-s3'", "supabase.storage"] }
+      ],
+      "integration": {
+        "name": "s3",
+        "purpose": "File storage"
+      }
+    }
+  ],
+  "toolkitGapDetection": [
+    {
+      "condition": "new_language",
+      "description": "New programming language added to project",
+      "check": "File extension not previously in project",
+      "suggest": "Language-specific dev and critic agents"
+    },
+    {
+      "condition": "realtime_capability",
+      "description": "Realtime features added",
+      "check": "capabilities.realtime becomes true",
+      "suggest": "Realtime-specific critic patterns"
+    },
+    {
+      "condition": "ai_capability",
+      "description": "AI/LLM integration added",
+      "check": "capabilities.ai becomes true",
+      "suggest": "@tools-writer agent, AI tool patterns"
+    },
+    {
+      "condition": "new_integration",
+      "description": "New third-party service integrated",
+      "check": "New entry in integrations array",
+      "suggest": "Integration-specific guidance in critics"
+    },
+    {
+      "condition": "new_framework",
+      "description": "New framework added (e.g., FastAPI, Gin)",
+      "check": "New framework detected in dependencies",
+      "suggest": "Framework-specific dev, critic, and tester agents"
+    }
+  ]
+}

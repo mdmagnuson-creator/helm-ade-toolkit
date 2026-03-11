@@ -1,0 +1,483 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/toolkit-structure.json",
+  "title": "Toolkit Structure Manifest",
+  "description": "Machine-readable manifest of the AI toolkit structure including agents, skills, schemas, scaffolds, and templates",
+  "type": "object",
+  "required": ["version", "generatedAt", "repository", "agents", "skills", "schemas", "scaffolds", "templates", "data"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the manifest format"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the manifest was generated"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "description": "GitHub repository URL"
+    },
+    "agents": {
+      "type": "object",
+      "required": ["total", "categories"],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of agents"
+        },
+        "categories": {
+          "type": "object",
+          "required": ["primary", "implementation", "testing", "critics", "operational"],
+          "additionalProperties": {
+            "$ref": "#/$defs/agentCategory"
+          }
+        }
+      }
+    },
+    "skills": {
+      "type": "object",
+      "required": ["total", "categories"],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of skills"
+        },
+        "categories": {
+          "type": "object",
+          "required": ["workflow", "content", "project", "meta", "utilities"],
+          "additionalProperties": {
+            "$ref": "#/$defs/skillCategory"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "type": "object",
+      "required": ["total", "items"],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/schemaItem"
+          }
+        }
+      }
+    },
+    "scaffolds": {
+      "type": "object",
+      "required": ["total", "items"],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/scaffoldItem"
+          }
+        }
+      }
+    },
+    "templates": {
+      "type": "object",
+      "required": ["coding", "git", "other", "agentTemplates"],
+      "properties": {
+        "coding": {
+          "$ref": "#/$defs/templateCategory",
+          "description": "Language/framework coding conventions"
+        },
+        "git": {
+          "$ref": "#/$defs/templateCategory",
+          "description": "Git workflow templates"
+        },
+        "other": {
+          "$ref": "#/$defs/templateCategory",
+          "description": "Miscellaneous templates"
+        },
+        "agentTemplates": {
+          "type": "object",
+          "required": ["categories"],
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "categories": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/templateItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "required": ["items"],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dataItem"
+          }
+        }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "properties": {
+        "opencode": {
+          "type": "object",
+          "properties": {
+            "file": { "type": "string" },
+            "description": { "type": "string" }
+          }
+        }
+      }
+    },
+    "workflows": {
+      "type": "object",
+      "description": "Agent communication and coordination workflows",
+      "properties": {
+        "description": { "type": "string" },
+        "overview": {
+          "type": "object",
+          "properties": {
+            "summary": { "type": "string" },
+            "keyPrinciples": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "primaryAgents": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "agents": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/primaryAgentItem"
+              }
+            }
+          }
+        },
+        "updateQueues": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "queues": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/updateQueueItem"
+              }
+            }
+          }
+        },
+        "escalationToPRD": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "summary": { "type": "string" },
+            "triggers": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "workflow": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "example": { "type": "object" }
+          }
+        },
+        "userInitiatedUpdates": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "summary": { "type": "string" },
+            "examples": {
+              "type": "array",
+              "items": { "type": "object" }
+            },
+            "benefits": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "architectureDiagram": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "ascii": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "ASCII art diagram as array of lines"
+            }
+          }
+        },
+        "marketingHighlights": {
+          "type": "object",
+          "description": "Key value propositions for marketing content",
+          "properties": {
+            "description": { "type": "string" },
+            "headline": { "type": "string" },
+            "subheadline": { "type": "string" },
+            "valueProps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/valuePropItem"
+              }
+            },
+            "useCases": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/useCaseItem"
+              }
+            }
+          }
+        }
+      }
+    },
+    "changelog": {
+      "type": "object",
+      "description": "Recent changes extracted from git history",
+      "properties": {
+        "generatedFrom": {
+          "type": "string",
+          "description": "How the changelog was generated (e.g., 'git log --since=30days')"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/changelogEntry"
+          }
+        }
+      },
+      "required": ["entries"]
+    }
+  },
+  "$defs": {
+    "agentItem": {
+      "type": "object",
+      "required": ["name", "file", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Agent identifier (filename without .md)"
+        },
+        "file": {
+          "type": "string",
+          "description": "Relative path to agent file"
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description from agent frontmatter"
+        }
+      }
+    },
+    "agentCategory": {
+      "type": "object",
+      "required": ["description", "agents"],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "agents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/agentItem"
+          }
+        }
+      }
+    },
+    "skillItem": {
+      "type": "object",
+      "required": ["name", "path", "description"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "skillCategory": {
+      "type": "object",
+      "required": ["description", "skills"],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/skillItem"
+          }
+        }
+      }
+    },
+    "schemaItem": {
+      "type": "object",
+      "required": ["name", "file", "description"],
+      "properties": {
+        "name": { "type": "string" },
+        "file": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "scaffoldItem": {
+      "type": "object",
+      "required": ["name", "path", "description"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "templateCategory": {
+      "type": "object",
+      "required": ["description", "items"],
+      "properties": {
+        "description": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/templateItem"
+          }
+        }
+      }
+    },
+    "templateItem": {
+      "type": "object",
+      "required": ["name", "file"],
+      "properties": {
+        "name": { "type": "string" },
+        "file": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "dataItem": {
+      "type": "object",
+      "required": ["name", "file", "description"],
+      "properties": {
+        "name": { "type": "string" },
+        "file": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "changelogEntry": {
+      "type": "object",
+      "required": ["date", "changes"],
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO date (YYYY-MM-DD)"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/changeItem"
+          }
+        }
+      }
+    },
+    "changeItem": {
+      "type": "object",
+      "required": ["type", "description"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["feat", "fix", "refactor", "docs", "chore", "perf"],
+          "description": "Conventional commit type"
+        },
+        "scope": {
+          "type": "string",
+          "description": "Optional scope from commit message"
+        },
+        "description": {
+          "type": "string",
+          "description": "Commit message summary"
+        },
+        "hash": {
+          "type": "string",
+          "description": "Short commit hash"
+        }
+      }
+    },
+    "primaryAgentItem": {
+      "type": "object",
+      "required": ["name", "role", "invocation", "responsibilities"],
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "invocation": { "type": "string" },
+        "responsibilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "updateQueueItem": {
+      "type": "object",
+      "required": ["name", "path", "direction", "purpose"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "direction": { "type": "string" },
+        "purpose": { "type": "string" },
+        "description": { "type": "string" },
+        "fileFormat": { "type": "string" },
+        "workflow": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "userControl": { "type": "string" },
+        "example": { "type": "object" }
+      }
+    },
+    "valuePropItem": {
+      "type": "object",
+      "required": ["title", "description"],
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "detail": { "type": "string" }
+      }
+    },
+    "useCaseItem": {
+      "type": "object",
+      "required": ["title", "story"],
+      "properties": {
+        "title": { "type": "string" },
+        "story": { "type": "string" }
+      }
+    }
+  }
+}

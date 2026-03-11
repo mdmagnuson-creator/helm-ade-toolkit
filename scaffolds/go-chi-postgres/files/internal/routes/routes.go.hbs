@@ -1,0 +1,61 @@
+package routes
+
+import (
+	"net/http"
+
+	"{{moduleName}}/internal/config"
+	"{{moduleName}}/internal/database"
+	"{{moduleName}}/internal/handlers"
+	"{{moduleName}}/internal/middleware"
+
+	"github.com/go-chi/chi/v5"
+	chimw "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+)
+
+// Setup creates and configures the router
+func Setup(db *database.DB, cfg *config.Config) http.Handler {
+	r := chi.NewRouter()
+
+	// Middleware
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(chimw.RealIP)
+	r.Use(chimw.RequestID)
+
+	// CORS
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"}, // Configure for production
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
+	// Health endpoints
+	r.Get("/health", handlers.Health)
+	r.Get("/ready", handlers.Ready)
+
+	// API v1
+	r.Route("/api/v1", func(r chi.Router) {
+		// Auth handlers
+		authHandler := handlers.NewAuthHandler(db, cfg)
+
+		// Public routes
+		r.Post("/auth/register", authHandler.Register)
+		r.Post("/auth/login", authHandler.Login)
+
+		// Protected routes
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.Auth(cfg))
+			
+			// User routes
+			r.Get("/auth/me", authHandler.Me)
+
+			// TODO: Add more protected routes here
+		})
+	})
+
+	return r
+}

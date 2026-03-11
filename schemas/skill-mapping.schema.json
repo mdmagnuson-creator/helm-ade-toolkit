@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/skill-mapping.json",
+  "title": "Skill Mapping Configuration",
+  "description": "Centralized mapping of frameworks, platforms, and testing tools to their appropriate skills",
+  "type": "object",
+  "required": ["platformSkills", "testingFrameworkSkills"],
+
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of this file's purpose"
+    },
+    "version": {
+      "type": "string",
+      "description": "Schema version (semver)"
+    },
+
+    "platformSkills": {
+      "type": "object",
+      "description": "Maps app frameworks/platforms to development and testing skills",
+      "required": ["mappings"],
+      "properties": {
+        "description": { "type": "string" },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["framework", "appType", "skills"],
+            "properties": {
+              "framework": {
+                "type": "string",
+                "description": "Framework identifier (e.g., electron, react-native, flutter)"
+              },
+              "appType": {
+                "type": "string",
+                "enum": ["desktop", "mobile", "web", "hybrid"],
+                "description": "Type of application"
+              },
+              "skills": {
+                "type": "object",
+                "description": "Skills to load for different purposes",
+                "properties": {
+                  "e2e": {
+                    "type": ["string", "null"],
+                    "description": "E2E testing skill name"
+                  },
+                  "development": {
+                    "type": ["string", "null"],
+                    "description": "Development skill name"
+                  },
+                  "build": {
+                    "type": ["string", "null"],
+                    "description": "Build/packaging skill name"
+                  }
+                }
+              },
+              "detectBy": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Detection methods (e.g., 'framework', 'package.json:electron')"
+              },
+              "platforms": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["browser", "server", "macos", "windows", "linux", "ios", "android", "tvos", "watchos"]
+                },
+                "description": "Platforms this framework can target"
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "testingFrameworkSkills": {
+      "type": "object",
+      "description": "Maps testing frameworks to testing skills",
+      "required": ["mappings"],
+      "properties": {
+        "description": { "type": "string" },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["testingFramework", "skill"],
+            "properties": {
+              "testingFramework": {
+                "type": "string",
+                "description": "Testing framework identifier"
+              },
+              "skill": {
+                "type": "string",
+                "description": "Skill to load for this testing framework"
+              },
+              "detectBy": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Detection methods"
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "agentRouting": {
+      "type": "object",
+      "description": "Routing hints for agents to select appropriate sub-agents",
+      "properties": {
+        "description": { "type": "string" },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["condition", "route"],
+            "properties": {
+              "condition": {
+                "type": "string",
+                "description": "Condition expression (pseudo-code for agent interpretation)"
+              },
+              "route": {
+                "type": "string",
+                "description": "Agent to route to"
+              },
+              "loadSkill": {
+                "type": ["string", "null"],
+                "description": "Skill to load before routing"
+              },
+              "context": {
+                "type": "string",
+                "description": "What context to pass to the routed agent"
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "skillSuggestions": {
+      "type": "object",
+      "description": "Suggestions for Builder/Planner when certain patterns are detected",
+      "properties": {
+        "description": { "type": "string" },
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["trigger", "message"],
+            "properties": {
+              "trigger": {
+                "type": "string",
+                "description": "Condition that triggers this suggestion"
+              },
+              "message": {
+                "type": "string",
+                "description": "Message to show (can include {placeholders})"
+              },
+              "recommendation": {
+                "type": "string",
+                "description": "Recommended action to take"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

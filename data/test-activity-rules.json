@@ -1,0 +1,602 @@
+{
+  "$schema": "https://opencode.ai/schemas/test-activity-rules.json",
+  "version": 1,
+  "defaults": {
+    "unit": true
+  },
+  "filePatterns": {
+    "**/auth/**": {
+      "critics": [
+        "security-critic",
+        "exploit-critic"
+      ],
+      "unit": true,
+      "reason": "Auth code is security-critical"
+    },
+    "**/payment/**": {
+      "critics": [
+        "security-critic",
+        "exploit-critic",
+        "backend-critic-ts"
+      ],
+      "quality": true,
+      "unit": true,
+      "reason": "Payment code is security-critical"
+    },
+    "**/billing/**": {
+      "critics": [
+        "security-critic",
+        "exploit-critic",
+        "backend-critic-ts"
+      ],
+      "quality": true,
+      "unit": true,
+      "reason": "Billing code is security-critical"
+    },
+    "**/checkout/**": {
+      "critics": [
+        "security-critic",
+        "backend-critic-ts"
+      ],
+      "quality": true,
+      "unit": true,
+      "reason": "Checkout flow is critical path"
+    },
+    "**/*.tsx": {
+      "critics": [
+        "frontend-critic"
+      ],
+      "unit": "react-tester",
+      "quality": [
+        "aesthetic-critic"
+      ],
+      "reason": "React components"
+    },
+    "**/*.jsx": {
+      "critics": [
+        "frontend-critic"
+      ],
+      "unit": "react-tester",
+      "quality": [
+        "aesthetic-critic"
+      ],
+      "reason": "React components"
+    },
+    "**/pages/**": {
+      "quality": [
+        "aesthetic-critic"
+      ],
+      "reason": "Page components"
+    },
+    "**/app/**/*.tsx": {
+      "quality": [
+        "aesthetic-critic"
+      ],
+      "reason": "App router pages"
+    },
+    "**/components/**": {
+      "quality": [
+        "aesthetic-critic"
+      ],
+      "reason": "Components — test pages that use them"
+    },
+    "**/api/**": {
+      "critics": [
+        "api-critic",
+        "backend-critic-ts"
+      ],
+      "unit": true,
+      "reason": "API routes affect user flows"
+    },
+    "**/routes/**": {
+      "critics": [
+        "api-critic",
+        "backend-critic-ts"
+      ],
+      "unit": true,
+      "reason": "API routes affect user flows"
+    },
+    "**/middleware/**": {
+      "critics": [
+        "security-critic",
+        "network-critic"
+      ],
+      "unit": true,
+      "reason": "Middleware affects all requests"
+    },
+    "**/cors.ts": {
+      "critics": [
+        "security-critic",
+        "backend-critic-ts"
+      ],
+      "unit": true,
+      "reason": "CORS configuration affects browser security — requires browser verification (curl won't catch CORS issues)"
+    },
+    "**/cors.js": {
+      "critics": [
+        "security-critic",
+        "backend-critic-ts"
+      ],
+      "unit": true,
+      "reason": "CORS configuration affects browser security — requires browser verification (curl won't catch CORS issues)"
+    },
+    "**/*cors*.ts": {
+      "critics": [
+        "security-critic"
+      ],
+      "reason": "CORS-related files affect browser security — requires browser verification"
+    },
+    "**/*cors*.js": {
+      "critics": [
+        "security-critic"
+      ],
+      "reason": "CORS-related files affect browser security — requires browser verification"
+    },
+    "**/headers.ts": {
+      "critics": [
+        "security-critic",
+        "network-critic"
+      ],
+      "unit": true,
+      "reason": "HTTP headers configuration affects browser behavior"
+    },
+    "**/headers.js": {
+      "critics": [
+        "security-critic",
+        "network-critic"
+      ],
+      "unit": true,
+      "reason": "HTTP headers configuration affects browser behavior"
+    },
+    "**/security*.ts": {
+      "critics": [
+        "security-critic",
+        "exploit-critic"
+      ],
+      "unit": true,
+      "reason": "Security configuration"
+    },
+    "**/security*.js": {
+      "critics": [
+        "security-critic",
+        "exploit-critic"
+      ],
+      "unit": true,
+      "reason": "Security configuration"
+    },
+    "**/middleware.ts": {
+      "critics": [
+        "security-critic",
+        "network-critic"
+      ],
+      "unit": true,
+      "reason": "Next.js middleware affects all requests"
+    },
+    "**/*.md": {
+      "critics": [],
+      "unit": false,
+      "reason": "Documentation — no runtime impact"
+    },
+    "**/README*": {
+      "critics": [],
+      "unit": false,
+      "reason": "Documentation — no runtime impact"
+    },
+    "**/*.d.ts": {
+      "critics": [],
+      "unit": false,
+      "reason": "Type definitions — compile-time only"
+    },
+    "**/types.ts": {
+      "critics": [],
+      "unit": false,
+      "reason": "Type definitions — compile-time only (verify no runtime exports)"
+    },
+    "**/types/*.ts": {
+      "critics": [],
+      "unit": false,
+      "reason": "Type definitions — compile-time only"
+    },
+    "**/*.test.ts": {
+      "critics": [],
+      "unit": false,
+      "reason": "Test files — tests test themselves"
+    },
+    "**/*.test.tsx": {
+      "critics": [],
+      "unit": false,
+      "reason": "Test files — tests test themselves"
+    },
+    "**/*.spec.ts": {
+      "critics": [],
+      "unit": false,
+      "reason": "Test files — tests test themselves"
+    },
+    "**/*.spec.tsx": {
+      "critics": [],
+      "unit": false,
+      "reason": "Test files — tests test themselves"
+    },
+    "**/__tests__/**": {
+      "critics": [],
+      "unit": false,
+      "reason": "Test files — tests test themselves"
+    },
+    "**/e2e/**": {
+      "critics": [],
+      "unit": false,
+      "reason": "E2E test files — tests test themselves"
+    },
+    "**/.eslintrc*": {
+      "critics": [],
+      "unit": false,
+      "reason": "Dev tooling config — no runtime impact"
+    },
+    "**/eslint.config.*": {
+      "critics": [],
+      "unit": false,
+      "reason": "Dev tooling config — no runtime impact"
+    },
+    "**/.prettierrc*": {
+      "critics": [],
+      "unit": false,
+      "reason": "Dev tooling config — no runtime impact"
+    },
+    "**/prettier.config.*": {
+      "critics": [],
+      "unit": false,
+      "reason": "Dev tooling config — no runtime impact"
+    },
+    "**/tsconfig*.json": {
+      "critics": [],
+      "unit": false,
+      "reason": "TypeScript config — no runtime impact"
+    },
+    "**/jsconfig*.json": {
+      "critics": [],
+      "unit": false,
+      "reason": "JavaScript config — no runtime impact"
+    },
+    "**/.gitignore": {
+      "critics": [],
+      "unit": false,
+      "reason": "Git config — no runtime impact"
+    },
+    "**/.github/**": {
+      "critics": [],
+      "unit": false,
+      "reason": "CI/CD config — no runtime impact"
+    },
+    "**/jest.config.*": {
+      "critics": [],
+      "unit": false,
+      "reason": "Test config — no runtime impact"
+    },
+    "**/vitest.config.*": {
+      "critics": [],
+      "unit": false,
+      "reason": "Test config — no runtime impact"
+    },
+    "**/playwright.config.*": {
+      "critics": [],
+      "unit": false,
+      "reason": "E2E config — no runtime impact"
+    },
+    "**/utils/**": {
+      "critics": [],
+      "unit": true,
+      "reason": "Utils affect runtime"
+    },
+    "**/lib/**": {
+      "critics": [],
+      "unit": true,
+      "reason": "Lib code affects runtime"
+    },
+    "**/helpers/**": {
+      "critics": [],
+      "unit": true,
+      "reason": "Helper code affects runtime"
+    },
+    "**/hooks/**": {
+      "critics": [
+        "frontend-critic"
+      ],
+      "unit": "react-tester",
+      "reason": "Hooks affect components"
+    },
+    "**/services/**": {
+      "critics": [
+        "backend-critic-ts",
+        "network-critic"
+      ],
+      "unit": true,
+      "reason": "Services are core business logic"
+    },
+    "**/db/**": {
+      "critics": [
+        "backend-critic-ts"
+      ],
+      "unit": true,
+      "reason": "Database code affects data"
+    },
+    "**/database/**": {
+      "critics": [
+        "backend-critic-ts"
+      ],
+      "unit": true,
+      "reason": "Database code affects data"
+    },
+    "**/prisma/**": {
+      "critics": [
+        "backend-critic-ts"
+      ],
+      "reason": "Prisma changes affect data layer"
+    },
+    "**/schema.prisma": {
+      "reason": "Schema changes affect all data access"
+    },
+    "**/drizzle/**": {
+      "critics": [
+        "backend-critic-ts"
+      ],
+      "reason": "Drizzle changes affect data layer"
+    },
+    "**/migrations/**": {
+      "critics": [
+        "backend-critic-ts"
+      ],
+      "reason": "Migrations affect data"
+    },
+    "**/*.css": {
+      "quality": [
+        "aesthetic-critic",
+        "tailwind-critic"
+      ],
+      "reason": "Styling changes"
+    },
+    "**/*.scss": {
+      "quality": [
+        "aesthetic-critic"
+      ],
+      "reason": "Styling changes"
+    },
+    "**/tailwind.config.*": {
+      "quality": [
+        "aesthetic-critic",
+        "tailwind-critic"
+      ],
+      "reason": "Tailwind config affects styling"
+    },
+    "**/styles/**": {
+      "quality": [
+        "aesthetic-critic"
+      ],
+      "reason": "Styling changes"
+    },
+    "**/*.go": {
+      "critics": [
+        "backend-critic-go"
+      ],
+      "unit": "go-tester",
+      "reason": "Go files — unit test with go-tester"
+    },
+    "**/cmd/**": {
+      "critics": [
+        "backend-critic-go"
+      ],
+      "unit": "go-tester",
+      "reason": "Go CLI commands — unit tests only"
+    },
+    "**/internal/**": {
+      "critics": [
+        "backend-critic-go"
+      ],
+      "unit": "go-tester",
+      "reason": "Go internal packages — unit tests"
+    },
+    "**/pkg/**": {
+      "critics": [
+        "backend-critic-go"
+      ],
+      "unit": "go-tester",
+      "reason": "Go shared packages — test dependents"
+    },
+    "**/server/**": {
+      "critics": [
+        "backend-critic-ts",
+        "network-critic"
+      ],
+      "unit": true,
+      "reason": "Server code is critical path"
+    },
+    "**/actions/**": {
+      "critics": [
+        "backend-critic-ts",
+        "security-critic"
+      ],
+      "unit": true,
+      "reason": "Server actions are critical"
+    },
+    "**/*.config.ts": {
+      "reason": "Config files may affect runtime"
+    },
+    "**/*.config.js": {
+      "reason": "Config files may affect runtime"
+    },
+    "**/next.config.*": {
+      "reason": "Next.js config"
+    },
+    "**/package.json": {
+      "reason": "Dependency changes"
+    },
+    "**/package-lock.json": {
+      "critics": [],
+      "unit": false,
+      "reason": "Lockfile — no direct runtime impact"
+    },
+    "**/yarn.lock": {
+      "critics": [],
+      "unit": false,
+      "reason": "Lockfile — no direct runtime impact"
+    },
+    "**/pnpm-lock.yaml": {
+      "critics": [],
+      "unit": false,
+      "reason": "Lockfile — no direct runtime impact"
+    }
+  },
+  "codePatterns": {
+    "prisma\\.(create|update|delete|upsert|deleteMany|updateMany)": {
+      "critics": [
+        "backend-critic-ts"
+      ],
+      "unit": true,
+      "reason": "Database mutations detected"
+    },
+    "db\\.(insert|update|delete|execute)": {
+      "critics": [
+        "backend-critic-ts"
+      ],
+      "unit": true,
+      "reason": "Database mutations detected (Drizzle/raw SQL)"
+    },
+    "(fetch|axios|got|ky).*(/auth|/login|/logout|/session|/token)": {
+      "critics": [
+        "security-critic",
+        "network-critic"
+      ],
+      "reason": "Auth-related network calls detected"
+    },
+    "crypto\\.": {
+      "critics": [
+        "security-critic",
+        "exploit-critic"
+      ],
+      "reason": "Cryptography usage detected"
+    },
+    "bcrypt|argon2|scrypt": {
+      "critics": [
+        "security-critic"
+      ],
+      "reason": "Password hashing detected"
+    },
+    "jwt\\.|jsonwebtoken": {
+      "critics": [
+        "security-critic",
+        "exploit-critic"
+      ],
+      "reason": "JWT handling detected"
+    },
+    "eval\\(|new Function\\(": {
+      "critics": [
+        "security-critic",
+        "exploit-critic"
+      ],
+      "reason": "Dynamic code execution detected"
+    },
+    "child_process|exec\\(|spawn\\(|execSync|spawnSync": {
+      "critics": [
+        "security-critic",
+        "exploit-critic"
+      ],
+      "reason": "Shell command execution detected"
+    },
+    "fs\\.(write|unlink|rm|rmdir|chmod|chown)": {
+      "critics": [
+        "security-critic"
+      ],
+      "reason": "File system mutations detected"
+    },
+    "process\\.env": {
+      "critics": [
+        "security-critic"
+      ],
+      "reason": "Environment variable access detected"
+    },
+    "innerHTML|dangerouslySetInnerHTML": {
+      "critics": [
+        "security-critic",
+        "exploit-critic"
+      ],
+      "reason": "Raw HTML injection detected"
+    },
+    "document\\.cookie": {
+      "critics": [
+        "security-critic"
+      ],
+      "reason": "Cookie manipulation detected"
+    },
+    "localStorage|sessionStorage": {
+      "critics": [
+        "security-critic"
+      ],
+      "reason": "Browser storage access detected"
+    },
+    "useState|useReducer|useContext": {
+      "critics": [
+        "frontend-critic"
+      ],
+      "unit": "react-tester",
+      "reason": "React state management detected"
+    },
+    "zustand|redux|recoil|jotai|valtio": {
+      "critics": [
+        "frontend-critic"
+      ],
+      "unit": "react-tester",
+      "reason": "State management library detected"
+    },
+    "useQuery|useMutation|useSWR": {
+      "critics": [
+        "frontend-critic",
+        "network-critic"
+      ],
+      "unit": "react-tester",
+      "reason": "Data fetching hook detected"
+    },
+    "stripe|paypal|braintree": {
+      "critics": [
+        "security-critic",
+        "exploit-critic"
+      ],
+      "reason": "Payment provider detected"
+    },
+    "sendgrid|resend|nodemailer|postmark": {
+      "critics": [
+        "backend-critic-ts"
+      ],
+      "reason": "Email service detected"
+    },
+    "s3|cloudfront|lambda|dynamodb|sqs|sns": {
+      "critics": [
+        "backend-aws-critic"
+      ],
+      "reason": "AWS service usage detected"
+    }
+  },
+  "crossCuttingRules": {
+    "multipleDirectories": {
+      "threshold": 3,
+      "add": {
+        "critics": [
+          "oddball-critic"
+        ],
+        "reason": "Changes span 3+ directories — check consistency"
+      }
+    },
+    "sharedModuleTouch": {
+      "paths": [
+        "**/shared/**",
+        "**/common/**",
+        "**/lib/**",
+        "**/utils/**"
+      ],
+      "add": {
+        "critics": [
+          "dx-critic"
+        ],
+        "reason": "Shared module changed — check API surface"
+      }
+    }
+  }
+}

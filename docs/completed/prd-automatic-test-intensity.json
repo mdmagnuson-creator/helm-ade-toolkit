@@ -1,0 +1,200 @@
+{
+  "$schema": "https://opencode.ai/schemas/prd.json",
+  "id": "prd-automatic-test-intensity",
+  "title": "Automatic Test Activity Selection",
+  "status": "ready",
+  "createdAt": "2026-02-27",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Remove Manual Rigor Selection",
+      "description": "As a Builder user, I want test activities determined automatically so I never have to choose between speed and quality.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Remove rigor profile prompt from PRD start flow (no prompt at all)",
+        "Remove rigor profile prompt from ad-hoc mode (no prompt at all)",
+        "Remove `testingRigor` from builder-state.json",
+        "Update prd-workflow skill to skip rigor selection",
+        "Update adhoc-workflow skill to skip rigor selection",
+        "No confirmation dialogs for test activities",
+        "Show one-time notice: \"Test activities are now automatic\""
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-002",
+      "title": "Create Activity Rules Data File",
+      "description": "As the toolkit, I need a data file mapping signals to activities.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Create `data/test-activity-rules.json` with file patterns",
+        "Include code patterns for risky operations",
+        "Include cross-cutting rules",
+        "Document the schema"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-003",
+      "title": "Implement File Pattern Matching",
+      "description": "As Builder, I need to match changed files against activity rules.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Glob pattern matching for file paths",
+        "Multiple patterns can match (activities are additive)",
+        "Return set of activities per file",
+        "Unit tests for pattern matching"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "high"
+    },
+    {
+      "id": "US-004",
+      "title": "Implement Code Pattern Detection",
+      "description": "As Builder, I need to detect risky code patterns in diffs.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Regex matching against `git diff` output",
+        "Patterns for: DB writes, auth calls, crypto, eval, child_process, fs writes",
+        "Return additional activities when patterns match",
+        "Unit tests for pattern detection"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "high"
+    },
+    {
+      "id": "US-005",
+      "title": "Implement Activity Resolution",
+      "description": "As Builder, I need to combine all signals into a final activity set.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Combine file patterns + code patterns + cross-cutting + hotspots",
+        "Deduplicate activities",
+        "Determine E2E timing (immediate vs deferred vs skip)",
+        "Return structured result with reasoning"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "high"
+    },
+    {
+      "id": "US-006",
+      "title": "Update Test Flow for Activity-Based Execution",
+      "description": "As Builder, I need to execute the resolved activities.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Run baseline (typecheck, lint) always",
+        "Run resolved unit testers for their file types",
+        "Run resolved critics in parallel where possible",
+        "Handle E2E timing correctly",
+        "Run quality checks if resolved",
+        "Update test-flow skill"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "high"
+    },
+    {
+      "id": "US-006a",
+      "title": "Implement Dependency Smoke Testing",
+      "description": "As Builder, I need to Playwright smoke test all dependents of changed files.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "For each changed file, find all files that import it",
+        "Map importing files to routes/pages they render",
+        "Generate smoke tests: page load, key elements render, no console errors",
+        "Direct dependents get interaction tests; indirect get load-only tests",
+        "Include dependent smoke tests in `e2e-areas.json`",
+        "`@e2e-playwright` generates `*-dependents-smoke.spec.ts` files"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "high"
+    },
+    {
+      "id": "US-007",
+      "title": "Display Activities to User (Informational)",
+      "description": "As a user, I want to see what tests are running and why — without being asked to confirm.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Show activity summary as tests begin (not before, not blocking)",
+        "Group by category (baseline, unit, critics, E2E, quality)",
+        "Show brief reasoning for each activity",
+        "Works in both PRD and ad-hoc modes",
+        "NO confirmation prompt — display is informational only",
+        "Execution proceeds immediately after display"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-008",
+      "title": "Implement Hotspot Tracking",
+      "description": "As Builder, I need to track files with past failures.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Create `docs/test-debt.json` schema",
+        "Record failures after each test run",
+        "Add hotspot activities during resolution",
+        "Decay hotspots after 30 days without failure"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-009",
+      "title": "Implement Escape Hatches",
+      "description": "As a power user, I need to override automatic activity selection when needed.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "`force full` command adds all activities",
+        "`skip [activity]` removes specific activity",
+        "`testing.alwaysInclude` in project.json",
+        "`testing.neverSkip` in project.json"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "medium"
+    },
+    {
+      "id": "US-010",
+      "title": "Migrate Existing Projects",
+      "description": "As a toolkit user, I need existing projects to work seamlessly.",
+      "status": "pending",
+      "acceptanceCriteria": [
+        "Projects without new config work with defaults",
+        "Existing `rigorProfile` settings are ignored (deprecated)",
+        "No breaking changes for users",
+        "Migration notes in changelog"
+      ],
+      "supportArticleRequired": false,
+      "toolsRequired": false,
+      "testIntensity": "low"
+    }
+  ],
+  "metadata": {
+    "totalStories": 10,
+    "estimatedComplexity": "high",
+    "keyPrinciple": "Zero user interaction - fully automatic test activity selection",
+    "affectedAreas": [
+      "data/test-activity-rules.json",
+      "skills/test-flow/SKILL.md",
+      "skills/prd-workflow/SKILL.md",
+      "skills/adhoc-workflow/SKILL.md",
+      "agents/builder.md",
+      "agents/tester.md",
+      "agents/e2e-reviewer.md",
+      "agents/e2e-playwright.md",
+      "schemas/test-activity-rules.schema.json",
+      "schemas/test-debt.schema.json"
+    ]
+  }
+}

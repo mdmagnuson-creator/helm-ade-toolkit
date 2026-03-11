@@ -1,0 +1,20 @@
+@import 'tailwindcss';
+
+:root {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', monospace;
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Focus styles */
+@layer base {
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+}

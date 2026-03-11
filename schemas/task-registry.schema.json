@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/task-registry.json",
+  "title": "Task Registry Schema",
+  "description": "Schema for project-level Task Spec registry tracking ad-hoc task lifecycle",
+  "type": "object",
+  "required": ["tasks"],
+
+  "definitions": {
+    "taskStatus": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "ready",
+        "in_progress",
+        "completed",
+        "abandoned"
+      ],
+      "description": "Task Spec lifecycle state. States progress: draft → ready → in_progress → completed (or abandoned)"
+    },
+    "scopeSize": {
+      "type": "string",
+      "enum": ["small", "medium", "large"],
+      "description": "Estimated scope size for the task"
+    },
+    "confidenceLevel": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "description": "Builder's confidence in understanding the request"
+    },
+    "taskEntry": {
+      "type": "object",
+      "required": ["id", "title", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^task-[a-z0-9-]+$",
+          "description": "Unique task identifier (e.g., 'task-add-loading-spinner')"
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable title of the task"
+        },
+        "status": {
+          "$ref": "#/definitions/taskStatus"
+        },
+        "scope": {
+          "$ref": "#/definitions/scopeSize",
+          "description": "Estimated scope (small/medium/large)"
+        },
+        "confidence": {
+          "$ref": "#/definitions/confidenceLevel",
+          "description": "Builder's confidence in understanding the request"
+        },
+        "storyCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of TSK-### stories in this Task Spec"
+        },
+        "completedStories": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of completed stories"
+        },
+        "currentStory": {
+          "type": ["string", "null"],
+          "pattern": "^TSK-[0-9]{3}$",
+          "description": "ID of the story currently being worked on (e.g., 'TSK-001')"
+        },
+        "filePath": {
+          "type": "string",
+          "description": "Path to the Task Spec file (e.g., 'docs/tasks/task-add-spinner.md')"
+        },
+        "promotedTo": {
+          "type": ["string", "null"],
+          "pattern": "^prd-[a-z0-9-]+$",
+          "description": "PRD ID if this task was promoted to a full PRD"
+        },
+        "promotionPath": {
+          "type": ["string", "null"],
+          "description": "Path to the promotion document in docs/tasks/promotions/"
+        },
+        "originalRequest": {
+          "type": "string",
+          "description": "The original user request that triggered this task"
+        },
+        "affectedFiles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of files identified as affected during analysis"
+        },
+        "downstreamConsequences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["description", "severity"],
+            "properties": {
+              "description": { "type": "string" },
+              "severity": {
+                "type": "string",
+                "enum": ["info", "warning", "critical"]
+              }
+            }
+          },
+          "description": "Identified downstream consequences with severity levels"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the Task Spec was created"
+        },
+        "startedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when work started (transitioned to in_progress)"
+        },
+        "completedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when task was completed"
+        },
+        "abandonedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when task was abandoned (resumable)"
+        },
+        "abandonReason": {
+          "type": ["string", "null"],
+          "description": "Reason the task was abandoned (for later resume)"
+        }
+      }
+    }
+  },
+
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "version": {
+      "type": "string",
+      "default": "1.0.0",
+      "description": "Schema version for migrations"
+    },
+    "tasks": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/taskEntry" },
+      "description": "List of all Task Specs (active, completed, abandoned)"
+    },
+    "nextStoryNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Next TSK-### number to use (auto-incremented)"
+    }
+  },
+
+  "x-lifecycle-transitions": {
+    "description": "Valid state transitions for Task Spec lifecycle",
+    "transitions": {
+      "draft": ["ready", "abandoned"],
+      "ready": ["in_progress", "abandoned"],
+      "in_progress": ["completed", "abandoned"],
+      "abandoned": ["ready"]
+    },
+    "descriptions": {
+      "draft": "Task Spec is being generated during analysis phase",
+      "ready": "Task Spec is ready for implementation",
+      "in_progress": "Task is being implemented",
+      "completed": "Task completed, archived to docs/tasks/completed/",
+      "abandoned": "Task abandoned but resumable, moved to docs/tasks/abandoned/"
+    }
+  },
+
+  "x-folder-structure": {
+    "description": "Task Spec folder hierarchy",
+    "paths": {
+      "drafts": "docs/tasks/drafts/",
+      "ready": "docs/tasks/",
+      "completed": "docs/tasks/completed/",
+      "abandoned": "docs/tasks/abandoned/",
+      "promotions": "docs/tasks/promotions/"
+    }
+  }
+}

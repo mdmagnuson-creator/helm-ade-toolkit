@@ -1,0 +1,1974 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/project.json",
+  "title": "OpenCode Project Manifest",
+  "description": "Machine-readable project configuration for AI agents",
+  "type": "object",
+  "required": ["name", "stack"],
+
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable project name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of what this project does"
+    },
+
+    "environments": {
+      "type": "object",
+      "description": "Environment hosting configuration. Used by agents for deployment, database access, environment-specific config, and mapping desktop/mobile apps to their backend environments.",
+      "properties": {
+        "development": {
+          "type": "object",
+          "description": "Local development environment",
+          "properties": {
+            "host": {
+              "type": "string",
+              "enum": ["local", "docker", "tunnel"],
+              "default": "local",
+              "description": "How the dev environment is hosted"
+            },
+            "services": {
+              "type": "array",
+              "description": "Multiple services running in dev (e.g., web frontend, API server)",
+              "items": {
+                "type": "object",
+                "required": ["name", "port"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Service name (e.g., 'web', 'api', 'worker')"
+                  },
+                  "port": {
+                    "type": "integer",
+                    "description": "Port this service runs on"
+                  },
+                  "command": {
+                    "type": "string",
+                    "description": "Optional: command to start this service (e.g., 'npm run dev:api')"
+                  },
+                  "healthCheck": {
+                    "type": "string",
+                    "description": "Optional: path to check if service is ready (e.g., '/api/health')"
+                  }
+                }
+              }
+            },
+            "primaryService": {
+              "type": "string",
+              "description": "Name of the primary service (for default health checks, etc.)"
+            },
+            "databaseUrl": { "type": "string", "description": "Database connection string (use 'envvar:NAME' for env var reference)" },
+            "apiUrl": { "type": "string", "description": "Base URL for API calls" }
+          }
+        },
+        "staging": {
+          "type": "object",
+          "description": "Staging/preview environment. Maps to a specific git branch, database, and deployment.",
+          "properties": {
+            "branch": {
+              "type": "string",
+              "description": "Git branch that deploys to this environment (e.g., 'main' for staging)"
+            },
+            "host": {
+              "type": "string",
+              "enum": ["vercel", "render", "fly", "railway", "aws", "gcp", "docker", "custom"],
+              "description": "Hosting platform"
+            },
+            "services": {
+              "type": "array",
+              "description": "Services running in staging",
+              "items": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Service name (e.g., 'web', 'api', 'worker')"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "URL for this service"
+                  }
+                }
+              }
+            },
+            "primaryService": {
+              "type": "string",
+              "description": "Name of the primary service"
+            },
+            "url": { "type": "string", "description": "Staging URL (fallback for single-service setups)" },
+            "databaseUrl": { "type": "string", "description": "Database connection string (use 'envvar:NAME' for env var reference)" },
+            "apiUrl": { "type": "string", "description": "Base URL for API calls" },
+            "database": {
+              "type": "object",
+              "description": "Database project configuration for this environment. Helps agents understand which database to target.",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": ["supabase", "planetscale", "neon", "rds", "cloud-sql", "atlas", "local"],
+                  "description": "Database hosting provider"
+                },
+                "projectRef": {
+                  "type": "string",
+                  "description": "Provider-specific project reference (e.g., Supabase project ref like 'rvuylmblhafnryfdlnkj')"
+                },
+                "projectName": {
+                  "type": "string",
+                  "description": "Human-readable project name in the provider dashboard (e.g., 'MyApp Staging')"
+                },
+                "linkedLocally": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Whether this database is linked to the local CLI (e.g., 'supabase link'). If true, local migrations target this database."
+                }
+              }
+            },
+            "vercelEnvironment": {
+              "type": "string",
+              "enum": ["preview", "production", "development"],
+              "description": "Which Vercel environment variables to use for this environment. NOTE: Vercel defaults 'main' branch to Production environment, so staging may need 'preview' setting."
+            },
+            "desktop": {
+              "type": "object",
+              "description": "Desktop app configuration that targets this environment",
+              "properties": {
+                "appName": {
+                  "type": "string",
+                  "description": "Name of the desktop app that uses this environment (e.g., 'MyApp Dev' for staging)"
+                },
+                "bundleId": {
+                  "type": "string",
+                  "description": "macOS bundle identifier for this environment's app (e.g., 'com.company.myapp-dev')"
+                }
+              }
+            }
+          }
+        },
+        "production": {
+          "type": "object",
+          "description": "Production environment. Maps to a specific git branch, database, and deployment.",
+          "properties": {
+            "branch": {
+              "type": "string",
+              "description": "Git branch that deploys to this environment (e.g., 'production' or 'main')"
+            },
+            "host": {
+              "type": "string",
+              "enum": ["vercel", "render", "fly", "railway", "aws", "gcp", "docker", "custom"],
+              "description": "Hosting platform"
+            },
+            "services": {
+              "type": "array",
+              "description": "Services running in production",
+              "items": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Service name (e.g., 'web', 'api', 'worker')"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "URL for this service"
+                  }
+                }
+              }
+            },
+            "primaryService": {
+              "type": "string",
+              "description": "Name of the primary service"
+            },
+            "url": { "type": "string", "description": "Production URL (fallback for single-service setups)" },
+            "databaseUrl": { "type": "string", "description": "Database connection string (use 'envvar:NAME' for env var reference)" },
+            "apiUrl": { "type": "string", "description": "Base URL for API calls" },
+            "database": {
+              "type": "object",
+              "description": "Database project configuration for this environment. Helps agents understand which database to target.",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": ["supabase", "planetscale", "neon", "rds", "cloud-sql", "atlas", "local"],
+                  "description": "Database hosting provider"
+                },
+                "projectRef": {
+                  "type": "string",
+                  "description": "Provider-specific project reference (e.g., Supabase project ref like 'hiuhimcmmqdeeyhvdkrb')"
+                },
+                "projectName": {
+                  "type": "string",
+                  "description": "Human-readable project name in the provider dashboard (e.g., 'MyApp Production')"
+                },
+                "linkedLocally": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Whether this database is linked to the local CLI. Usually false for production."
+                }
+              }
+            },
+            "vercelEnvironment": {
+              "type": "string",
+              "enum": ["preview", "production", "development"],
+              "description": "Which Vercel environment variables to use for this environment."
+            },
+            "desktop": {
+              "type": "object",
+              "description": "Desktop app configuration that targets this environment",
+              "properties": {
+                "appName": {
+                  "type": "string",
+                  "description": "Name of the desktop app that uses this environment (e.g., 'MyApp' for production)"
+                },
+                "bundleId": {
+                  "type": "string",
+                  "description": "macOS bundle identifier for this environment's app (e.g., 'com.company.myapp')"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "stack": {
+      "type": "object",
+      "description": "Technology stack configuration",
+      "required": ["languages"],
+      "properties": {
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "enum": ["typescript", "javascript", "go", "python", "java", "rust", "ruby", "php", "csharp"]
+              },
+              "version": { "type": "string" },
+              "primary": { "type": "boolean", "default": false }
+            }
+          },
+          "description": "Programming languages used (first is primary if not specified)"
+        },
+        "runtime": {
+          "type": "string",
+          "enum": ["node", "bun", "deno", "go", "python", "jvm", "dotnet"],
+          "description": "Primary runtime environment"
+        },
+        "packageManager": {
+          "type": "string",
+          "enum": ["npm", "yarn", "pnpm", "bun", "go", "pip", "poetry", "cargo"],
+          "description": "Package manager for dependencies"
+        }
+      }
+    },
+
+    "apps": {
+      "type": "object",
+      "description": "Applications in this project (monorepo or single)",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path", "type"],
+        "properties": {
+          "path": { "type": "string", "description": "Relative path from project root" },
+          "type": {
+            "type": "string",
+            "enum": ["frontend", "backend", "fullstack", "cli", "library", "worker", "desktop", "mobile"],
+            "description": "Application type"
+          },
+          "framework": {
+            "type": "string",
+            "description": "Framework name (e.g., nextjs, remix, express, gin, fastapi, electron, tauri, react-native, flutter)"
+          },
+          "frameworkVersion": { "type": "string" },
+          "entryPoint": { "type": "string", "description": "Main entry directory or file" },
+          "port": { "type": "integer", "description": "DEPRECATED: Use devPort in projects.json registry instead. This field is ignored by agents." },
+          "structure": {
+            "type": "object",
+            "description": "Key directories within this app",
+            "additionalProperties": { "type": "string" }
+          },
+          "platforms": {
+            "type": "array",
+            "description": "Target platforms for this app (e.g., browser, macos, ios). Omit for server-only apps.",
+            "items": {
+              "type": "string",
+              "enum": ["browser", "server", "macos", "windows", "linux", "ios", "android", "tvos", "watchos"]
+            }
+          },
+          "runtime": {
+            "type": "string",
+            "description": "Runtime environment for mobile apps (e.g., hermes, jsc for React Native)",
+            "enum": ["hermes", "jsc", "v8", "javascriptcore", "dart"]
+          },
+          "webContent": {
+            "type": "string",
+            "enum": ["bundled", "remote", "hybrid"],
+            "description": "How web content is loaded in desktop/mobile apps. bundled: Local HTML/JS in app package (Electron, Tauri). remote: Loads external URL (WebView wrapping web app). hybrid: Mix of both. Required for type='desktop' to determine verification strategy."
+          },
+          "remoteUrl": {
+            "type": "string",
+            "pattern": "^https?://",
+            "description": "Base URL for remote web content (required when webContent='remote' or 'hybrid'). Used by agents to determine verification target. Example: 'https://app.myservice.com'"
+          },
+          "testing": {
+            "type": "object",
+            "description": "Per-app testing configuration. Falls back to project-level testing config if not specified.",
+            "properties": {
+              "framework": {
+                "type": "string",
+                "description": "Testing framework for this app",
+                "enum": ["playwright", "playwright-electron", "detox", "maestro", "appium", "xcuitest", "espresso", "jest", "vitest", "pytest", "go-test"]
+              },
+              "testDir": {
+                "type": "string",
+                "description": "Directory containing tests for this app"
+              },
+              "configPath": {
+                "type": "string",
+                "description": "Path to testing framework config file"
+              },
+              "executablePath": {
+                "type": "object",
+                "description": "Paths to packaged app executables for E2E testing (Electron, Tauri, etc.)",
+                "properties": {
+                  "macos": {
+                    "type": "string",
+                    "description": "Path to macOS .app bundle (e.g., /Applications/MyApp.app/Contents/MacOS/MyApp)"
+                  },
+                  "windows": {
+                    "type": "string",
+                    "description": "Path to Windows .exe (e.g., C:/Program Files/MyApp/MyApp.exe)"
+                  },
+                  "linux": {
+                    "type": "string",
+                    "description": "Path to Linux executable (e.g., /usr/bin/myapp)"
+                  }
+                }
+              },
+              "devLaunchArgs": {
+                "type": "array",
+                "description": "Args to pass when launching app in dev mode (e.g., ['./main.js', '--enable-logging'])",
+                "items": { "type": "string" }
+              }
+            }
+          },
+          "platformMetadata": {
+            "type": "object",
+            "description": "Platform-specific configuration for signing, notarization, and distribution",
+            "properties": {
+              "macos": {
+                "type": "object",
+                "description": "macOS-specific metadata",
+                "properties": {
+                  "bundleId": { "type": "string", "description": "Bundle identifier (e.g., com.company.app)" },
+                  "teamId": { "type": "string", "description": "Apple Developer Team ID" },
+                  "category": { "type": "string", "description": "App Store category (e.g., public.app-category.developer-tools)" },
+                  "entitlements": { "type": "string", "description": "Path to entitlements plist file" },
+                  "notarize": { "type": "boolean", "description": "Whether to notarize the app", "default": false },
+                  "signingIdentity": { "type": "string", "description": "Code signing identity name" }
+                }
+              },
+              "windows": {
+                "type": "object",
+                "description": "Windows-specific metadata",
+                "properties": {
+                  "appId": { "type": "string", "description": "Windows Application ID" },
+                  "certificateSubject": { "type": "string", "description": "Certificate subject name for signing" },
+                  "signTool": { "type": "string", "description": "Path to signtool.exe or signing configuration" }
+                }
+              },
+              "linux": {
+                "type": "object",
+                "description": "Linux-specific metadata",
+                "properties": {
+                  "appId": { "type": "string", "description": "Application ID (reverse DNS notation)" },
+                  "category": { "type": "string", "description": "Freedesktop category (e.g., Development, Utility)" },
+                  "desktop": {
+                    "type": "object",
+                    "description": "Freedesktop .desktop file fields",
+                    "additionalProperties": { "type": "string" }
+                  }
+                }
+              },
+              "ios": {
+                "type": "object",
+                "description": "iOS-specific metadata",
+                "properties": {
+                  "bundleId": { "type": "string", "description": "Bundle identifier" },
+                  "teamId": { "type": "string", "description": "Apple Developer Team ID" },
+                  "provisioningProfile": { "type": "string", "description": "Provisioning profile name or path" },
+                  "capabilities": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Required capabilities (e.g., push-notifications, in-app-purchase)"
+                  }
+                }
+              },
+              "android": {
+                "type": "object",
+                "description": "Android-specific metadata",
+                "properties": {
+                  "packageName": { "type": "string", "description": "Android package name (e.g., com.company.app)" },
+                  "keystoreAlias": { "type": "string", "description": "Keystore alias for signing" },
+                  "minSdkVersion": { "type": "integer", "description": "Minimum Android SDK version" },
+                  "targetSdkVersion": { "type": "integer", "description": "Target Android SDK version" }
+                }
+              }
+            }
+          },
+          "buildDeploy": {
+            "type": "object",
+            "description": "Build-deploy cycle configuration for desktop apps. Declares paths so the agent can automate build → kill → copy → relaunch before Playwright verification. The agent handles the deploy commands — no custom interpolation needed.",
+            "properties": {
+              "buildCommand": {
+                "type": "string",
+                "description": "Command to build the desktop app (e.g., 'pnpm build', 'npm run build:electron'). Run from the project root."
+              },
+              "buildOutputApp": {
+                "type": "string",
+                "description": "Path to the built .app bundle, relative to project root (e.g., 'apps/desktop/dist/mac-universal/Helm.app')"
+              },
+              "testApp": {
+                "type": "string",
+                "description": "Absolute path to the installed test app on macOS (e.g., '/Applications/Helm Preview.app'). The agent will kill, overwrite, and relaunch this app during the deploy step."
+              },
+              "autoDeployAfterStory": {
+                "type": "boolean",
+                "description": "Whether to automatically run the build-deploy cycle after each story/task completes. Default: true.",
+                "default": true
+              },
+              "buildTimeoutMs": {
+                "type": "integer",
+                "description": "Build timeout in milliseconds. Electron builds with electron-builder can take 2+ minutes. Default: 300000 (5 minutes).",
+                "default": 300000,
+                "minimum": 30000
+              },
+              "triggerPaths": {
+                "type": "array",
+                "description": "Glob patterns for files that trigger a rebuild when changed. If no changed files match, the build-deploy step is skipped. For remote webContent apps, only include main process paths (e.g., 'apps/desktop/electron/**') — UI-only changes don't require a rebuild.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["buildCommand", "buildOutputApp", "testApp", "triggerPaths"]
+          }
+        }
+      }
+    },
+
+    "packages": {
+      "type": "object",
+      "description": "Shared packages (for monorepos)",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+
+    "database": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["postgres", "mysql", "sqlite", "mongodb", "redis", "none"]
+        },
+        "client": {
+          "type": "string",
+          "description": "Database client/ORM (e.g., supabase, prisma, drizzle, pgx, sqlalchemy)"
+        },
+        "migrationsPath": { "type": "string" },
+        "seedPath": { "type": "string" }
+      }
+    },
+
+    "styling": {
+      "type": "object",
+      "properties": {
+        "framework": {
+          "type": "string",
+          "enum": ["tailwind", "css-modules", "styled-components", "emotion", "sass", "vanilla", "none"]
+        },
+        "version": { "type": "string" },
+        "darkMode": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "strategy": {
+              "type": "string",
+              "enum": ["class", "media", "system"],
+              "description": "How dark mode is triggered"
+            }
+          }
+        },
+        "designSystemPath": {
+          "type": "string",
+          "description": "Path to design system documentation"
+        }
+      }
+    },
+
+    "testing": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "type": "object",
+          "properties": {
+            "framework": { "type": "string", "description": "e.g., jest, vitest, pytest, go-test" },
+            "configPath": { "type": "string" },
+            "testDir": { "type": "string" }
+          }
+        },
+        "e2e": {
+          "type": "object",
+          "properties": {
+            "framework": { "type": "string", "description": "e.g., playwright, cypress" },
+            "configPath": { "type": "string" },
+            "testDir": { "type": "string" }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "threshold": { "type": "integer", "description": "Minimum coverage percentage" }
+          }
+        },
+        "alwaysInclude": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Activities to always run regardless of automatic resolution (e.g., [\"security-critic\", \"exploit-critic\"])"
+        },
+        "neverSkip": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Activities that cannot be bypassed when they fail (e.g., [\"typecheck\", \"ui-tester-playwright\"])"
+        },
+        "autoGenerate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically generate tests for changed code without existing coverage"
+        },
+        "qualityChecks": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable quality-beyond-correctness checks (visual stability, performance budgets, CLS)"
+        },
+        "testVerifySettings": {
+          "type": "object",
+          "description": "Controls which automated Playwright invocation points are enabled. All default to true. When true, Playwright runs automatically — no user prompt. When false, that invocation point is skipped silently. Does NOT gate user-invoked workflows (@qa, @ui-test-full-app-auditor) or test file maintenance.",
+          "properties": {
+            "adHocUIVerify_Analysis": {
+              "type": "boolean",
+              "default": true,
+              "description": "Ad-hoc mode: automatically run Playwright analysis probe after code changes"
+            },
+            "adHocUIVerify_StoryTest": {
+              "type": "boolean",
+              "default": true,
+              "description": "Ad-hoc mode: automatically write/run Playwright tests for completed tasks"
+            },
+            "adHocUIVerify_CompletionTest": {
+              "type": "boolean",
+              "default": true,
+              "description": "Ad-hoc mode: automatically run holistic Playwright tests covering the full batch of changes at task spec completion"
+            },
+            "prdUIVerify_Analysis": {
+              "type": "boolean",
+              "default": true,
+              "description": "PRD mode: automatically run per-story Playwright verification after implementation"
+            },
+            "prdUIVerify_StoryTest": {
+              "type": "boolean",
+              "default": true,
+              "description": "PRD mode: automatically write/run per-story Playwright tests"
+            },
+            "prdUIVerify_PRDCompletionTest": {
+              "type": "boolean",
+              "default": true,
+              "description": "PRD mode: automatically run holistic Playwright tests at PRD completion"
+            }
+          }
+        }
+      }
+    },
+
+    "linting": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "tools": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Linting tools (e.g., eslint, prettier, biome, golint, ruff)"
+        }
+      }
+    },
+
+    "git": {
+      "type": "object",
+      "description": "Git workflow and branching strategy configuration",
+      "properties": {
+        "autoCommit": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether agents may automatically commit changes. When false, agents MUST NOT run git commit — they should stage changes and report what to commit, but leave the actual commit to the user. This is HARSHLY ENFORCED across all agents."
+        },
+        "branchingStrategy": {
+          "type": "string",
+          "enum": ["trunk-based", "github-flow", "git-flow", "release-branches"],
+          "default": "trunk-based",
+          "description": "Branching strategy: trunk-based (all work on main), github-flow (feature branches → main), git-flow (develop/release/main), release-branches (develop → release/* → main)"
+        },
+        "defaultBranch": {
+          "type": "string",
+          "default": "main",
+          "description": "Primary branch name (usually 'main' or 'master')"
+        },
+        "developBranch": {
+          "type": "string",
+          "default": "develop",
+          "description": "Integration branch for git-flow and release-branches strategies"
+        },
+        "releaseBranchPattern": {
+          "type": "string",
+          "default": "release/*",
+          "description": "Pattern for release branches (git-flow and release-branches strategies)"
+        },
+        "teamSync": {
+          "type": "object",
+          "description": "Team synchronization settings for multi-machine collaboration. When enabled, agents pull before operations and push after commits.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable automatic git pull/push for team synchronization"
+            },
+            "pullBeforeWork": {
+              "type": "boolean",
+              "default": true,
+              "description": "Pull latest changes at session start and before/after commits"
+            },
+            "pushAfterCommit": {
+              "type": "boolean",
+              "default": true,
+              "description": "Automatically push after each commit"
+            },
+            "confirmBeforePush": {
+              "type": "boolean",
+              "default": true,
+              "description": "Ask user for confirmation before pushing"
+            },
+            "pushRetries": {
+              "type": "integer",
+              "default": 3,
+              "description": "Number of retry attempts for push failures (network issues)"
+            },
+            "conflictBehavior": {
+              "type": "string",
+              "enum": ["stop-and-alert", "auto-merge", "stash-and-alert"],
+              "default": "stop-and-alert",
+              "description": "How to handle conflicts: stop-and-alert (safest), auto-merge (attempt git merge), stash-and-alert (stash local, pull, alert)"
+            }
+          }
+        },
+        "agentWorkflow": {
+          "type": "object",
+          "description": "How agents interact with git branches. See AGENTS.md 'Git Completion Workflow' for the canonical workflow. PRs to requiresHumanApproval branches are allowed but auto-merge is blocked. Default cascade: pushTo → workBranch → defaultBranch.",
+          "properties": {
+            "workBranch": {
+              "type": "string",
+              "description": "Branch agents should work on (e.g., 'staging', 'develop'). Defaults to defaultBranch if not set."
+            },
+            "pushTo": {
+              "type": "string",
+              "description": "Branch to push changes to. Defaults to workBranch if not set, which defaults to defaultBranch."
+            },
+            "createPrTo": {
+              "type": "string",
+              "description": "Branch to create PRs against. Defaults to defaultBranch if not set."
+            },
+            "requiresHumanApproval": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Branches requiring human approval before merge. Agents CAN create PRs to these branches, but CANNOT auto-merge. Direct push is blocked. Use for production/main branches that need human review before changes land."
+            }
+          }
+        }
+      }
+    },
+
+    "commands": {
+      "type": "object",
+      "description": "Shell commands for common operations",
+      "properties": {
+        "dev": { "type": "string", "description": "Command to start development server (e.g., npm run dev)" },
+        "build": { "type": "string" },
+        "test": { "type": "string" },
+        "testUnit": { "type": "string" },
+        "testE2E": { "type": "string" },
+        "typecheck": { "type": "string" },
+        "lint": { "type": "string" },
+        "lintFix": { "type": "string" },
+        "format": { "type": "string" },
+        "migrate": { "type": "string" },
+        "migrateCreate": { "type": "string" }
+      },
+      "additionalProperties": { "type": "string" }
+    },
+
+    "devServer": {
+      "type": "object",
+      "description": "Development server configuration. NOTE: The port is stored in ~/.config/opencode/projects.json (projects[].devPort), NOT here. This section is for health checks and startup options only.",
+      "properties": {
+        "healthCheck": {
+          "type": "string",
+          "description": "URL path to check if server is ready (e.g., / or /api/health). Combined with port from projects.json to form full URL."
+        },
+        "startupTimeout": {
+          "type": "integer",
+          "default": 30000,
+          "description": "Maximum time in milliseconds to wait for server to become ready"
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables to set when starting the dev server (e.g., DISABLE_RATE_LIMIT=true for testing)",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+
+    "qualityGates": {
+      "type": "object",
+      "description": "Commands that must pass at various stages",
+      "properties": {
+        "beforeCommit": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Commands to run before committing"
+        },
+        "beforePush": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "beforeMerge": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "postChangeWorkflow": {
+      "type": "object",
+      "description": "Optional override: Mandatory steps Builder must complete after code changes, before committing. If absent, Builder auto-infers from apps[] configuration (desktop+bundled → rebuild+relaunch, desktop+remote → ensure Electron running, web → HMR).",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of this workflow"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "required"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique step identifier"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable step name"
+              },
+              "command": {
+                "type": "string",
+                "description": "Shell command to execute"
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this step must pass before commit"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["command", "process", "playwright-check"],
+                "default": "command",
+                "description": "Step type: command (run and check exit code), process (start long-running process), playwright-check (browser/Electron verification)"
+              },
+              "notes": {
+                "type": "string",
+                "description": "Why this step exists or what it does"
+              }
+            }
+          }
+        },
+        "enforcement": {
+          "type": "object",
+          "properties": {
+            "beforeCommit": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether this workflow must complete before committing"
+            },
+            "skipConditions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Human-readable conditions under which the workflow can be skipped (e.g., 'docs-only changes', 'config-only changes', 'user explicitly says skip verification')"
+            }
+          }
+        }
+      }
+    },
+
+    "postChangeActions": {
+      "type": "array",
+      "description": "Actions to run AFTER commit. These propagate changes to related systems — marketing sites, support articles, native app builds, documentation syncs, etc. Runs after the quality pipeline and commit. Each action has a type that determines how it executes.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "type"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "Unique action identifier (kebab-case)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable action name shown in progress output"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["pending-update", "agent", "command", "notify"],
+            "description": "Action type: pending-update (create docs/pending-updates/ file in target project), agent (invoke a specialist agent), command (run shell command), notify (display message to user)"
+          },
+          "target": {
+            "type": "object",
+            "description": "Target project for pending-update actions. Resolved via relatedProjects.",
+            "properties": {
+              "relationship": {
+                "type": "string",
+                "description": "Relationship type from relatedProjects (e.g., 'marketing-site', 'documentation-site')"
+              },
+              "label": {
+                "type": "string",
+                "description": "Optional label to disambiguate when multiple projects share the same relationship type"
+              }
+            },
+            "required": ["relationship"]
+          },
+          "agent": {
+            "type": "string",
+            "description": "Agent to invoke for type 'agent' (e.g., '@support-article-writer', '@tools-writer', '@public-page-dev')"
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command to run for type 'command' (e.g., 'xcodebuild build', 'flutter build ios')"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message to display for type 'notify'"
+          },
+          "template": {
+            "type": "string",
+            "description": "For pending-update actions: description template for the update file. Builder fills in specifics based on what changed."
+          },
+          "updateType": {
+            "type": "string",
+            "enum": ["sync", "review", "rebuild", "config"],
+            "default": "sync",
+            "description": "For pending-update actions: the updateType written into the pending-update file header"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["normal", "high", "critical"],
+            "default": "normal",
+            "description": "Priority level for pending-update actions or execution priority for commands"
+          },
+          "trigger": {
+            "type": "object",
+            "description": "When this action should run. If omitted, the action runs on every change.",
+            "properties": {
+              "condition": {
+                "type": "string",
+                "enum": ["always", "files-changed-in", "feature-change", "user-facing-change"],
+                "default": "always",
+                "description": "Trigger condition: always (every change), files-changed-in (match pathPatterns against changed files), feature-change (agent judges if this was a feature-level change), user-facing-change (agent judges if user-visible behavior changed)"
+              },
+              "pathPatterns": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Glob patterns to match against changed files. Used with 'files-changed-in' condition."
+              },
+              "requires": {
+                "type": "string",
+                "description": "Dot-path capability check (e.g., 'capabilities.ai', 'capabilities.supportDocs'). Action is skipped if the capability is falsy."
+              }
+            }
+          },
+          "modes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["prd", "adhoc"]
+            },
+            "default": ["prd", "adhoc"],
+            "description": "Which workflow modes this action applies to. Defaults to both."
+          },
+          "continueOnFailure": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to continue executing remaining actions if this one fails. Defaults to true since post-change actions should not block the workflow."
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "minimum": 5000,
+            "default": 120000,
+            "description": "Timeout in milliseconds for command-type actions"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Why this action exists or implementation notes"
+          }
+        }
+      }
+    },
+
+    "capabilities": {
+      "type": "object",
+      "description": "Project capabilities. Set at bootstrap, updated by agents as new integrations are added. Used to determine which workflow steps are applicable.",
+      "properties": {
+        "authentication": { "type": "boolean", "description": "Has user authentication system" },
+        "multiTenant": { "type": "boolean", "description": "Supports multiple organizations/tenants" },
+        "payments": { "type": "boolean", "description": "Has payment processing (Stripe, etc.)" },
+        "email": { "type": "boolean", "description": "Has transactional email (Resend, SendGrid, etc.)" },
+        "i18n": { "type": "boolean", "description": "Has internationalization support" },
+        "marketing": { "type": "boolean", "description": "Has marketing/landing pages" },
+        "supportDocs": { "type": "boolean", "description": "Has support documentation/help articles" },
+        "api": { "type": "boolean", "description": "Exposes an API for external consumption" },
+        "realtime": { "type": "boolean", "description": "Has realtime/websocket features" },
+        "ai": { "type": "boolean", "description": "Has AI/LLM integration" },
+        "documentation": {
+          "type": "object",
+          "description": "Documentation system configuration (used by docs-writer, support-article-writer)",
+          "properties": {
+            "system": {
+              "type": "string",
+              "enum": ["markdown", "docusaurus", "vitepress", "database", "notion", "none"],
+              "description": "Documentation system type"
+            },
+            "userDocsPath": { "type": "string", "description": "Path to user-facing docs" },
+            "supportArticlesPath": { "type": "string", "description": "Path to support articles" },
+            "apiDocsPath": { "type": "string", "description": "Path to API documentation" },
+            "databaseTable": { "type": "string", "description": "Table name if database-backed (e.g., support_articles)" }
+          }
+        },
+        "aiTools": {
+          "type": "object",
+          "description": "AI/chatbot tools configuration (used by tools-writer)",
+          "properties": {
+            "system": {
+              "type": "string",
+              "enum": ["openai-functions", "langchain", "mcp", "custom", "none"],
+              "description": "AI tool system type"
+            },
+            "schemaPath": { "type": "string", "description": "Path to tool schema definitions" },
+            "implementationPath": { "type": "string", "description": "Path to tool implementations" },
+            "typesPath": { "type": "string", "description": "Path to tool type definitions" }
+          }
+        }
+      },
+      "additionalProperties": { "type": "boolean" }
+    },
+
+    "planning": {
+      "type": "object",
+      "description": "Planner-specific scope guidance that should be considered for every PRD and story.",
+      "properties": {
+        "considerations": {
+          "type": "array",
+          "description": "Project-specific considerations Planner should pass through when writing PRDs (for example permissions, support docs, AI tools, compliance).",
+          "items": {
+            "type": "object",
+            "required": ["id", "label"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Stable key for the consideration (kebab-case recommended)."
+              },
+              "label": {
+                "type": "string",
+                "description": "Human-readable consideration name shown in PRD review tables."
+              },
+              "required": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether this consideration must be explicitly addressed in relevant PRD stories."
+              },
+              "appliesWhen": {
+                "type": "array",
+                "description": "Optional tags describing when this consideration applies (e.g., api, admin-ui, data-access, auth).",
+                "items": { "type": "string" }
+              },
+              "scopeQuestions": {
+                "type": "array",
+                "description": "Questions Planner should answer during scope writing.",
+                "items": { "type": "string" }
+              },
+              "acceptanceCriteriaHints": {
+                "type": "array",
+                "description": "Suggested acceptance criteria snippets to include when this consideration applies.",
+                "items": { "type": "string" }
+              },
+              "defaultStoryFields": {
+                "type": "object",
+                "description": "Optional per-story defaults that downstream tools can map into story metadata.",
+                "additionalProperties": {
+                  "oneOf": [
+                    { "type": "boolean" },
+                    { "type": "string" },
+                    { "type": "number" },
+                    {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          { "type": "boolean" },
+                          { "type": "string" },
+                          { "type": "number" }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              "notes": {
+                "type": "string",
+                "description": "Optional project-specific implementation or policy notes for this consideration."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "workflows": {
+      "type": "object",
+      "description": "Project-specific workflow overrides. If not defined, defaults are read from ~/.config/opencode/data/workflow-defaults.json. See that file for current defaults and available steps.",
+      "properties": {
+        "adhoc": {
+          "type": "array",
+          "description": "Steps to run for ad-hoc requests. If not specified, falls back to toolkit defaults in data/workflow-defaults.json.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "build",
+              "typecheck",
+              "lint",
+              "test",
+              "test-scoped",
+              "critic",
+              "tester",
+              "tester-scoped",
+              "e2e",
+              "e2e-write",
+              "visual-verify",
+              "commit",
+              "report",
+              "toolkit-suggestions"
+            ]
+          }
+        },
+        "prd": {
+          "type": "array",
+          "description": "Steps to run for PRD-driven work. If not specified, falls back to toolkit defaults in data/workflow-defaults.json.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "build",
+              "typecheck",
+              "lint",
+              "test",
+              "test-scoped",
+              "critic",
+              "tester",
+              "tester-scoped",
+              "e2e",
+              "e2e-write",
+              "visual-verify",
+              "commit",
+              "report",
+              "toolkit-suggestions"
+            ]
+          }
+        }
+      }
+    },
+
+    "integrations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "e.g., stripe, resend, openai, supabase" },
+          "purpose": { "type": "string", "description": "What it's used for" }
+        }
+      }
+    },
+
+    "aws": {
+      "type": "object",
+      "description": "AWS configuration (used by backend-aws-critic, aws-dev)",
+      "properties": {
+        "services": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "AWS services used (e.g., dynamodb, s3, sqs, lambda, secrets-manager)"
+        },
+        "sdkVersion": { 
+          "type": "string",
+          "enum": ["v2", "v3"],
+          "description": "AWS SDK version" 
+        },
+        "infrastructure": {
+          "type": "string",
+          "enum": ["cdk", "cloudformation", "terraform", "sam", "serverless", "none"],
+          "description": "Infrastructure-as-code tool"
+        },
+        "infrastructurePath": { "type": "string", "description": "Path to IaC files" },
+        "clientWrapperPath": { 
+          "type": "string", 
+          "description": "Path to standard AWS client wrapper (if exists)" 
+        },
+        "localDevelopment": { 
+          "type": "boolean", 
+          "default": false,
+          "description": "Whether AWS services run locally (LocalStack, etc.)" 
+        }
+      }
+    },
+
+    "security": {
+      "type": "object",
+      "description": "Security configuration (used by security-critic, exploit-critic)",
+      "properties": {
+        "authMiddleware": { 
+          "type": "string", 
+          "description": "Path to authentication middleware" 
+        },
+        "csrfProtection": {
+          "type": "string",
+          "enum": ["double-submit", "synchronizer-token", "samesite-cookie", "none"],
+          "description": "CSRF protection strategy"
+        },
+        "corsConfigPath": { 
+          "type": "string", 
+          "description": "Path to CORS configuration" 
+        },
+        "securityHeadersPath": { 
+          "type": "string", 
+          "description": "Path to security headers configuration" 
+        },
+        "inputValidation": {
+          "type": "string",
+          "description": "Validation library (e.g., zod, yup, joi, class-validator)"
+        },
+        "secretsManagement": {
+          "type": "string",
+          "enum": ["env-vars", "aws-secrets-manager", "vault", "doppler", "other"],
+          "description": "How secrets are managed"
+        }
+      }
+    },
+
+    "authentication": {
+      "type": "object",
+      "description": "Authentication configuration for AI agents (screenshot, E2E, QA) to log in during testing. Configure via /setup-auth command.",
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["passwordless-otp", "email-password", "oauth", "none"],
+          "description": "Authentication method used by this project"
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["supabase", "nextauth", "clerk", "auth0", "custom"],
+          "description": "Authentication provider/library"
+        },
+        "skill": {
+          "type": "string",
+          "description": "Name of the auth skill to use (e.g., 'auth-supabase-otp'). Auto-derived from method+provider if not specified."
+        },
+        "testUser": {
+          "type": "object",
+          "description": "Test user configuration",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["fixed", "dynamic"],
+              "default": "fixed",
+              "description": "fixed = use same test user, dynamic = create new user each time"
+            },
+            "emailVar": {
+              "type": "string",
+              "default": "TEST_EMAIL",
+              "description": "Environment variable containing test email"
+            },
+            "emailDefault": {
+              "type": "string",
+              "default": "test@example.com",
+              "description": "Default test email if env var not set"
+            },
+            "emailPattern": {
+              "type": "string",
+              "description": "Pattern for dynamic emails (e.g., 'test-{uuid}@example.com')"
+            },
+            "passwordVar": {
+              "type": "string",
+              "description": "Environment variable containing test password (for email-password method)"
+            }
+          }
+        },
+        "verification": {
+          "type": "object",
+          "description": "How to retrieve verification codes (for OTP flows)",
+          "properties": {
+            "source": {
+              "type": "string",
+              "description": "Where to get verification codes (e.g., 'supabase')"
+            },
+            "table": {
+              "type": "string",
+              "description": "Database table containing verification codes"
+            },
+            "column": {
+              "type": "string",
+              "description": "Column containing the verification code"
+            },
+            "lookupBy": {
+              "type": "string",
+              "description": "Column to look up user by (e.g., 'email')"
+            }
+          }
+        },
+        "routes": {
+          "type": "object",
+          "description": "Authentication route paths",
+          "properties": {
+            "login": {
+              "type": "string",
+              "default": "/login",
+              "description": "Login page path"
+            },
+            "verify": {
+              "type": "string",
+              "default": "/verify",
+              "description": "Verification page path (for OTP)"
+            },
+            "authenticated": {
+              "type": "string",
+              "default": "/dashboard",
+              "description": "Page to land on after successful auth"
+            }
+          }
+        },
+        "reuseSession": {
+          "type": "boolean",
+          "default": false,
+          "description": "Save auth state to file and reuse across tests in same run"
+        },
+        "headless": {
+          "type": "object",
+          "description": "Headless auth configuration (skip UI, inject session directly for faster tests)",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable headless auth for faster tests"
+            },
+            "method": {
+              "type": "string",
+              "enum": ["supabase-admin", "nextauth-direct", "custom-api", "cli"],
+              "description": "How to acquire auth tokens headlessly. 'cli' runs a shell command that outputs tokens."
+            },
+            "command": {
+              "type": "string",
+              "description": "CLI command to run (for method: cli). Supports $ENV_VAR expansion (e.g., 'pnpm cli auth:test-token --email $TEST_EMAIL')."
+            },
+            "responseFormat": {
+              "type": "string",
+              "enum": ["json", "text", "env"],
+              "default": "json",
+              "description": "Format of CLI command output: json (parsed with tokenPath), text (entire stdout is the token), env (KEY=VALUE lines)"
+            },
+            "tokenPath": {
+              "type": "string",
+              "default": "accessToken",
+              "description": "Dot-path to access token in response (for json format, e.g., 'data.accessToken')"
+            },
+            "refreshTokenPath": {
+              "type": "string",
+              "description": "Dot-path to refresh token in response (optional, for json format)"
+            },
+            "sessionStorage": {
+              "type": "string",
+              "enum": ["cookies", "localStorage", "both"],
+              "default": "cookies",
+              "description": "Where to inject the token in browser context after CLI acquisition"
+            },
+            "uiTestPath": {
+              "type": "string",
+              "description": "Path to the one E2E test that exercises full login UI (e.g., 'e2e/auth.spec.ts')"
+            }
+          }
+        },
+        "acquisition": {
+          "type": "object",
+          "description": "Human-readable auth acquisition procedure for agents. Read by agents when headless fails or for initial understanding of how auth works in this project.",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "One-line summary of how auth works in this project"
+            },
+            "steps": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Ordered steps an agent should follow to get an authenticated session"
+            },
+            "fallbackToUI": {
+              "type": "boolean",
+              "default": true,
+              "description": "If headless/CLI fails, fall back to UI-based auth flow using the appropriate auth skill"
+            },
+            "notes": {
+              "type": "string",
+              "description": "Additional context about the auth system (gotchas, requirements, env vars needed, etc.)"
+            }
+          }
+        },
+        "cleanup": {
+          "type": "object",
+          "description": "Test user cleanup configuration",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable test user cleanup"
+            },
+            "trigger": {
+              "type": "string",
+              "enum": ["manual", "auto", "scheduled"],
+              "default": "manual",
+              "description": "When to run cleanup: manual (script), auto (test teardown), scheduled (cron)"
+            },
+            "emailPattern": {
+              "type": "string",
+              "description": "Regex pattern identifying test users (e.g., '^test-.*@example\\.com$')"
+            },
+            "maxAgeHours": {
+              "type": "number",
+              "description": "Delete test users older than this many hours"
+            }
+          }
+        },
+        "selectors": {
+          "type": "object",
+          "description": "Custom CSS selectors for auth forms (for custom/generic provider)",
+          "properties": {
+            "emailInput": { "type": "string", "description": "Selector for email input field" },
+            "passwordInput": { "type": "string", "description": "Selector for password input field" },
+            "submitButton": { "type": "string", "description": "Selector for submit/continue button" },
+            "otpInputs": { "type": "string", "description": "Selector for OTP input fields" },
+            "verifyButton": { "type": "string", "description": "Selector for verify button" }
+          }
+        },
+        "tenant": {
+          "type": "object",
+          "description": "Multi-tenant authentication configuration",
+          "properties": {
+            "identifier": {
+              "type": "string",
+              "description": "Test tenant ID or subdomain"
+            },
+            "loginUrlPattern": {
+              "type": "string",
+              "description": "URL pattern with {tenant} placeholder (e.g., 'https://{tenant}.example.com/login')"
+            }
+          }
+        }
+      }
+    },
+
+    "vectorization": {
+      "type": "object",
+      "description": "Codebase and database vectorization for semantic search. Enables agents to query project knowledge semantically instead of relying solely on grep/glob.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether vectorization is enabled for this project"
+        },
+        "storage": {
+          "type": "string",
+          "enum": ["local", "cloud"],
+          "default": "local",
+          "description": "Where to store embeddings: local (LanceDB) or cloud (Pinecone/Weaviate)"
+        },
+        "embeddingModel": {
+          "type": "string",
+          "enum": ["auto", "openai", "voyage", "ollama"],
+          "default": "auto",
+          "description": "Embedding model: auto (OpenAI if available, else Ollama), openai (text-embedding-3-small), voyage (voyage-code-2), ollama (nomic-embed-text)"
+        },
+        "contextualRetrieval": {
+          "type": "string",
+          "enum": ["auto", "always", "never"],
+          "default": "auto",
+          "description": "Add contextual descriptions to chunks before embedding. auto = enable for codebases >50k tokens, always/never = force on/off. Uses Claude Haiku."
+        },
+        "codebase": {
+          "type": "object",
+          "description": "Codebase indexing configuration",
+          "properties": {
+            "include": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": ["src/**", "lib/**", "app/**", "docs/**", "tests/**", "e2e/**", "__tests__/**"],
+              "description": "Glob patterns for files to include in index"
+            },
+            "exclude": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": ["node_modules/**", "dist/**", "build/**", ".git/**", ".next/**"],
+              "description": "Glob patterns for files to exclude from index. Note: test files are included by default (see indexTests)."
+            },
+            "chunkStrategy": {
+              "type": "string",
+              "enum": ["ast", "sliding-window"],
+              "default": "ast",
+              "description": "How to split files: ast (semantic boundaries via Tree-sitter) or sliding-window (fixed token windows)"
+            },
+            "indexTests": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether to index test files. Recommended true for understanding expected behavior."
+            }
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "description": "Code relationship indexing for call graphs and dependencies",
+          "properties": {
+            "callGraph": {
+              "type": "boolean",
+              "default": true,
+              "description": "Build call graph to answer 'what calls this function?' and 'what does this function call?'"
+            },
+            "dependencies": {
+              "type": "boolean",
+              "default": true,
+              "description": "Track import/require statements to answer 'what imports this module?'"
+            },
+            "testMapping": {
+              "type": "boolean",
+              "default": true,
+              "description": "Map tests to the code they cover. Enables 'which tests cover this function?' queries."
+            }
+          }
+        },
+        "gitHistory": {
+          "type": "object",
+          "description": "Git history indexing for understanding code intent and changes",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether to index git commit history and blame data"
+            },
+            "depth": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 10000,
+              "default": 500,
+              "description": "Number of recent commits to index"
+            }
+          }
+        },
+        "architectureSummary": {
+          "type": "object",
+          "description": "AI-generated architecture summaries for high-level understanding",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether to generate architecture summaries for major modules"
+            },
+            "refreshInterval": {
+              "type": "string",
+              "enum": ["daily", "weekly", "monthly", "manual"],
+              "default": "weekly",
+              "description": "How often to regenerate architecture summaries"
+            }
+          }
+        },
+        "database": {
+          "type": "object",
+          "description": "Database schema and config table indexing",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Whether to index database schema and config tables"
+            },
+            "connection": {
+              "type": "string",
+              "description": "Database connection reference (use 'env:DATABASE_URL' for env var). Never store actual credentials."
+            },
+            "type": {
+              "type": "string",
+              "enum": ["postgres", "mysql", "sqlite"],
+              "description": "Database type"
+            },
+            "schema": {
+              "type": "object",
+              "description": "Schema extraction configuration",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to extract and index schema (tables, columns, types, constraints)"
+                },
+                "include": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "default": ["public.*"],
+                  "description": "Schema patterns to include (e.g., 'public.*', 'app.users')"
+                },
+                "exclude": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "default": [],
+                  "description": "Schema patterns to exclude (e.g., 'public.migrations', 'audit.*')"
+                }
+              }
+            },
+            "configTables": {
+              "type": "array",
+              "description": "Configuration tables to extract sample rows from (e.g., pricing_tiers, feature_flags)",
+              "items": {
+                "type": "object",
+                "required": ["table"],
+                "properties": {
+                  "table": {
+                    "type": "string",
+                    "description": "Table name (e.g., 'public.pricing_tiers')"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Human description of what this table contains"
+                  },
+                  "sampleRows": {
+                    "oneOf": [
+                      { "type": "integer", "minimum": 1, "maximum": 100 },
+                      { "type": "string", "enum": ["all"] }
+                    ],
+                    "default": 10,
+                    "description": "Number of sample rows to extract, or 'all' for small tables"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "search": {
+          "type": "object",
+          "description": "Search behavior configuration",
+          "properties": {
+            "hybridWeight": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.7,
+              "description": "Weight for semantic vs keyword search (0 = pure keyword, 1 = pure semantic, 0.7 = balanced)"
+            },
+            "topK": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Number of results to return from search"
+            },
+            "reranking": {
+              "type": "object",
+              "description": "Result reranking configuration",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Whether to rerank results for improved precision"
+                },
+                "model": {
+                  "type": "string",
+                  "enum": ["cohere", "cross-encoder"],
+                  "default": "cross-encoder",
+                  "description": "Reranking model: cohere (cloud, best quality) or cross-encoder (local, offline)"
+                }
+              }
+            }
+          }
+        },
+        "refresh": {
+          "type": "object",
+          "description": "Index refresh configuration",
+          "properties": {
+            "onGitChange": {
+              "type": "boolean",
+              "default": true,
+              "description": "Automatically refresh index on git commit (via post-commit hook)"
+            },
+            "onSessionStart": {
+              "type": "boolean",
+              "default": true,
+              "description": "Check and refresh stale index when agent session starts"
+            },
+            "maxAge": {
+              "type": "string",
+              "default": "24h",
+              "description": "Force refresh if index is older than this (e.g., '24h', '7d')"
+            }
+          }
+        },
+        "cloud": {
+          "type": "object",
+          "description": "Cloud vector storage configuration (only used when storage='cloud')",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["pinecone", "weaviate"],
+              "description": "Cloud vector database provider"
+            },
+            "credentials": {
+              "type": "string",
+              "description": "Credentials reference (use 'env:PINECONE_API_KEY' for env var)"
+            },
+            "namespace": {
+              "type": "string",
+              "description": "Namespace/index name for this project (defaults to project name)"
+            }
+          }
+        },
+        "credentials": {
+          "type": "object",
+          "description": "API credentials references for vectorization services (never store actual keys)",
+          "properties": {
+            "openai": {
+              "type": "string",
+              "default": "env:OPENAI_API_KEY",
+              "description": "OpenAI API key reference for embeddings"
+            },
+            "anthropic": {
+              "type": "string",
+              "default": "env:ANTHROPIC_API_KEY",
+              "description": "Anthropic API key reference for contextual retrieval"
+            },
+            "voyage": {
+              "type": "string",
+              "default": "env:VOYAGE_API_KEY",
+              "description": "Voyage AI API key reference for embeddings"
+            },
+            "cohere": {
+              "type": "string",
+              "default": "env:COHERE_API_KEY",
+              "description": "Cohere API key reference for reranking"
+            }
+          }
+        }
+      }
+    },
+
+    "agents": {
+      "type": "object",
+      "description": "AI agent behavior configuration",
+      "properties": {
+        "workingDir": {
+          "type": "string",
+          "default": "ai-tmp",
+          "description": "Project-local directory for temporary AI working files (screenshots, intermediate outputs). Must be gitignored."
+        },
+        "verification": {
+          "type": "object",
+          "description": "Playwright verification configuration for UI changes. Controls mandatory visual verification before task completion.",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["playwright-required"],
+              "default": "playwright-required",
+              "description": "playwright-required: Builder must verify UI changes with Playwright before marking complete. All projects get full Playwright verification — the no-ui option has been removed."
+            },
+            "testBaseUrl": {
+              "type": "string",
+              "pattern": "^https?://",
+              "description": "Explicit base URL for E2E tests and verification. Overrides automatic URL resolution. Must include protocol (http:// or https://). Example: 'https://staging.myapp.com'. See test-url-resolution skill for resolution priority."
+            },
+            "selectorStrategy": {
+              "type": "string",
+              "enum": ["strict", "flexible"],
+              "default": "strict",
+              "description": "strict: Tests must use data-testid, agent adds them if missing. flexible: Prefer data-testid, fall back to role/text selectors."
+            },
+            "testDir": {
+              "type": "string",
+              "default": "tests/ui-verify",
+              "description": "Directory for generated UI verification test scripts (committed to git)."
+            },
+            "screenshotDir": {
+              "type": "string",
+              "default": "ai-tmp/verification/screenshots",
+              "description": "Directory for temporary verification screenshots (gitignored)."
+            },
+            "reviewGeneratedTests": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether @quality-critic reviews generated verification tests."
+            },
+            "requiredPasses": {
+              "type": "integer",
+              "default": 3,
+              "minimum": 1,
+              "maximum": 10,
+              "description": "Number of consecutive test passes required before declaring a feature verified. Ensures stability by catching transient/flaky issues."
+            },
+            "autoFixLoop": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether to automatically attempt to fix verification failures. When true, Builder classifies failures (prerequisite vs feature) and delegates fixes to @developer."
+            },
+            "fixAttemptTimeoutMinutes": {
+              "type": "integer",
+              "default": 5,
+              "minimum": 1,
+              "maximum": 30,
+              "description": "Maximum time in minutes to allow for each fix attempt during automated fix loop."
+            },
+            "runBroaderTestsAfterFix": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether to run related tests after fixing a verification failure. Helps catch regression in adjacent functionality."
+            }
+          }
+        },
+        "criticMode": {
+          "type": "string",
+          "enum": ["strict", "balanced", "fast"],
+          "default": "balanced",
+          "description": "When to run critic during PRD work: strict (after every story), balanced (every 2-3 stories), fast (once at end)"
+        },
+        "browserVerification": {
+          "type": "boolean",
+          "default": true,
+          "deprecated": true,
+          "description": "DEPRECATED: Use agents.verification.mode instead. Whether UI changes need browser verification."
+        },
+        "heartbeatTimeoutMinutes": {
+          "type": "integer",
+          "default": 10,
+          "description": "Session heartbeat timeout in minutes. Session is considered abandoned after this period of inactivity."
+        },
+        "commitStrategy": {
+          "type": "string",
+          "enum": ["batch-per-session", "per-todo", "manual"],
+          "default": "batch-per-session",
+          "description": "When to commit: batch-per-session (default), per-todo (after each todo), or manual (user triggers)"
+        },
+        "multiSession": {
+          "type": "boolean",
+          "default": false,
+          "deprecated": true,
+          "description": "DEPRECATED: Session coordination is now always-on. This field is ignored. Remove from project.json."
+        },
+        "autoMerge": {
+          "type": "string",
+          "enum": ["off", "on-e2e-pass", "on-ci-pass"],
+          "default": "off",
+          "description": "When to auto-merge PRs. 'off' = human merges, 'on-e2e-pass' = merge after Builder E2E passes, 'on-ci-pass' = merge after GitHub CI passes"
+        },
+        "requireApproval": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether PR approval is required before auto-merge (only applies when autoMerge is not 'off')"
+        },
+        "mergeQueue": {
+          "type": "object",
+          "description": "Merge queue configuration for coordinating parallel session merges",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether to use merge queue (false = legacy behavior, no queue)"
+            },
+            "autoProcess": {
+              "type": "boolean",
+              "default": false,
+              "description": "Automatically process queue when entry is added (vs manual @merge-coordinator)"
+            },
+            "strategy": {
+              "type": "string",
+              "enum": ["squash", "merge", "rebase"],
+              "default": "squash",
+              "description": "Git merge strategy to use"
+            },
+            "requireApproval": {
+              "type": "boolean",
+              "default": false,
+              "description": "Require PR approval before auto-merge through queue"
+            },
+            "runTestsAfterRebase": {
+              "type": "boolean",
+              "default": true,
+              "description": "Run full test suite after rebasing (slower but safer)"
+            },
+            "runE2EAfterRebase": {
+              "type": "boolean",
+              "default": true,
+              "description": "Run E2E tests after rebasing (requires dev server)"
+            },
+            "notifyOnComplete": {
+              "type": "boolean",
+              "default": true,
+              "description": "Log notification when merge completes or fails"
+            },
+            "deleteOnComplete": {
+              "type": "boolean",
+              "default": true,
+              "description": "Delete branch after successful merge"
+            }
+          }
+        },
+        "fallbackChains": {
+          "type": "object",
+          "description": "Per-project fallback chain overrides for agent reassignment. Merges with toolkit defaults unless override is true.",
+          "properties": {
+            "override": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, replace toolkit defaults entirely. If false, merge with defaults (project chains take precedence for matching keys)."
+            },
+            "chains": {
+              "type": "object",
+              "description": "Map of task type to fallback chain",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "primary": {
+                    "type": "string",
+                    "description": "Primary agent for this task type"
+                  },
+                  "alternatives": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Alternative agents to try if primary fails (in order)"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Human-readable description of this chain"
+                  }
+                },
+                "required": ["primary", "alternatives"]
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "skills": {
+      "type": "object",
+      "description": "Project-specific skills configuration. Skills are step-by-step guides for common patterns in THIS project.",
+      "properties": {
+        "projectSkillsPath": {
+          "type": "string",
+          "default": "docs/skills/",
+          "description": "Path to project-specific skills directory"
+        },
+        "generated": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "description": "Skill name (e.g., auth-flow)" },
+              "generatedFrom": { "type": "string", "description": "Meta-skill that generated this (e.g., auth-skill-generator)" },
+              "generatedAt": { "type": "string", "format": "date", "description": "When the skill was generated" }
+            }
+          },
+          "description": "Skills that have been generated for this project"
+        }
+      }
+    },
+
+    "context": {
+      "type": "object",
+      "description": "Paths to additional context documents",
+      "properties": {
+        "architecture": { 
+          "type": "string",
+          "description": "Path to architecture documentation (e.g., docs/ARCHITECTURE.md)"
+        },
+        "conventions": { 
+          "type": "string",
+          "description": "Path to coding conventions documentation (e.g., docs/CONVENTIONS.md)"
+        },
+        "designSystem": { 
+          "type": "string",
+          "description": "Path to design system documentation"
+        },
+        "brandVoice": {
+          "type": "string",
+          "description": "Path to brand voice/messaging guidelines"
+        },
+        "glossary": { 
+          "type": "string",
+          "description": "Path to project glossary/terminology"
+        },
+        "security": { 
+          "type": "string",
+          "description": "Path to security guidelines"
+        }
+      },
+      "additionalProperties": { "type": "string" }
+    },
+
+    "relatedProjects": {
+      "type": "array",
+      "description": "Companion projects related to this one. Enables agents to find related projects (e.g., documentation site, marketing site, API backend) without guessing based on names.",
+      "items": {
+        "type": "object",
+        "required": ["projectId", "relationship"],
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "description": "Project ID from projects.json registry"
+          },
+          "relationship": {
+            "type": "string",
+            "description": "Relationship type. Common conventions: documentation-site, documented-project, marketing-site, marketed-product, admin-dashboard, managed-service, api-backend, frontend-client, mobile-app, web-counterpart, shared-library, dependent-project, monorepo-sibling, test-harness, tested-system"
+          },
+          "label": {
+            "type": "string",
+            "description": "Optional label for disambiguation when multiple projects share the same relationship type (e.g., 'user-docs' vs 'api-docs' for two documentation-site relationships)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional human-readable description of this relationship"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,152 @@
+# Default fallback chains for agent reassignment
+# When a specialist fails, Builder/Developer consult this to find alternatives.
+#
+# Usage:
+# - Toolkit provides these defaults
+# - Projects can override in project.json → agents.fallbackChains
+# - Project chains merge with (not replace) defaults unless "override": true
+#
+# Schema version for future migrations
+schemaVersion: 1
+
+chains:
+  # ═══════════════════════════════════════════════════════════════════════
+  # FRONTEND IMPLEMENTATION
+  # ═══════════════════════════════════════════════════════════════════════
+  
+  react-component:
+    primary: react-dev
+    alternatives: [developer]
+    description: "React/JSX component implementation"
+    
+  frontend-generic:
+    primary: react-dev  
+    alternatives: [developer]
+    description: "General frontend work (styling, layout, interactions)"
+
+  public-page:
+    primary: public-page-dev
+    alternatives: [react-dev, developer]
+    description: "Marketing, legal, and public-facing pages"
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # BACKEND IMPLEMENTATION
+  # ═══════════════════════════════════════════════════════════════════════
+  
+  go-service:
+    primary: go-dev
+    alternatives: [developer]
+    description: "Go service/handler implementation"
+    
+  java-service:
+    primary: java-dev
+    alternatives: [developer]
+    description: "Java service implementation"
+    
+  python-service:
+    primary: python-dev
+    alternatives: [developer]
+    description: "Python service implementation"
+    
+  typescript-backend:
+    primary: developer
+    alternatives: []
+    description: "TypeScript backend (no specialist, developer handles)"
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # TESTING
+  # ═══════════════════════════════════════════════════════════════════════
+  
+  jest-tests:
+    primary: jest-tester
+    alternatives: [tester, developer]
+    description: "Jest unit/integration tests"
+    
+  react-tests:
+    primary: react-tester
+    alternatives: [jest-tester, tester, developer]
+    description: "React component tests with Testing Library"
+    
+  go-tests:
+    primary: go-tester
+    alternatives: [tester, developer]
+    description: "Go tests with testify"
+    
+  playwright-tests:
+    primary: ui-tester-playwright
+    alternatives: [developer]
+    description: "Playwright E2E tests"
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # INFRASTRUCTURE
+  # ═══════════════════════════════════════════════════════════════════════
+  
+  cloudformation:
+    primary: aws-dev
+    alternatives: [developer]
+    description: "CloudFormation templates"
+    
+  terraform:
+    primary: terraform-dev
+    alternatives: [developer]
+    description: "Terraform configurations"
+    
+  docker:
+    primary: docker-dev
+    alternatives: [developer]
+    description: "Docker images and container configs"
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # GENERIC FALLBACK
+  # ═══════════════════════════════════════════════════════════════════════
+  
+  generic:
+    primary: developer
+    alternatives: []
+    description: "Catch-all for unmatched task types"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RETRY CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+retry:
+  # Rate limits are transient — retry same agent with backoff
+  rateLimit:
+    maxRetries: 3
+    backoffSeconds: [30, 60, 120]  # Exponential backoff
+    
+  # Bad output suggests capability mismatch — try alternatives
+  badOutput:
+    maxRetries: 1  # One retry with same agent, then switch
+    
+  # Context overflow needs fresh context, not retry
+  contextOverflow:
+    maxRetries: 0  # Don't retry, checkpoint + fresh session
+    
+  # Crashes/errors get one retry then switch
+  crash:
+    maxRetries: 1
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TASK TYPE DETECTION
+# ═══════════════════════════════════════════════════════════════════════════
+# 
+# How Builder determines which chain to use:
+#
+# 1. Check file patterns:
+#    - *.tsx, *.jsx → react-component
+#    - *_test.go → go-tests
+#    - *.spec.ts (in e2e/) → playwright-tests
+#    - *.test.tsx → react-tests
+#    - *.test.ts (in src/) → jest-tests
+#    - Dockerfile* → docker
+#    - *.tf → terraform
+#    - *.yaml (in cloudformation/) → cloudformation
+#
+# 2. Check task description keywords:
+#    - "component", "react", "jsx" → react-component
+#    - "test", "spec", "coverage" → [appropriate test chain]
+#    - "api", "handler", "endpoint" → [backend chain by stack]
+#    - "deploy", "infrastructure" → [infra chain by tool]
+#
+# 3. Fall back to "generic" if no match

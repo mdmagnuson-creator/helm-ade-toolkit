@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/prd-registry.json",
+  "title": "PRD Registry Schema",
+  "description": "Schema for project-level PRD registry tracking PRD lifecycle and conflicts",
+  "type": "object",
+  "required": ["prds"],
+
+  "definitions": {
+    "prdStatus": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "ready",
+        "in_progress",
+        "committed",
+        "pushed",
+        "pr_open",
+        "merged",
+        "completed"
+      ],
+      "description": "PRD lifecycle state. States progress: draft → ready → in_progress → committed → pushed → pr_open → merged → completed"
+    },
+    "conflictRisk": {
+      "type": "string",
+      "enum": ["none", "low", "medium", "high"],
+      "description": "Level of conflict risk when working on this PRD alongside other active PRDs"
+    },
+    "prdEntry": {
+      "type": "object",
+      "required": ["id", "title", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^prd-[a-z0-9-]+$",
+          "description": "Unique PRD identifier (e.g., 'prd-error-logging')"
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable title of the PRD"
+        },
+        "status": {
+          "$ref": "#/definitions/prdStatus"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"],
+          "default": "medium",
+          "description": "Priority level for ordering work"
+        },
+        "storyCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of user stories in this PRD"
+        },
+        "completedStories": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of completed user stories"
+        },
+        "currentStory": {
+          "type": ["string", "null"],
+          "description": "ID of the story currently being worked on (e.g., 'US-003')"
+        },
+        "branchName": {
+          "type": "string",
+          "description": "Git branch name for this PRD (e.g., 'feature/error-logging')"
+        },
+        "prNumber": {
+          "type": ["integer", "null"],
+          "description": "GitHub PR number when status is pr_open or later"
+        },
+        "prUrl": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "description": "Full URL to the GitHub PR"
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "List of PRD IDs that must be completed before this PRD can start"
+        },
+        "conflictsWith": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["prdId", "risk"],
+            "properties": {
+              "prdId": { "type": "string" },
+              "risk": { "$ref": "#/definitions/conflictRisk" },
+              "sharedPaths": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "File paths both PRDs touch"
+              }
+            }
+          },
+          "default": [],
+          "description": "Other PRDs that may conflict with this one"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date",
+          "description": "Date the PRD was created"
+        },
+        "startedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when work started (transitioned to in_progress)"
+        },
+        "completedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when PRD was fully completed and archived"
+        }
+      }
+    }
+  },
+
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "version": {
+      "type": "string",
+      "default": "1.1.0",
+      "description": "Schema version for migrations"
+    },
+    "prds": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/prdEntry" },
+      "description": "List of active PRDs (draft, ready, in_progress, etc.)"
+    },
+    "completed": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/prdEntry" },
+      "maxItems": 5,
+      "description": "Rolling window of last 5 completed PRDs for recent context. Auto-archives to 'archived' when 6th PRD completes."
+    },
+    "archived": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/prdEntry" },
+      "description": "Full archive of older completed PRDs (beyond rolling window). Minimal metadata, not loaded at startup."
+    },
+    "archiveStats": {
+      "type": "object",
+      "properties": {
+        "totalArchived": {
+          "type": "integer",
+          "description": "Total count of archived PRDs for quick reference without loading archive"
+        },
+        "oldestArchivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Completion date of oldest archived PRD"
+        },
+        "newestArchivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Completion date of newest archived PRD"
+        }
+      },
+      "description": "Summary statistics for archived PRDs"
+    }
+  },
+
+  "x-lifecycle-transitions": {
+    "description": "Valid state transitions for PRD lifecycle",
+    "transitions": {
+      "draft": ["ready"],
+      "ready": ["in_progress"],
+      "in_progress": ["committed"],
+      "committed": ["pushed"],
+      "pushed": ["pr_open"],
+      "pr_open": ["merged"],
+      "merged": ["completed"]
+    },
+    "descriptions": {
+      "draft": "PRD is being written, not ready for development",
+      "ready": "PRD is ready to be claimed and built",
+      "in_progress": "PRD has been claimed, work is happening",
+      "committed": "All stories complete, changes committed locally",
+      "pushed": "Branch pushed to remote",
+      "pr_open": "PR created, awaiting review/merge",
+      "merged": "PR merged, awaiting cleanup/archival",
+      "completed": "Archived to docs/completed/"
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/update-affinity-rules.json",
+  "title": "Update Affinity Rules",
+  "description": "JSONPath-based rules for determining which projects are affected by toolkit changes",
+  "type": "object",
+  "required": ["rules"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "match"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "description": "Unique identifier for the rule (kebab-case)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of what this rule matches"
+          },
+          "match": {
+            "type": "object",
+            "required": ["path", "condition"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "JSONPath-like path to the field in project.json (e.g., 'apps', 'database.provider')"
+              },
+              "condition": {
+                "type": "string",
+                "enum": ["equals", "contains", "hasValueWhere", "exists", "notExists", "always"],
+                "description": "Type of condition to evaluate"
+              },
+              "value": {
+                "description": "Value to compare against (for equals/contains conditions)"
+              },
+              "where": {
+                "type": "object",
+                "description": "Object with field:value pairs that must all match (for hasValueWhere condition). Use null to check for missing fields.",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

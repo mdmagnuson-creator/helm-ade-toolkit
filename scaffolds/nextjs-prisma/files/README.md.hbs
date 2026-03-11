@@ -1,0 +1,127 @@
+# {{projectNamePascal}}
+
+{{description}}
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- npm or pnpm
+- PostgreSQL database (local or hosted)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd {{projectName}}
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+4. Set up the database:
+   ```bash
+   # Generate Prisma client
+   npm run db:generate
+
+   # Push schema to database (development)
+   npm run db:push
+
+   # Or create a migration (production)
+   npm run db:migrate
+   ```
+
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+6. Open [http://localhost:{{devPort}}](http://localhost:{{devPort}}) in your browser.
+
+### Local PostgreSQL with Docker (Optional)
+
+```bash
+# Start PostgreSQL container
+docker run --name {{projectName}}-db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB={{projectName}} \
+  -p 5432:5432 \
+  -d postgres:16
+
+# Connection URL: postgresql://postgres:postgres@localhost:5432/{{projectName}}
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Create production build |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript type checking |
+| `npm run format` | Format code with Prettier |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:push` | Push schema to database |
+| `npm run db:migrate` | Create and run migrations |
+| `npm run db:studio` | Open Prisma Studio |
+{{#if (eq testing.unit 'jest')}}
+| `npm run test` | Run unit tests |
+| `npm run test:coverage` | Run tests with coverage |
+{{/if}}
+{{#if (eq testing.e2e 'playwright')}}
+| `npm run test:e2e` | Run E2E tests |
+{{/if}}
+
+## Tech Stack
+
+- [Next.js 15](https://nextjs.org/) - React framework
+- [React 19](https://react.dev/) - UI library
+- [Prisma](https://www.prisma.io/) - Database ORM
+- [PostgreSQL](https://www.postgresql.org/) - Database
+- [NextAuth.js v5](https://authjs.dev/) - Authentication
+- [Tailwind CSS v4](https://tailwindcss.com/) - Utility-first CSS
+- [TypeScript](https://www.typescriptlang.org/) - Type safety
+{{#if capabilities.payments}}
+- [Stripe](https://stripe.com/) - Payment processing
+{{/if}}
+{{#if capabilities.email}}
+- [Resend](https://resend.com/) - Email delivery
+{{/if}}
+{{#if capabilities.ai}}
+- [OpenAI](https://openai.com/) - AI/LLM integration
+{{/if}}
+
+## Project Structure
+
+```
+{{projectName}}/
+├── src/
+│   ├── app/              # Next.js App Router pages
+│   ├── components/       # React components
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Utility functions and clients
+│   │   ├── auth/         # NextAuth configuration
+│   │   └── db/           # Prisma client
+│   └── types/            # TypeScript type definitions
+├── prisma/
+│   ├── schema.prisma     # Database schema
+│   └── migrations/       # Database migrations
+├── docs/                 # Documentation
+├── public/               # Static assets
+└── tests/                # Test files
+```
+
+## License
+
+MIT

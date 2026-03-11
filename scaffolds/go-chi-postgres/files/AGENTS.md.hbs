@@ -1,0 +1,90 @@
+# {{projectNamePascal}}
+
+{{description}}
+
+## Development
+
+```bash
+make run        # Run the server
+make dev        # Run with hot reload (requires air)
+make build      # Build binary
+make test       # Run tests
+make lint       # Run linter
+```
+
+## Database
+
+```bash
+make docker-up   # Start PostgreSQL in Docker
+make migrate-up  # Run migrations
+make migrate-down # Rollback last migration
+```
+
+## Stack
+
+- **Language:** Go 1.22+
+- **Router:** Chi v5
+- **Database:** PostgreSQL
+- **Auth:** JWT
+- **Logging:** Zerolog
+{{#if capabilities.payments}}
+- **Payments:** Stripe
+{{/if}}
+{{#if capabilities.ai}}
+- **AI:** OpenAI
+{{/if}}
+
+## Project Structure
+
+```
+{{projectName}}/
+├── cmd/
+│   └── server/
+│       └── main.go         # Entry point
+├── internal/
+│   ├── config/             # Configuration
+│   ├── database/           # Database connection and queries
+│   ├── handlers/           # HTTP handlers
+│   ├── middleware/         # HTTP middleware
+│   ├── models/             # Data models
+│   └── routes/             # Route definitions
+├── migrations/             # SQL migrations
+├── scripts/                # Helper scripts
+├── docs/                   # Documentation
+│   └── agents/             # Project-specific AI agents
+├── go.mod                  # Go module definition
+├── Makefile                # Build commands
+├── Dockerfile              # Container build
+└── docker-compose.yml      # Local development stack
+```
+
+## API Endpoints
+
+### Health
+- `GET /health` - Health check
+- `GET /ready` - Readiness check
+
+### Auth
+- `POST /api/v1/auth/register` - Register new user
+- `POST /api/v1/auth/login` - Login
+- `GET /api/v1/auth/me` - Get current user (protected)
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+cp .env.example .env
+```
+
+Required:
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - JWT signing secret (generate with `openssl rand -base64 32`)
+{{#if capabilities.payments}}
+- `STRIPE_SECRET_KEY` - Stripe API key
+{{/if}}
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) - System overview
+- [API](docs/API.md) - API documentation

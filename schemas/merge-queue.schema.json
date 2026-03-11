@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/merge-queue.json",
+  "title": "Merge Queue Schema",
+  "description": "Global merge queue for coordinating parallel session merges across projects",
+  "type": "object",
+
+  "definitions": {
+    "entryStatus": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "processing",
+        "rebasing",
+        "testing",
+        "merging",
+        "completed",
+        "failed",
+        "blocked"
+      ],
+      "description": "Merge queue entry status. States progress: queued → processing → rebasing → testing → merging → completed (or failed/blocked)"
+    },
+    "entryPriority": {
+      "type": "string",
+      "enum": ["critical", "high", "normal", "low"],
+      "default": "normal",
+      "description": "Priority for queue ordering. Higher priority items are processed first."
+    },
+    "queueEntry": {
+      "type": "object",
+      "required": ["id", "projectId", "branch", "prNumber", "status", "queuedAt"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^entry-[a-z0-9]+$",
+          "description": "Unique entry identifier (e.g., 'entry-abc123')"
+        },
+        "projectId": {
+          "type": "string",
+          "description": "Project ID from projects.json"
+        },
+        "prdId": {
+          "type": ["string", "null"],
+          "description": "PRD ID if this is PRD-driven work"
+        },
+        "adhocId": {
+          "type": ["string", "null"],
+          "description": "Adhoc ID if this is ad-hoc work (e.g., 'adhoc-2026-02-20-fix-typo')"
+        },
+        "branch": {
+          "type": "string",
+          "description": "Git branch name"
+        },
+        "prNumber": {
+          "type": "integer",
+          "description": "GitHub PR number"
+        },
+        "prUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Full URL to the GitHub PR"
+        },
+        "status": {
+          "$ref": "#/definitions/entryStatus"
+        },
+        "priority": {
+          "$ref": "#/definitions/entryPriority"
+        },
+        "queuedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the entry was added to the queue"
+        },
+        "startedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "When processing started"
+        },
+        "completedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "When merge completed or failed"
+        },
+        "heartbeat": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Last heartbeat while processing (for stale detection)"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Builder session ID that created this entry"
+        },
+        "conflictRisk": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Entry IDs that may conflict with this one"
+        },
+        "filesChanged": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of files changed in this branch (for conflict detection)"
+        },
+        "error": {
+          "type": ["object", "null"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["conflict", "test-failure", "merge-blocked", "stale", "other"]
+            },
+            "message": { "type": "string" },
+            "details": { "type": "string" }
+          },
+          "description": "Error details if status is failed or blocked"
+        }
+      }
+    }
+  },
+
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "version": {
+      "type": "string",
+      "default": "1.0.0",
+      "description": "Schema version for migrations"
+    },
+    "queue": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/queueEntry" },
+      "description": "Entries waiting to be processed (status: queued)"
+    },
+    "processing": {
+      "oneOf": [
+        { "$ref": "#/definitions/queueEntry" },
+        { "type": "null" }
+      ],
+      "description": "Currently processing entry (only one at a time)"
+    },
+    "completed": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/queueEntry" },
+      "description": "Successfully merged entries (kept for history)"
+    },
+    "failed": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/queueEntry" },
+      "description": "Failed or blocked entries needing attention"
+    }
+  },
+
+  "x-status-transitions": {
+    "description": "Valid state transitions for merge queue entries",
+    "transitions": {
+      "queued": ["processing"],
+      "processing": ["rebasing", "failed"],
+      "rebasing": ["testing", "blocked", "failed"],
+      "testing": ["merging", "failed"],
+      "merging": ["completed", "blocked", "failed"],
+      "blocked": ["queued"],
+      "failed": ["queued"]
+    },
+    "descriptions": {
+      "queued": "Waiting to be processed",
+      "processing": "Currently being handled by merge-coordinator",
+      "rebasing": "Rebasing onto latest main",
+      "testing": "Running tests after rebase",
+      "merging": "Tests passed, merging to main",
+      "completed": "Successfully merged to main",
+      "failed": "Failed (conflict, test failure, etc.)",
+      "blocked": "Waiting for dependency or manual action (e.g., PR approval)"
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "$schema": "../schemas/workflow-defaults.schema.json",
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-08",
+  "description": "Default workflow steps for PRD and ad-hoc modes. Projects can override these by defining workflows in their project.json.",
+
+  "workflows": {
+    "prd": {
+      "steps": [
+        "build",
+        "critic",
+        "tester",
+        "typecheck",
+        "lint",
+        "test",
+        "visual-verify",
+        "commit",
+        "toolkit-suggestions"
+      ],
+      "description": "Comprehensive workflow for planned PRD work. Includes full test coverage, code review, and visual verification."
+    },
+    "adhoc": {
+      "steps": [
+        "build",
+        "typecheck",
+        "lint",
+        "test-scoped",
+        "critic",
+        "commit",
+        "report"
+      ],
+      "description": "Fast workflow for quick fixes and ad-hoc requests. Uses scoped testing for speed."
+    }
+  },
+
+  "conditionalSteps": {
+    "tester-scoped": {
+      "description": "Write tests scoped to changed files only",
+      "prdCondition": null,
+      "adhocCondition": "always"
+    }
+  },
+
+  "stepReference": {
+    "build": {
+      "description": "Delegate to @developer to implement the feature",
+      "needsDevServer": false,
+      "runAlways": true
+    },
+    "typecheck": {
+      "description": "Run TypeScript type checking",
+      "needsDevServer": false,
+      "condition": "stack.languages includes typescript"
+    },
+    "lint": {
+      "description": "Run linter (ESLint, golangci-lint, etc.)",
+      "needsDevServer": false,
+      "condition": "commands.lint is defined"
+    },
+    "test": {
+      "description": "Run full test suite",
+      "needsDevServer": false,
+      "condition": "commands.test is defined"
+    },
+    "test-scoped": {
+      "description": "Run only tests for files changed in this session",
+      "needsDevServer": false,
+      "condition": "commands.test is defined"
+    },
+    "critic": {
+      "description": "Run @critic for code review (routes to specialist critics)",
+      "needsDevServer": false,
+      "runAlways": true
+    },
+    "tester": {
+      "description": "Run @tester to write/update unit tests for new code",
+      "needsDevServer": false,
+      "condition": "testing.unit is configured"
+    },
+    "tester-scoped": {
+      "description": "Run @tester in ad-hoc mode (scoped to changed files)",
+      "needsDevServer": false,
+      "condition": "testing.unit is configured"
+    },
+    "visual-verify": {
+      "description": "Take screenshot to verify UI changes",
+      "needsDevServer": true,
+      "condition": "UI files were changed (components, styles, pages)"
+    },
+    "commit": {
+      "description": "Commit changes to git",
+      "needsDevServer": false,
+      "runAlways": true
+    },
+    "report": {
+      "description": "Generate ad-hoc completion report",
+      "needsDevServer": false,
+      "adhocOnly": true
+    },
+    "toolkit-suggestions": {
+      "description": "Analyze work done and suggest toolkit improvements",
+      "needsDevServer": false,
+      "prdOnly": true
+    }
+  }
+}

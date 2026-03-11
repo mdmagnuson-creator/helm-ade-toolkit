@@ -1,0 +1,74 @@
+{
+  "$schema": "../schemas/update-registry.schema.json",
+  "schemaVersion": 1,
+  "description": "Central registry of available updates. Projects can sync from this registry to discover updates they haven't received yet.",
+  "updates": [
+    {
+      "id": "2026-02-28-add-desktop-app-config",
+      "description": "Add executablePath configuration for Electron/Tauri E2E testing",
+      "affinityRule": "desktop-apps",
+      "priority": "normal",
+      "updateType": "schema",
+      "createdAt": "2026-02-28",
+      "templatePath": "templates/updates/add-desktop-app-config.md"
+    },
+    {
+      "id": "2026-03-04-migrate-git-config",
+      "description": "Migrate deprecated agents.* git fields to git.agentWorkflow (interactive)",
+      "affinityRule": "all-projects",
+      "priority": "high",
+      "updateType": "migration",
+      "createdAt": "2026-03-04",
+      "templatePath": "templates/updates/migrate-git-config.md"
+    },
+    {
+      "id": "2026-03-05-deprecate-multi-session",
+      "description": "Remove deprecated agents.multiSession field (coordination is now always-on)",
+      "affinityRule": "all-projects",
+      "priority": "normal",
+      "updateType": "schema",
+      "createdAt": "2026-03-05",
+      "templatePath": "templates/updates/deprecate-multi-session.md"
+    },
+    {
+      "id": "2026-03-05-architecture-aware-verification",
+      "description": "Configure auth acquisition and app architecture settings for automated verification",
+      "affinityRule": "all-projects",
+      "priority": "high",
+      "updateType": "schema",
+      "interactive": true,
+      "createdAt": "2026-03-05",
+      "templatePath": "templates/updates/architecture-aware-verification.md"
+    },
+    {
+      "id": "2026-03-07-configure-test-verify-settings",
+      "description": "Configure testVerifySettings — the 6 Playwright gate settings that control automated UI testing",
+      "affinityRule": "all-projects",
+      "priority": "high",
+      "updateType": "schema",
+      "interactive": true,
+      "createdAt": "2026-03-07",
+      "templatePath": "templates/updates/configure-test-verify-settings.md"
+    },
+    {
+      "id": "2026-03-07-configure-electron-build-deploy",
+      "description": "Configure buildDeploy for Electron apps — automates build → kill → copy → relaunch before Playwright verification",
+      "affinityRule": "electron-apps",
+      "priority": "normal",
+      "updateType": "schema",
+      "interactive": true,
+      "createdAt": "2026-03-07",
+      "templatePath": "templates/updates/configure-electron-build-deploy.md"
+    },
+    {
+      "id": "2026-03-08-migrate-to-post-change-actions",
+      "description": "Migrate from story flags and conditionalSteps to postChangeActions for downstream propagation (support articles, AI tools, marketing, project syncs)",
+      "affinityRule": "all-projects",
+      "priority": "high",
+      "updateType": "schema",
+      "interactive": true,
+      "createdAt": "2026-03-08",
+      "templatePath": "templates/updates/migrate-to-post-change-actions.md"
+    }
+  ]
+}

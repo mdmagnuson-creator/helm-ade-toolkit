@@ -1,0 +1,210 @@
+{
+  "$schema": "https://opencode.ai/schemas/prd-registry.json",
+  "prds": [
+    {
+      "id": "prd-multi-platform-apps",
+      "title": "Multi-Platform App Support & Electron Testing",
+      "status": "complete",
+      "filePath": "docs/completed/prd-multi-platform-apps.md",
+      "jsonPath": "docs/completed/prd-multi-platform-apps.json",
+      "createdAt": "2026-02-27",
+      "completedAt": "2026-02-27",
+      "stories": 9
+    },
+    {
+      "id": "prd-automatic-test-intensity",
+      "title": "Automatic Test Activity Selection",
+      "status": "complete",
+      "filePath": "docs/completed/prd-automatic-test-intensity.md",
+      "jsonPath": "docs/completed/prd-automatic-test-intensity.json",
+      "createdAt": "2026-02-27",
+      "completedAt": "2026-02-28",
+      "stories": 10
+    },
+    {
+      "id": "prd-integration-gaps",
+      "title": "Integration Skill Gaps",
+      "status": "complete",
+      "filePath": "docs/completed/prd-integration-gaps.md",
+      "createdAt": "2026-02-28",
+      "completedAt": "2026-02-28",
+      "stories": 2
+    },
+    {
+      "id": "prd-pending-updates-v2",
+      "title": "Enhanced Pending Updates System",
+      "status": "complete",
+      "filePath": "docs/completed/prd-pending-updates-v2.md",
+      "createdAt": "2026-02-27",
+      "completedAt": "2026-02-27"
+    },
+    {
+      "id": "prd-project-auth-config",
+      "title": "Project Authentication Configuration",
+      "status": "complete",
+      "filePath": "docs/completed/prd-project-auth-config.md",
+      "createdAt": "2026-02-25",
+      "completedAt": "2026-02-25"
+    },
+    {
+      "id": "prd-rate-limit-resilience",
+      "title": "Rate Limit Resilience",
+      "status": "complete",
+      "filePath": "docs/completed/prd-rate-limit-resilience.md",
+      "createdAt": "2026-02-26",
+      "completedAt": "2026-02-26"
+    },
+    {
+      "id": "prd-vectorization",
+      "title": "Codebase and Database Vectorization",
+      "status": "complete",
+      "filePath": "docs/completed/prd-vectorization.md",
+      "createdAt": "2026-02-27",
+      "completedAt": "2026-02-28"
+    },
+    {
+      "id": "prd-verifiable-completion",
+      "title": "Verifiable Task Completion",
+      "status": "ready",
+      "filePath": "docs/prds/prd-verifiable-completion.md",
+      "createdAt": "2026-02-28",
+      "stories": 7,
+      "notes": "Foundation PRD for intelligent delegation - defines what 'success' means for task handoffs"
+    },
+    {
+      "id": "prd-checkpoint-serialization",
+      "title": "Checkpoint & State Serialization",
+      "status": "ready",
+      "filePath": "docs/prds/prd-checkpoint-serialization.md",
+      "createdAt": "2026-02-28",
+      "stories": 7,
+      "dependencies": ["prd-verifiable-completion"],
+      "notes": "Enables task handoff between agents - checkpoints capture work artifacts for resume"
+    },
+    {
+      "id": "prd-dynamic-reassignment",
+      "title": "Dynamic Reassignment",
+      "status": "ready",
+      "filePath": "docs/prds/prd-dynamic-reassignment.md",
+      "createdAt": "2026-02-28",
+      "stories": 7,
+      "dependencies": ["prd-verifiable-completion", "prd-checkpoint-serialization"],
+      "notes": "Automatic agent fallback and retry - uses checkpoints and verification contracts"
+    },
+    {
+      "id": "prd-toolkit-agent-organization",
+      "title": "Toolkit-Wide Agent Organization Refactor",
+      "status": "complete",
+      "filePath": "docs/completed/prd-toolkit-agent-organization.md",
+      "createdAt": "2026-03-01",
+      "completedAt": "2026-03-01",
+      "stories": 11,
+      "notes": "Extracts duplicated patterns to AGENTS.md and skills. Creates verification-contracts, dynamic-reassignment, self-correction, auth-config-check, critic-dispatch, session-state skills. Builder reduced from 2,255 to 1,312 lines (42%)."
+    },
+    {
+      "id": "prd-adhoc-analysis-phase",
+      "title": "Ad-hoc Analysis Phase with Task Specs",
+      "status": "complete",
+      "filePath": "docs/completed/prd-adhoc-analysis-phase.md",
+      "createdAt": "2026-03-01",
+      "completedAt": "2026-03-02",
+      "stories": 14,
+      "notes": "Adds analysis phase to ad-hoc mode. Introduces Task Specs with PRD-like lifecycle. Enables promotion to formal PRD when scope grows."
+    },
+    {
+      "id": "prd-token-optimization",
+      "title": "Token Optimization for Large Agents and Skills",
+      "status": "ready",
+      "filePath": "docs/prds/prd-token-optimization.md",
+      "createdAt": "2026-03-04",
+      "stories": 4,
+      "notes": "Split test-flow into 7 focused skills, update Builder loading protocol, extract Builder inline docs, implement PRD archive with 5-item rolling window."
+    },
+    {
+      "id": "prd-vectorization-cloud-storage",
+      "title": "Vectorization Cloud Storage (Pinecone)",
+      "status": "ready",
+      "filePath": "docs/prds/prd-vectorization-cloud-storage.md",
+      "createdAt": "2026-03-02",
+      "stories": 9,
+      "notes": "Add Pinecone cloud vector storage for cross-machine sync. Eliminates per-machine embedding costs and enables instant access on new machines."
+    },
+    {
+      "id": "prd-builder-skill-extraction",
+      "title": "Builder Skill Extraction (Phase 2)",
+      "status": "complete",
+      "filePath": "docs/completed/prd-builder-skill-extraction.md",
+      "createdAt": "2026-03-05",
+      "completedAt": "2026-03-05",
+      "stories": 5,
+      "notes": "Extracted verification handling, dashboards, and error recovery from builder.md to 3 new skills. Reduced builder from 2,082 to 1,459 lines (-30%). Created builder-verification (14KB), builder-dashboard (5KB), builder-error-recovery (4KB)."
+    },
+    {
+      "id": "prd-session-unification",
+      "title": "Session Unification (Always-On Coordination)",
+      "status": "complete",
+      "filePath": "docs/completed/prd-session-unification.md",
+      "createdAt": "2026-03-05",
+      "completedAt": "2026-03-05",
+      "stories": 7,
+      "notes": "Unified solo and multi-session modes into always-on coordination with lazy heartbeat. Created session-setup skill, deprecated agents.multiSession flag, eliminated all solo/multi branching from builder.md and developer.md."
+    },
+    {
+      "id": "prd-architecture-aware-verification",
+      "title": "Architecture-Aware Verification & Auth Acquisition",
+      "status": "complete",
+      "filePath": "docs/prds/prd-architecture-aware-verification.md",
+      "createdAt": "2026-03-05",
+      "completedAt": "2026-03-05",
+      "stories": 5,
+      "notes": "Builder auto-infers verification pipelines from app architecture (desktop/Electron → rebuild+relaunch, web → HMR). Added postChangeWorkflow schema, CLI-based headless auth acquisition, interactive rollout template for all projects."
+    },
+    {
+      "id": "prd-adhoc-design-decisions",
+      "title": "Ad-hoc Design Decision Surfacing & Testing Consolidation",
+      "status": "ready",
+      "filePath": "docs/prds/prd-adhoc-design-decisions.md",
+      "createdAt": "2026-03-06",
+      "stories": 17,
+      "notes": "Part 1: Adds Step 0.1c (implementation decisions) and Step 0.1d (Playwright analysis confirmation) to ad-hoc analysis. Builder detects implicit decisions, asks user, then visually confirms analysis via Playwright before showing dashboard. Integrates planning.considerations. Answers flow into Task Spec acceptance criteria. Part 2: Consolidates 4 duplicated quality-check pipeline definitions into a single canonical test-flow skill. Removes isUIProject() gate entirely — all projects get full Playwright verification unconditionally. Deduplicates E2E URL resolution and shared detection functions. Part 3: Unifies PRD and ad-hoc state models into single activeWork object, defines mandatory story processing pipeline (implement → test-flow → auto-commit), adds flow chart dashboard option, enables session resume from unified state."
+    },
+    {
+      "id": "prd-mandatory-probe-enforcement",
+      "title": "Mandatory Playwright Probe Enforcement — Remove All Skip Paths",
+      "status": "complete",
+      "filePath": "docs/prds/prd-mandatory-probe-enforcement.md",
+      "createdAt": "2026-03-06",
+      "completedAt": "2026-03-06",
+      "stories": 13,
+      "notes": "Eliminates all probe skip paths (skipped, degraded-no-auth, config opt-out). Makes probe truly mandatory with user-assisted auth escalation, re-probe loop for contradictions, and user-skipped as the only skip path (requires explicit user acceptance)."
+    },
+    {
+      "id": "prd-playwright-agent-consolidation",
+      "title": "Playwright Agent Consolidation, E2E Routing Rationalization & UI Test Naming Convention",
+      "status": "ready",
+      "filePath": "docs/prds/prd-playwright-agent-consolidation.md",
+      "createdAt": "2026-03-07",
+      "stories": 13,
+      "notes": "Merges playwright-dev into e2e-playwright, renames all e2e-* to ui-* naming convention, introduces testVerifySettings as universal Playwright gate, simplifies 12 invocation paths to unified routing through one agent."
+    },
+    {
+      "id": "prd-electron-build-deploy",
+      "title": "Electron Build-Deploy Cycle Automation",
+      "status": "complete",
+      "filePath": "docs/completed/prd-electron-build-deploy.md",
+      "createdAt": "2026-03-07",
+      "completedAt": "2026-03-08",
+      "stories": 6,
+      "notes": "Adds apps.desktop.buildDeploy schema section so test-flow can automate build → kill → copy → relaunch for Electron projects. Creates dedicated electron-build-deploy skill with explicit command sequence to prevent Builder from skipping deploy steps. macOS only for v1."
+    },
+    {
+      "id": "prd-proactive-context-management",
+      "title": "Proactive Context Management with Persistent Session Logs",
+      "status": "ready",
+      "filePath": "docs/prds/prd-proactive-context-management.md",
+      "createdAt": "2026-03-08",
+      "stories": 5,
+      "notes": "Replaces builder-state.json with persistent session logs. Builder works story-by-story automatically, shedding context between chunks. Session logs committed to git for cross-machine resume. Completed sessions archived to docs/sessions/archive/."
+    }
+  ]
+}

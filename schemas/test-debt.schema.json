@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/test-debt.json",
+  "title": "Test Debt",
+  "description": "Per-project tracking of test failures and hotspots for automatic activity escalation",
+  "type": "object",
+  "required": ["hotspots"],
+  "properties": {
+    "hotspots": {
+      "type": "object",
+      "description": "Files with recent test failures that need extra scrutiny",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["failureCount", "lastFailure"],
+        "properties": {
+          "failureCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of test failures in decay window"
+          },
+          "lastFailure": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of most recent failure (YYYY-MM-DD)"
+          },
+          "addedCritics": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Additional critics to run for this file"
+          },
+          "forceE2E": {
+            "type": "boolean",
+            "description": "Force immediate E2E for this file"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Human-readable explanation"
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": { "type": "string", "format": "date" },
+                "type": { 
+                  "type": "string",
+                  "enum": ["unit", "e2e", "critic", "typecheck", "lint"]
+                },
+                "message": { "type": "string" }
+              }
+            },
+            "description": "Recent failure history"
+          }
+        }
+      }
+    },
+    "decayDays": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 30,
+      "description": "Days after which hotspots decay if no new failures"
+    },
+    "lastUpdated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this file was last updated"
+    }
+  }
+}

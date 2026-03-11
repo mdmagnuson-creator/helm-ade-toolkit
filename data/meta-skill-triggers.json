@@ -1,0 +1,69 @@
+{
+  "$schema": "../schemas/meta-skill-triggers.schema.json",
+  "description": "Mapping of capabilities and integrations to their meta-skill generators. Used by project-bootstrap (US-009) and developer (US-010) to auto-generate project-specific skills.",
+  "capabilityTriggers": {
+    "authentication": {
+      "metaSkill": "auth-skill-generator",
+      "generates": "auth-flow",
+      "description": "Authentication protection patterns for pages and API routes"
+    },
+    "multiTenant": {
+      "metaSkill": "multi-tenant-skill-generator",
+      "generates": "tenant-context",
+      "description": "Multi-tenant data isolation and context patterns"
+    },
+    "api": {
+      "metaSkill": "api-endpoint-skill-generator",
+      "generates": "api-patterns",
+      "description": "API endpoint creation patterns and conventions"
+    },
+    "email": {
+      "metaSkill": "email-skill-generator",
+      "generates": "email-patterns",
+      "description": "Transactional email sending patterns"
+    },
+    "ai": {
+      "metaSkill": "ai-tools-skill-generator",
+      "generates": "ai-tools",
+      "description": "AI/LLM tool definition patterns for chatbots and agents"
+    }
+  },
+  "integrationTriggers": {
+    "stripe": {
+      "metaSkill": "stripe-skill-generator",
+      "generates": "payments",
+      "description": "Stripe payment integration patterns"
+    },
+    "supabase": {
+      "metaSkill": "supabase-skill-generator",
+      "generates": "supabase-patterns",
+      "description": "Supabase database, RLS, and client patterns"
+    }
+  },
+  "alwaysGenerate": [
+    {
+      "metaSkill": "crud-skill-generator",
+      "generates": "crud-patterns",
+      "description": "CRUD operation patterns for entities",
+      "condition": "hasDatabase"
+    },
+    {
+      "metaSkill": "database-migration-skill-generator",
+      "generates": "migrations",
+      "description": "Database migration patterns",
+      "condition": "hasDatabase"
+    },
+    {
+      "metaSkill": "form-skill-generator",
+      "generates": "form-patterns",
+      "description": "Form handling patterns",
+      "condition": "hasFrontend"
+    },
+    {
+      "metaSkill": "table-skill-generator",
+      "generates": "table-patterns",
+      "description": "Data table and list patterns",
+      "condition": "hasFrontend"
+    }
+  ]
+}

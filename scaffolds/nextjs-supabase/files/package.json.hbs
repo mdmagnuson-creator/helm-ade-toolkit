@@ -1,0 +1,51 @@
+{
+  "name": "{{projectName}}",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."{{#if (eq testing.unit 'jest')}},
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"{{/if}}{{#if (eq testing.e2e 'playwright')}},
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"{{/if}}
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "@supabase/ssr": "^0.5.0",
+    "tailwindcss": "^4.0.0",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.5.0",
+    "lucide-react": "^0.400.0"{{#if capabilities.payments}},
+    "stripe": "^16.0.0",
+    "@stripe/stripe-js": "^4.0.0"{{/if}}{{#if capabilities.email}},
+    "resend": "^4.0.0"{{/if}}{{#if capabilities.ai}},
+    "openai": "^4.60.0",
+    "ai": "^3.4.0"{{/if}}
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.0.0",
+    "prettier": "^3.3.0",
+    "prettier-plugin-tailwindcss": "^0.6.0"{{#if (eq testing.unit 'jest')}},
+    "jest": "^29.7.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/jest-dom": "^6.5.0",
+    "jest-environment-jsdom": "^29.7.0"{{/if}}{{#if (eq testing.e2e 'playwright')}},
+    "@playwright/test": "^1.47.0"{{/if}}
+  }
+}

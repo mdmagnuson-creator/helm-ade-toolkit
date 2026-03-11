@@ -1,0 +1,38 @@
+name: 'Generate PRD'
+description: 'Generate a Product Requirements Document from a GitHub issue using AI'
+author: 'Yo Go'
+
+branding:
+  icon: 'file-text'
+  color: 'blue'
+
+inputs:
+  issue_number:
+    description: 'Issue number to generate PRD for'
+    required: true
+  github_token:
+    description: 'GitHub token with issues write permission and models read permission'
+    required: true
+  model:
+    description: 'AI model to use (e.g., openai/gpt-4o)'
+    required: false
+    default: 'openai/gpt-4o'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+        cache-dependency-path: automations/prd/go.sum
+
+    - name: Generate PRD
+      shell: bash
+      working-directory: ${{ github.action_path }}/automations/prd
+      run: go run .
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        ISSUE_NUMBER: ${{ inputs.issue_number }}
+        MODEL: ${{ inputs.model }}

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/projects.json",
+  "title": "OpenCode Projects Registry",
+  "description": "Registry of known projects for agent coordination",
+  "type": "object",
+  "required": ["projects"],
+
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of this file"
+    },
+    "nextDevPort": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 65535,
+      "default": 4000,
+      "description": "Next available dev port to assign to new projects. Auto-increments when a new project is added."
+    },
+    "projects": {
+      "type": "array",
+      "description": "List of registered projects",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "path"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "Unique identifier for the project (lowercase, hyphens only)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable project name"
+          },
+          "path": {
+            "type": "string",
+            "description": "Absolute path to the project root directory"
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description of what this project does"
+          },
+          "devPort": {
+            "type": ["integer", "null"],
+            "minimum": 1024,
+            "maximum": 65535,
+            "description": "Development server port for this project. Assigned automatically from nextDevPort when project is added, but can be overridden by user. Set to null for projects with no local runtime (code-only projects where you can't run a dev server locally). When null, E2E tests and dev server startup are skipped."
+          },
+          "hasAgentSystem": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this project has agent system files (project.json, prd-registry.json, etc.)"
+          },
+          "projectManifest": {
+            "type": ["string", "null"],
+            "description": "Relative path to project.json from project root (typically 'docs/project.json')"
+          },
+          "prdRegistry": {
+            "type": ["string", "null"],
+            "description": "Relative path to prd-registry.json from project root"
+          },
+          "sessionLocks": {
+            "type": ["string", "null"],
+            "description": "Relative path to session-locks.json from project root"
+          }
+        }
+      }
+    }
+  }
+}

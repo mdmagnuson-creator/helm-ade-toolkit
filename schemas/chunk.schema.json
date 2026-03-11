@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/chunk.json",
+  "title": "Chunk Metadata",
+  "description": "Full metadata for a single work chunk (chunk.json). Only read when working on this chunk or during compaction recovery for the current chunk. Lives at docs/sessions/{session-id}/chunks/{chunk-id}/chunk.json.",
+  "type": "object",
+  "required": ["id", "storyId", "title", "status"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Chunk folder name matching session.json chunks[].id (e.g., US-001-01-user-registration)",
+      "pattern": "^[A-Z]+-[0-9]+-[0-9]+-[a-z0-9-]+$"
+    },
+    "storyId": {
+      "type": "string",
+      "description": "Story identifier (e.g., US-001 for PRD, TSK-001 for ad-hoc)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable title of this chunk"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "completed", "failed", "skipped"],
+      "description": "Current processing status"
+    },
+    "startedAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "When work on this chunk began"
+    },
+    "completedAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "When this chunk completed"
+    },
+    "filesModified": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of files created or modified during this chunk's implementation"
+    },
+    "tests": {
+      "type": ["object", "null"],
+      "description": "Test results for this chunk. Replaces top-level pendingTests from builder-state.json — isolated per-chunk, no cross-contamination.",
+      "properties": {
+        "unit": {
+          "type": ["object", "null"],
+          "properties": {
+            "generated": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Paths to generated unit test files"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["pending", "running", "passed", "failed"],
+              "description": "Current test status"
+            },
+            "passed": {
+              "type": ["integer", "null"],
+              "description": "Number of passing tests"
+            },
+            "failed": {
+              "type": ["integer", "null"],
+              "description": "Number of failing tests"
+            }
+          }
+        },
+        "e2e": {
+          "type": ["object", "null"],
+          "properties": {
+            "generated": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Paths to generated E2E test files"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["pending", "running", "passed", "failed", "deferred"],
+              "description": "Current test status. Deferred means postponed to PRD completion."
+            },
+            "passed": {
+              "type": ["integer", "null"],
+              "description": "Number of passing tests"
+            },
+            "failed": {
+              "type": ["integer", "null"],
+              "description": "Number of failing tests"
+            },
+            "deferredTo": {
+              "type": ["string", "null"],
+              "description": "If deferred, when to run (e.g., prd-completion)"
+            }
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": ["object", "null"],
+      "description": "Verification contract and results for this chunk. Isolated per-chunk — no cross-chunk leakage, no manual reset needed. Replaces top-level verificationContract/verificationResults from builder-state.json.",
+      "properties": {
+        "contract": {
+          "type": ["object", "null"],
+          "description": "Pre-delegation contract defining how chunk completion will be verified",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["verifiable", "advisory", "skip"],
+              "description": "Contract type: verifiable (full test-flow), advisory (user review), skip (lint/typecheck only)"
+            },
+            "criteria": {
+              "type": "array",
+              "description": "List of verification criteria",
+              "items": {
+                "type": "object",
+                "required": ["activity", "description"],
+                "properties": {
+                  "activity": {
+                    "type": "string",
+                    "description": "Verification activity type (unit-test, typecheck, lint, critic)"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Human-readable description"
+                  },
+                  "pattern": {
+                    "type": ["string", "null"],
+                    "description": "File or test pattern to match"
+                  },
+                  "timing": {
+                    "type": "string",
+                    "enum": ["immediate", "deferred"],
+                    "description": "When this criterion is checked"
+                  }
+                }
+              }
+            },
+            "generatedFrom": {
+              "type": "string",
+              "enum": ["auto", "user", "prd"],
+              "description": "How the contract was generated"
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": ["type", "criteria"]
+        },
+        "result": {
+          "type": ["object", "null"],
+          "description": "Results of verifying this chunk against its contract",
+          "properties": {
+            "overall": {
+              "type": "string",
+              "enum": ["pass", "fail", "pending"],
+              "description": "Overall verification status"
+            },
+            "criteria": {
+              "type": "array",
+              "description": "Per-criterion results",
+              "items": {
+                "type": "object",
+                "required": ["activity", "status"],
+                "properties": {
+                  "activity": { "type": "string" },
+                  "status": {
+                    "type": "string",
+                    "enum": ["pass", "fail", "skipped"]
+                  },
+                  "error": {
+                    "type": ["string", "null"],
+                    "description": "Error message if failed"
+                  },
+                  "attempts": {
+                    "type": ["integer", "null"],
+                    "description": "Number of attempts made"
+                  }
+                }
+              }
+            },
+            "completedAt": {
+              "type": ["string", "null"],
+              "format": "date-time"
+            }
+          },
+          "required": ["overall"]
+        }
+      }
+    },
+    "resolvedActivities": {
+      "type": ["object", "null"],
+      "description": "Last resolved test activities from automatic activity resolution for this chunk",
+      "properties": {
+        "activities": {
+          "type": "object",
+          "description": "Map of activity types to resolution status",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "reason": { "type": "string" },
+              "timing": {
+                "type": "string",
+                "enum": ["immediate", "deferred", "skip"]
+              }
+            }
+          }
+        },
+        "changedFiles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Files analyzed for activity resolution"
+        },
+        "resolvedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "commit": {
+      "type": ["object", "null"],
+      "description": "Commit information for this chunk",
+      "properties": {
+        "hash": {
+          "type": "string",
+          "description": "Git commit hash"
+        },
+        "message": {
+          "type": "string",
+          "description": "Commit message used"
+        }
+      },
+      "required": ["hash", "message"]
+    },
+    "uncommitted": {
+      "type": ["object", "null"],
+      "description": "Summary of uncommitted work in this chunk. Null when chunk is fully committed.",
+      "properties": {
+        "hasChanges": {
+          "type": "boolean",
+          "description": "Whether there are uncommitted changes"
+        },
+        "summary": {
+          "type": ["string", "null"],
+          "description": "Brief summary of uncommitted work"
+        },
+        "filesChanged": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of uncommitted changed files"
+        }
+      }
+    },
+    "reassignment": {
+      "type": ["object", "null"],
+      "description": "Tracks reassignment attempts for this chunk. Isolated per-chunk — cleared when chunk succeeds.",
+      "properties": {
+        "taskType": {
+          "type": "string",
+          "description": "Task type for fallback chain lookup (e.g., react-component, jest-tests)"
+        },
+        "attempts": {
+          "type": "array",
+          "description": "History of agent attempts for this chunk",
+          "items": {
+            "type": "object",
+            "required": ["agent", "startedAt", "outcome"],
+            "properties": {
+              "agent": { "type": "string" },
+              "startedAt": { "type": "string", "format": "date-time" },
+              "endedAt": { "type": ["string", "null"], "format": "date-time" },
+              "outcome": {
+                "type": "string",
+                "enum": ["success", "rate_limit", "verification_failed", "context_overflow", "crash", "timeout"]
+              },
+              "error": { "type": ["string", "null"] },
+              "retryCount": { "type": ["integer", "null"] }
+            }
+          }
+        },
+        "currentAgent": { "type": "string" },
+        "escalated": { "type": "boolean", "default": false },
+        "escalatedAt": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "required": ["attempts", "currentAgent"]
+    },
+    "advisory": {
+      "type": ["object", "null"],
+      "description": "Advisory task info if this chunk was unverifiable (user review needed). Replaces top-level advisoryTasks from builder-state.json.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "What the specialist produced"
+        },
+        "output": {
+          "type": ["string", "null"],
+          "description": "Summary of specialist output"
+        },
+        "completedAt": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        }
+      }
+    },
+    "pendingUpdates": {
+      "type": ["object", "null"],
+      "description": "Documentation and marketing updates auto-detected from this chunk's changed files",
+      "properties": {
+        "supportArticles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Support article slugs that need updating"
+        },
+        "marketingScreenshots": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Marketing screenshot IDs that need refreshing"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "in_progress", "completed", "skipped"]
+        }
+      }
+    }
+  },
+
+  "additionalProperties": false
+}

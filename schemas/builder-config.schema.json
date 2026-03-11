@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/builder-config.json",
+  "title": "Builder Config",
+  "description": "Machine-specific Builder configuration (builder-config.json). Gitignored — stores CLI auth state, cached project context, and pointer to active session. Lives at docs/builder-config.json in each project.",
+  "type": "object",
+
+  "properties": {
+    "availableCLIs": {
+      "type": ["object", "null"],
+      "description": "Detected CLIs and their authentication status. Persisted to survive context compaction. Re-detected if older than 24 hours.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["installed", "authenticated"],
+        "properties": {
+          "installed": {
+            "type": "boolean",
+            "description": "Whether the CLI is installed on this machine"
+          },
+          "authenticated": {
+            "type": "boolean",
+            "description": "Whether the CLI is authenticated (can make API calls)"
+          },
+          "user": {
+            "type": ["string", "null"],
+            "description": "Authenticated user/account identifier (if available)"
+          },
+          "detectedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this CLI was last detected/verified"
+          }
+        }
+      },
+      "examples": [
+        {
+          "vercel": { "installed": true, "authenticated": true, "user": "my-team", "detectedAt": "2026-03-03T10:00:00Z" },
+          "gh": { "installed": true, "authenticated": true, "user": "username", "detectedAt": "2026-03-03T10:00:00Z" },
+          "aws": { "installed": true, "authenticated": false, "detectedAt": "2026-03-03T10:00:00Z" }
+        }
+      ]
+    },
+    "projectContext": {
+      "type": ["object", "null"],
+      "description": "Cached project context for compaction resilience. Re-read from project.json on startup, cached here for recovery.",
+      "properties": {
+        "loadedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When context was loaded from project.json"
+        },
+        "git": {
+          "type": "object",
+          "description": "Git workflow configuration from project.json",
+          "properties": {
+            "defaultBranch": { "type": "string" },
+            "autoCommit": { "type": ["boolean", "string"] },
+            "agentWorkflow": {
+              "type": "object",
+              "properties": {
+                "workBranch": { "type": "string" },
+                "pushTo": { "type": "string" },
+                "createPrTo": { "type": "string" },
+                "requiresHumanApproval": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            },
+            "teamSync": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "pushAfterCommit": { "type": "boolean" }
+              }
+            }
+          }
+        },
+        "environments": {
+          "type": "object",
+          "description": "Environment URLs from project.json",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "url": { "type": "string" }
+            }
+          }
+        },
+        "relatedProjects": {
+          "type": "array",
+          "description": "Related projects from project.json",
+          "items": {
+            "type": "object",
+            "properties": {
+              "projectId": { "type": "string" },
+              "relationship": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "lastSessionPath": {
+      "type": ["string", "null"],
+      "description": "Relative path to the most recent active session folder (e.g., docs/sessions/2026-03-08-a1b2c3). Used for fast session discovery on startup. Cleared when session is archived.",
+      "examples": ["docs/sessions/2026-03-08-a1b2c3"]
+    }
+  },
+
+  "additionalProperties": false
+}

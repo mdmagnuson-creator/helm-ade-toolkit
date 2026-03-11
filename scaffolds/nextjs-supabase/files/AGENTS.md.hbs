@@ -1,0 +1,81 @@
+# {{projectNamePascal}}
+
+{{description}}
+
+## Development
+
+```bash
+npm run dev       # Start dev server (port {{devPort}})
+npm run build     # Production build
+npm run typecheck # Type checking
+npm run lint      # Lint code
+npm run format    # Format code
+{{#if (eq testing.unit 'jest')}}
+npm run test      # Run unit tests
+{{/if}}
+{{#if (eq testing.e2e 'playwright')}}
+npm run test:e2e  # Run E2E tests
+{{/if}}
+```
+
+## Stack
+
+- **Frontend:** Next.js 15 (App Router) with React 19
+- **Database:** Supabase (PostgreSQL)
+- **Styling:** Tailwind CSS v4
+- **Auth:** Supabase Auth
+{{#if capabilities.payments}}
+- **Payments:** Stripe
+{{/if}}
+{{#if capabilities.email}}
+- **Email:** Resend
+{{/if}}
+{{#if capabilities.ai}}
+- **AI:** OpenAI
+{{/if}}
+
+## Project Structure
+
+```
+src/
+├── app/                 # Next.js App Router
+│   ├── (auth)/         # Auth pages (login, signup)
+│   ├── (dashboard)/    # Protected dashboard pages
+│   └── api/            # API routes
+├── components/
+│   ├── ui/             # Base UI components
+│   ├── forms/          # Form components
+│   └── layout/         # Layout components
+├── hooks/              # Custom React hooks
+├── lib/                # Utilities and clients
+│   └── supabase/       # Supabase client configuration
+└── types/              # TypeScript types
+
+supabase/
+└── migrations/         # Database migrations
+
+docs/
+├── ARCHITECTURE.md     # System architecture
+├── CONVENTIONS.md      # Coding conventions
+└── agents/             # Project-specific AI agents
+```
+
+## Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in your values:
+
+```bash
+cp .env.example .env.local
+```
+
+Required variables:
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
+{{#if capabilities.payments}}
+- `STRIPE_SECRET_KEY` - Stripe secret key
+{{/if}}
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) - System overview and data flow
+- [Conventions](docs/CONVENTIONS.md) - Coding patterns and style guidelines

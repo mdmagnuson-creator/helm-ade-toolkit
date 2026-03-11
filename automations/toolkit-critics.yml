@@ -1,0 +1,51 @@
+name: Toolkit Critics (Warning Mode)
+
+on:
+  pull_request:
+    paths:
+      - "agents/**"
+      - "skills/**"
+      - "scripts/**"
+      - "README.md"
+      - "toolkit-structure.json"
+      - "project-updates/**"
+  workflow_dispatch:
+
+jobs:
+  governance-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Make scripts executable
+        run: chmod +x scripts/validate-*.sh
+
+      - name: Workflow post-change validator (warning-only)
+        run: |
+          if ! scripts/validate-toolkit-postchange.sh .; then
+            echo "::warning::workflow post-change validator reported issues"
+          fi
+
+      - name: Handoff contracts validator (warning-only)
+        run: |
+          if ! scripts/validate-handoff-contracts.sh .; then
+            echo "::warning::handoff contract validator reported issues"
+          fi
+
+      - name: Project-updates schema validator (warning-only)
+        run: |
+          if ! scripts/validate-project-updates.sh .; then
+            echo "::warning::project-updates schema validator reported issues"
+          fi
+
+      - name: Policy testability validator (warning-only)
+        run: |
+          if ! scripts/validate-policy-testability.sh .; then
+            echo "::warning::policy testability validator reported issues"
+          fi

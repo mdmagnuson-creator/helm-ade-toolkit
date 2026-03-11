@@ -1,0 +1,46 @@
+# Workflow to test the PRD action in this repository
+name: Generate PRD
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to generate PRD for'
+        type: number
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  models: read
+
+concurrency:
+  group: prd-${{ github.event.issue.number || github.event.inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  generate-prd:
+    runs-on: ubuntu-latest
+    name: Generate a PRD
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get issue number
+        id: issue
+        run: |
+          if [ "${{ github.event_name }}" = "issues" ]; then
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          else
+            echo "number=${{ github.event.inputs.issue_number }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate PRD
+        uses: ./  # Use local action for testing
+        with:
+          issue_number: ${{ steps.issue.outputs.number }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          model: 'openai/gpt-4o'

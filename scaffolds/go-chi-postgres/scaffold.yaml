@@ -1,0 +1,177 @@
+name: go-chi-postgres
+description: Go HTTP API with Chi router, PostgreSQL, JWT auth, structured logging
+version: "1.0"
+
+# Variables collected during scaffolding
+variables:
+  - name: projectName
+    prompt: "Project name"
+    transform: kebab-case
+    required: true
+    source: context.projectName
+  
+  - name: moduleName
+    prompt: "Go module name (e.g., github.com/user/project)"
+    required: true
+    source: context.moduleName
+  
+  - name: description
+    prompt: "Project description"
+    required: true
+    source: context.description
+  
+  - name: databaseUrl
+    prompt: "PostgreSQL connection URL (or 'local' for local development)"
+    default: local
+  
+  - name: devPort
+    prompt: "Development server port"
+    default: "8080"
+
+# Dependencies are managed via go.mod - listed here for reference
+goDependencies:
+  - github.com/go-chi/chi/v5
+  - github.com/go-chi/cors
+  - github.com/golang-jwt/jwt/v5
+  - github.com/jackc/pgx/v5
+  - github.com/jackc/pgx/v5/stdlib
+  - github.com/golang-migrate/migrate/v4
+  - github.com/joho/godotenv
+  - github.com/rs/zerolog
+  - github.com/go-playground/validator/v10
+
+# Conditional dependencies based on features
+conditionalDependencies:
+  - if: capabilities.ai
+    add:
+      - github.com/sashabaranov/go-openai
+  
+  - if: capabilities.payments
+    add:
+      - github.com/stripe/stripe-go/v76
+
+# Directory structure to create
+structure:
+  - cmd/server
+  - internal/config
+  - internal/database
+  - internal/handlers
+  - internal/middleware
+  - internal/models
+  - internal/routes
+  - migrations
+  - scripts
+  - docs
+  - docs/prds
+  - docs/drafts
+  - docs/agents
+
+# Files to generate
+files:
+  # Root config files
+  - template: go.mod.hbs
+    output: go.mod
+  
+  - template: .env.example.hbs
+    output: .env.example
+  
+  - template: .env.hbs
+    output: .env
+  
+  - template: .gitignore
+    output: .gitignore
+  
+  - template: Makefile.hbs
+    output: Makefile
+  
+  - template: Dockerfile.hbs
+    output: Dockerfile
+  
+  - template: docker-compose.yml.hbs
+    output: docker-compose.yml
+  
+  # Main entry point
+  - template: cmd/server/main.go.hbs
+    output: cmd/server/main.go
+  
+  # Config
+  - template: internal/config/config.go.hbs
+    output: internal/config/config.go
+  
+  # Database
+  - template: internal/database/database.go.hbs
+    output: internal/database/database.go
+  
+  - template: internal/database/queries.go.hbs
+    output: internal/database/queries.go
+  
+  # Handlers
+  - template: internal/handlers/health.go
+    output: internal/handlers/health.go
+  
+  - template: internal/handlers/auth.go.hbs
+    output: internal/handlers/auth.go
+  
+  # Middleware
+  - template: internal/middleware/auth.go.hbs
+    output: internal/middleware/auth.go
+  
+  - template: internal/middleware/logging.go
+    output: internal/middleware/logging.go
+  
+  # Models
+  - template: internal/models/user.go
+    output: internal/models/user.go
+  
+  - template: internal/models/errors.go
+    output: internal/models/errors.go
+  
+  # Routes
+  - template: internal/routes/routes.go.hbs
+    output: internal/routes/routes.go
+  
+  # Migrations
+  - template: migrations/000001_init.up.sql.hbs
+    output: migrations/000001_init.up.sql
+  
+  - template: migrations/000001_init.down.sql
+    output: migrations/000001_init.down.sql
+  
+  # Scripts
+  - template: scripts/migrate.sh
+    output: scripts/migrate.sh
+  
+  # Documentation
+  - template: AGENTS.md.hbs
+    output: AGENTS.md
+  
+  - template: README.md.hbs
+    output: README.md
+
+# Commands to run after scaffold
+postScaffold:
+  - command: go mod download
+    workdir: .
+    description: Download Go dependencies
+  
+  - command: go mod tidy
+    workdir: .
+    description: Tidy go.mod
+  
+  - command: chmod +x scripts/*.sh
+    workdir: .
+    description: Make scripts executable
+  
+  - command: git init
+    workdir: .
+    description: Initialize git repository
+  
+  - command: git add .
+    workdir: .
+    description: Stage all files
+  
+  - command: git commit -m "Initial scaffold from go-chi-postgres"
+    workdir: .
+    description: Create initial commit
+    requiresConfirmation: true
+    confirmationPrompt: "Create initial commit? [Y/n]"

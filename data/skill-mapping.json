@@ -1,0 +1,173 @@
+{
+  "$schema": "../schemas/skill-mapping.schema.json",
+  "description": "Centralized mapping of frameworks and platforms to their appropriate skills. Used by agents to determine which skills to load at runtime.",
+  "version": "1.0.0",
+
+  "platformSkills": {
+    "description": "Maps app frameworks/platforms to development and testing skills",
+    "mappings": [
+      {
+        "framework": "electron",
+        "appType": "desktop",
+        "skills": {
+          "e2e": "ui-test-electron",
+          "development": null
+        },
+        "detectBy": ["framework", "package.json:electron"],
+        "platforms": ["macos", "windows", "linux"]
+      },
+      {
+        "framework": "tauri",
+        "appType": "desktop",
+        "skills": {
+          "e2e": "e2e-tauri",
+          "development": null
+        },
+        "detectBy": ["framework", "cargo.toml:tauri"],
+        "platforms": ["macos", "windows", "linux"]
+      },
+      {
+        "framework": "react-native",
+        "appType": "mobile",
+        "skills": {
+          "e2e": "e2e-mobile",
+          "development": null
+        },
+        "detectBy": ["framework", "package.json:react-native"],
+        "platforms": ["ios", "android"]
+      },
+      {
+        "framework": "expo",
+        "appType": "mobile",
+        "skills": {
+          "e2e": "e2e-mobile",
+          "development": null
+        },
+        "detectBy": ["framework", "package.json:expo"],
+        "platforms": ["ios", "android", "browser"]
+      },
+      {
+        "framework": "flutter",
+        "appType": "mobile",
+        "skills": {
+          "e2e": "e2e-flutter",
+          "development": null
+        },
+        "detectBy": ["framework", "pubspec.yaml:flutter"],
+        "platforms": ["ios", "android", "macos", "windows", "linux", "browser"]
+      },
+      {
+        "framework": "capacitor",
+        "appType": "mobile",
+        "skills": {
+          "e2e": "e2e-mobile",
+          "development": null
+        },
+        "detectBy": ["framework", "package.json:@capacitor/core"],
+        "platforms": ["ios", "android", "browser"]
+      }
+    ]
+  },
+
+  "testingFrameworkSkills": {
+    "description": "Maps testing frameworks to testing skills",
+    "mappings": [
+      {
+        "testingFramework": "playwright",
+        "skill": "ui-tester-playwright",
+        "detectBy": ["testing.e2e.framework", "package.json:@playwright/test"]
+      },
+      {
+        "testingFramework": "playwright-electron",
+        "skill": "ui-test-electron",
+        "detectBy": ["testing.e2e.framework", "apps.*.testing.framework"]
+      },
+      {
+        "testingFramework": "detox",
+        "skill": "e2e-mobile",
+        "detectBy": ["testing.e2e.framework", "package.json:detox"]
+      },
+      {
+        "testingFramework": "maestro",
+        "skill": "e2e-mobile",
+        "detectBy": ["testing.e2e.framework", ".maestro/"]
+      },
+      {
+        "testingFramework": "appium",
+        "skill": "e2e-mobile",
+        "detectBy": ["testing.e2e.framework", "package.json:appium"]
+      },
+      {
+        "testingFramework": "xcuitest",
+        "skill": "e2e-ios-native",
+        "detectBy": ["testing.e2e.framework"]
+      },
+      {
+        "testingFramework": "espresso",
+        "skill": "e2e-android-native",
+        "detectBy": ["testing.e2e.framework"]
+      },
+      {
+        "testingFramework": "jest",
+        "skill": "jest-tester",
+        "detectBy": ["testing.unit.framework", "package.json:jest"]
+      },
+      {
+        "testingFramework": "vitest",
+        "skill": "vitest-tester",
+        "detectBy": ["testing.unit.framework", "package.json:vitest"]
+      }
+    ]
+  },
+
+  "agentRouting": {
+    "description": "Routing hints for tester agent to select appropriate sub-agents",
+    "rules": [
+      {
+        "condition": "apps.*.framework === 'electron' || apps.*.testing.framework === 'playwright-electron'",
+        "route": "ui-tester-playwright",
+        "loadSkill": "ui-test-electron",
+        "context": "Pass app path and electron main entry point"
+      },
+      {
+        "condition": "apps.*.type === 'mobile' && apps.*.framework in ['react-native', 'expo']",
+        "route": "e2e-mobile",
+        "loadSkill": "e2e-mobile",
+        "context": "Pass platform (ios/android) and app identifier"
+      },
+      {
+        "condition": "apps.*.type === 'mobile' && apps.*.framework === 'flutter'",
+        "route": "e2e-flutter",
+        "loadSkill": "e2e-flutter",
+        "context": "Pass platform and flutter app configuration"
+      },
+      {
+        "condition": "apps.*.type === 'frontend' || apps.*.type === 'fullstack'",
+        "route": "ui-tester-playwright",
+        "loadSkill": null,
+        "context": "Standard web E2E testing"
+      }
+    ]
+  },
+
+  "skillSuggestions": {
+    "description": "Suggestions for Builder/Planner when certain frameworks are detected",
+    "suggestions": [
+      {
+        "trigger": "electron detected without ui-test-electron skill loaded",
+        "message": "Detected Electron app at {appPath}. Consider using `playwright-electron` for E2E testing.",
+        "recommendation": "Set apps.{appName}.testing.framework = 'playwright-electron'"
+      },
+      {
+        "trigger": "mobile app detected without mobile testing framework",
+        "message": "Detected mobile app ({framework}). Consider adding Detox or Maestro for E2E testing.",
+        "recommendation": "Set apps.{appName}.testing.framework to 'detox' or 'maestro'"
+      },
+      {
+        "trigger": "desktop app without platforms array",
+        "message": "Desktop app detected but no platforms specified. Add platforms array for proper build targeting.",
+        "recommendation": "Set apps.{appName}.platforms = ['macos', 'windows', 'linux']"
+      }
+    ]
+  }
+}

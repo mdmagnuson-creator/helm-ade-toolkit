@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/workflow-defaults.json",
+  "title": "Workflow Defaults",
+  "description": "Default workflow configurations for PRD and ad-hoc modes. These are used as fallback when projects don't define their own workflows.",
+  "type": "object",
+  "required": ["version", "workflows"],
+
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the defaults format"
+    },
+
+    "lastUpdated": {
+      "type": "string",
+      "format": "date",
+      "description": "Date this file was last updated"
+    },
+
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of this file's purpose"
+    },
+
+    "workflows": {
+      "type": "object",
+      "description": "Default workflow definitions",
+      "required": ["prd", "adhoc"],
+      "properties": {
+        "prd": {
+          "$ref": "#/$defs/workflowDefinition"
+        },
+        "adhoc": {
+          "$ref": "#/$defs/workflowDefinition"
+        }
+      }
+    },
+
+    "conditionalSteps": {
+      "type": "object",
+      "description": "Steps that are added conditionally based on story flags or capabilities. NOTE: support-article, tools, and marketing have been moved to postChangeActions in project.json.",
+      "additionalProperties": {
+        "$ref": "#/$defs/conditionalStep"
+      }
+    },
+
+    "stepReference": {
+      "type": "object",
+      "description": "Reference documentation for all available workflow steps",
+      "additionalProperties": {
+        "$ref": "#/$defs/stepDefinition"
+      }
+    }
+  },
+
+  "$defs": {
+    "workflowStep": {
+      "type": "string",
+      "enum": [
+        "build",
+        "typecheck",
+        "lint",
+        "test",
+        "test-scoped",
+        "critic",
+        "tester",
+        "tester-scoped",
+        "e2e",
+        "e2e-write",
+        "visual-verify",
+        "commit",
+        "report",
+        "toolkit-suggestions"
+      ],
+      "description": "A single workflow step identifier"
+    },
+
+    "workflowDefinition": {
+      "type": "object",
+      "required": ["steps"],
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/workflowStep"
+          },
+          "description": "Ordered list of steps to execute"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of this workflow"
+        }
+      }
+    },
+
+    "conditionalStep": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "What this step does"
+        },
+        "prdCondition": {
+          "type": ["string", "null"],
+          "description": "Condition expression for when to add this step in PRD mode (null = never)"
+        },
+        "adhocCondition": {
+          "type": ["string", "null"],
+          "description": "Condition expression for when to add this step in ad-hoc mode (null = never)"
+        }
+      }
+    },
+
+    "stepDefinition": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "What this step does"
+        },
+        "needsDevServer": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this step requires the dev server to be running"
+        },
+        "runAlways": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this step runs regardless of project configuration"
+        },
+        "condition": {
+          "type": "string",
+          "description": "Human-readable condition for when this step applies"
+        },
+        "prdOnly": {
+          "type": "boolean",
+          "default": false,
+          "description": "Step only applies to PRD mode"
+        },
+        "adhocOnly": {
+          "type": "boolean",
+          "default": false,
+          "description": "Step only applies to ad-hoc mode"
+        }
+      }
+    }
+  }
+}

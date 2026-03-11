@@ -1,0 +1,1700 @@
+# Stack Database
+# Comprehensive database of technology options for project scaffolding
+# Used by stack-advisor skill to recommend technology choices
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# FRONTEND FRAMEWORKS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+frontends:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # React Ecosystem
+  # ─────────────────────────────────────────────────────────────────────────────
+  nextjs:
+    name: "Next.js"
+    version: "15"
+    type: fullstack-react
+    languages: [typescript, javascript]
+    features:
+      - app-router
+      - server-components
+      - server-actions
+      - api-routes
+      - ssr
+      - ssg
+      - isr
+      - middleware
+      - image-optimization
+      - font-optimization
+    learning_curve: easy
+    ecosystem_size: large
+    community: very-active
+    docs_quality: excellent
+    stability: stable
+    hosting:
+      recommended: [vercel]
+      supported: [netlify, aws-amplify, cloudflare-pages, docker, self-hosted]
+    pairs_well_with:
+      backends: [supabase, prisma, drizzle, trpc]
+      auth: [nextauth, clerk, supabase-auth, auth0]
+      styling: [tailwind, css-modules, styled-components]
+    best_for:
+      - saas
+      - marketing-sites
+      - e-commerce
+      - dashboards
+      - content-sites
+    not_for:
+      - simple-static-sites  # overkill
+      - mobile-apps
+    setup_time: fast
+    maturity: very-mature
+
+  remix:
+    name: "Remix"
+    version: "2"
+    type: fullstack-react
+    languages: [typescript, javascript]
+    features:
+      - nested-routes
+      - loaders-actions
+      - progressive-enhancement
+      - error-boundaries
+      - ssr
+      - edge-ready
+    learning_curve: medium
+    ecosystem_size: medium
+    community: active
+    docs_quality: good
+    stability: stable
+    hosting:
+      recommended: [cloudflare-pages, vercel]
+      supported: [netlify, fly-io, aws, docker]
+    pairs_well_with:
+      backends: [prisma, drizzle, d1]
+      auth: [remix-auth, clerk, auth0]
+      styling: [tailwind, css-modules]
+    best_for:
+      - web-apps
+      - content-sites
+      - forms-heavy-apps
+      - edge-applications
+    not_for:
+      - static-sites
+      - mobile-apps
+    setup_time: medium
+    maturity: mature
+
+  vite-react:
+    name: "Vite + React"
+    version: "5"
+    type: spa
+    languages: [typescript, javascript]
+    features:
+      - fast-hmr
+      - esm
+      - spa
+      - code-splitting
+    learning_curve: easy
+    ecosystem_size: large
+    community: very-active
+    docs_quality: good
+    stability: stable
+    hosting:
+      recommended: [vercel, netlify]
+      supported: [any-static-host]
+    pairs_well_with:
+      backends: [any]
+      auth: [any]
+      styling: [tailwind, css-modules, styled-components]
+    best_for:
+      - spa-applications
+      - admin-panels
+      - internal-tools
+    not_for:
+      - seo-critical
+      - content-sites
+    setup_time: very-fast
+    maturity: mature
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Vue Ecosystem
+  # ─────────────────────────────────────────────────────────────────────────────
+  nuxt:
+    name: "Nuxt"
+    version: "3"
+    type: fullstack-vue
+    languages: [typescript, javascript]
+    features:
+      - auto-imports
+      - file-based-routing
+      - ssr
+      - ssg
+      - hybrid-rendering
+      - server-routes
+      - nitro-server
+    learning_curve: easy
+    ecosystem_size: medium
+    community: active
+    docs_quality: excellent
+    stability: stable
+    hosting:
+      recommended: [vercel, netlify]
+      supported: [cloudflare, aws, docker]
+    pairs_well_with:
+      backends: [prisma, drizzle, supabase]
+      auth: [nuxt-auth, supabase-auth, clerk]
+      styling: [tailwind, unocss]
+    best_for:
+      - vue-teams
+      - content-sites
+      - dashboards
+    not_for:
+      - react-teams
+    setup_time: fast
+    maturity: mature
+
+  vue-spa:
+    name: "Vue + Vite"
+    version: "3"
+    type: spa
+    languages: [typescript, javascript]
+    features:
+      - composition-api
+      - fast-hmr
+      - spa
+    learning_curve: easy
+    ecosystem_size: large
+    community: active
+    docs_quality: excellent
+    stability: stable
+    hosting:
+      recommended: [vercel, netlify]
+      supported: [any-static-host]
+    pairs_well_with:
+      backends: [any]
+      styling: [tailwind, unocss]
+    best_for:
+      - spa-applications
+      - vue-teams
+    not_for:
+      - seo-critical
+    setup_time: very-fast
+    maturity: mature
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Svelte Ecosystem
+  # ─────────────────────────────────────────────────────────────────────────────
+  sveltekit:
+    name: "SvelteKit"
+    version: "2"
+    type: fullstack-svelte
+    languages: [typescript, javascript]
+    features:
+      - compiler
+      - minimal-js
+      - ssr
+      - ssg
+      - form-actions
+      - load-functions
+      - adapters
+    learning_curve: easy
+    ecosystem_size: small
+    community: active
+    docs_quality: excellent
+    stability: stable
+    hosting:
+      recommended: [vercel, netlify, cloudflare-pages]
+      supported: [any]
+    pairs_well_with:
+      backends: [prisma, drizzle, supabase]
+      auth: [lucia, supabase-auth]
+      styling: [tailwind]
+    best_for:
+      - performance-critical
+      - small-bundle-size
+      - content-sites
+    not_for:
+      - large-teams  # smaller ecosystem
+      - enterprise  # less proven
+    setup_time: fast
+    maturity: mature
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Other Frameworks
+  # ─────────────────────────────────────────────────────────────────────────────
+  astro:
+    name: "Astro"
+    version: "4"
+    type: content-framework
+    languages: [typescript, javascript]
+    features:
+      - islands-architecture
+      - zero-js-default
+      - content-collections
+      - multi-framework  # can use React, Vue, Svelte components
+      - ssg
+      - ssr
+    learning_curve: easy
+    ecosystem_size: medium
+    community: active
+    docs_quality: excellent
+    stability: stable
+    hosting:
+      recommended: [vercel, netlify, cloudflare-pages]
+      supported: [any]
+    pairs_well_with:
+      backends: [any]
+      styling: [tailwind]
+    best_for:
+      - content-sites
+      - marketing-sites
+      - documentation
+      - blogs
+    not_for:
+      - spa-applications
+      - highly-interactive-apps
+    setup_time: fast
+    maturity: mature
+
+  solid:
+    name: "SolidJS"
+    version: "1"
+    type: spa
+    languages: [typescript, javascript]
+    features:
+      - fine-grained-reactivity
+      - no-virtual-dom
+      - jsx
+      - small-bundle
+    learning_curve: medium
+    ecosystem_size: small
+    community: growing
+    docs_quality: good
+    stability: stable
+    hosting:
+      recommended: [vercel, netlify]
+      supported: [any-static-host]
+    pairs_well_with:
+      backends: [any]
+      styling: [tailwind]
+    best_for:
+      - performance-critical
+      - react-like-syntax
+    not_for:
+      - large-teams  # smaller ecosystem
+    setup_time: fast
+    maturity: maturing
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BACKEND FRAMEWORKS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+backends:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Node.js / TypeScript
+  # ─────────────────────────────────────────────────────────────────────────────
+  nextjs-api:
+    name: "Next.js API Routes"
+    type: serverless-api
+    languages: [typescript, javascript]
+    features:
+      - api-routes
+      - server-actions
+      - middleware
+      - edge-functions
+    performance: medium
+    learning_curve: easy
+    use_with: [nextjs]
+    best_for:
+      - simple-apis
+      - bff-pattern  # backend-for-frontend
+      - fullstack-apps
+    not_for:
+      - complex-backends
+      - high-performance
+      - microservices
+
+  express:
+    name: "Express"
+    version: "4"
+    type: api
+    languages: [typescript, javascript]
+    features:
+      - middleware
+      - routing
+      - large-ecosystem
+    performance: medium
+    learning_curve: easy
+    ecosystem_size: very-large
+    hosting:
+      recommended: [railway, render, fly-io]
+      supported: [aws-lambda, docker, any]
+    best_for:
+      - node-apis
+      - quick-prototypes
+      - teams-know-express
+    not_for:
+      - high-performance
+      - type-safety-critical
+    setup_time: very-fast
+    maturity: very-mature
+
+  fastify:
+    name: "Fastify"
+    version: "4"
+    type: api
+    languages: [typescript, javascript]
+    features:
+      - schema-validation
+      - plugins
+      - logging
+      - fast
+    performance: high
+    learning_curve: easy
+    ecosystem_size: medium
+    hosting:
+      recommended: [railway, render, fly-io]
+      supported: [aws-lambda, docker, any]
+    best_for:
+      - high-performance-node
+      - json-apis
+    not_for:
+      - simple-apps  # slight overhead vs express
+    setup_time: fast
+    maturity: mature
+
+  hono:
+    name: "Hono"
+    version: "4"
+    type: api
+    languages: [typescript, javascript]
+    features:
+      - edge-native
+      - middleware
+      - routing
+      - multi-runtime  # node, deno, bun, cloudflare workers
+    performance: very-high
+    learning_curve: easy
+    ecosystem_size: growing
+    hosting:
+      recommended: [cloudflare-workers, vercel-edge, deno-deploy]
+      supported: [any]
+    best_for:
+      - edge-apis
+      - serverless
+      - cloudflare-workers
+    not_for:
+      - traditional-server
+    setup_time: fast
+    maturity: maturing
+
+  nestjs:
+    name: "NestJS"
+    version: "10"
+    type: api
+    languages: [typescript]
+    features:
+      - dependency-injection
+      - modules
+      - decorators
+      - microservices
+      - graphql
+      - websockets
+    performance: medium
+    learning_curve: hard  # angular-like patterns
+    ecosystem_size: large
+    hosting:
+      recommended: [railway, render]
+      supported: [aws, docker, any]
+    best_for:
+      - enterprise-node
+      - large-teams
+      - complex-apis
+    not_for:
+      - small-projects  # too much overhead
+      - rapid-prototyping
+    setup_time: medium
+    maturity: mature
+
+  trpc:
+    name: "tRPC"
+    version: "11"
+    type: rpc
+    languages: [typescript]
+    features:
+      - type-safe-apis
+      - no-codegen
+      - react-query-integration
+      - subscriptions
+    performance: high
+    learning_curve: easy
+    ecosystem_size: medium
+    use_with: [nextjs, remix, vite-react]
+    best_for:
+      - typescript-fullstack
+      - rapid-development
+      - type-safety
+    not_for:
+      - public-apis  # REST/GraphQL better for external consumers
+      - non-typescript-clients
+    setup_time: fast
+    maturity: mature
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Go
+  # ─────────────────────────────────────────────────────────────────────────────
+  go-chi:
+    name: "Chi (Go)"
+    version: "5"
+    type: api
+    languages: [go]
+    features:
+      - middleware
+      - routing
+      - lightweight
+      - stdlib-compatible
+    performance: very-high
+    learning_curve: medium
+    ecosystem_size: medium
+    hosting:
+      recommended: [fly-io, railway]
+      supported: [aws-lambda, ecs, k8s, docker]
+    best_for:
+      - high-performance-apis
+      - microservices
+      - go-teams
+    not_for:
+      - rapid-prototyping  # more verbose than node
+      - typescript-teams
+    setup_time: medium
+    maturity: mature
+
+  go-gin:
+    name: "Gin (Go)"
+    version: "1"
+    type: api
+    languages: [go]
+    features:
+      - middleware
+      - validation
+      - json-rendering
+      - fast
+    performance: very-high
+    learning_curve: medium
+    ecosystem_size: large
+    hosting:
+      recommended: [fly-io, railway]
+      supported: [aws-lambda, ecs, k8s, docker]
+    best_for:
+      - high-performance-apis
+      - restful-services
+    not_for:
+      - rapid-prototyping
+    setup_time: medium
+    maturity: very-mature
+
+  go-fiber:
+    name: "Fiber (Go)"
+    version: "2"
+    type: api
+    languages: [go]
+    features:
+      - express-like-api
+      - fast
+      - middleware
+    performance: very-high
+    learning_curve: easy  # familiar to express devs
+    ecosystem_size: medium
+    hosting:
+      recommended: [fly-io, railway]
+      supported: [aws-lambda, ecs, k8s, docker]
+    best_for:
+      - express-devs-moving-to-go
+      - high-performance
+    not_for:
+      - go-purists  # not idiomatic
+    setup_time: fast
+    maturity: mature
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Python
+  # ─────────────────────────────────────────────────────────────────────────────
+  fastapi:
+    name: "FastAPI"
+    version: "0.110"
+    type: api
+    languages: [python]
+    features:
+      - async
+      - auto-docs
+      - validation
+      - type-hints
+      - openapi
+    performance: high
+    learning_curve: easy
+    ecosystem_size: large
+    hosting:
+      recommended: [railway, render]
+      supported: [aws-lambda, docker, any]
+    best_for:
+      - python-apis
+      - ml-backends
+      - data-intensive
+      - auto-documented-apis
+    not_for:
+      - typescript-teams
+    setup_time: fast
+    maturity: mature
+
+  django:
+    name: "Django"
+    version: "5"
+    type: fullstack
+    languages: [python]
+    features:
+      - orm
+      - admin
+      - auth
+      - forms
+      - templates
+      - batteries-included
+    performance: medium
+    learning_curve: medium
+    ecosystem_size: very-large
+    hosting:
+      recommended: [railway, render]
+      supported: [aws, docker, any]
+    best_for:
+      - content-sites
+      - admin-heavy-apps
+      - rapid-prototyping
+    not_for:
+      - microservices
+      - api-only
+    setup_time: fast
+    maturity: very-mature
+
+  flask:
+    name: "Flask"
+    version: "3"
+    type: api
+    languages: [python]
+    features:
+      - minimal
+      - flexible
+      - extensions
+    performance: medium
+    learning_curve: easy
+    ecosystem_size: large
+    hosting:
+      recommended: [railway, render]
+      supported: [aws-lambda, docker, any]
+    best_for:
+      - simple-apis
+      - microservices
+      - flexibility
+    not_for:
+      - large-apps  # need more structure
+    setup_time: very-fast
+    maturity: very-mature
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Ruby
+  # ─────────────────────────────────────────────────────────────────────────────
+  rails:
+    name: "Ruby on Rails"
+    version: "7"
+    type: fullstack
+    languages: [ruby]
+    features:
+      - active-record
+      - hotwire
+      - turbo
+      - stimulus
+      - action-cable
+      - mailers
+      - jobs
+    performance: medium
+    learning_curve: medium
+    ecosystem_size: large
+    hosting:
+      recommended: [render, railway, heroku]
+      supported: [aws, docker]
+    best_for:
+      - rapid-prototyping
+      - startups
+      - content-heavy
+      - crud-apps
+    not_for:
+      - microservices
+      - high-performance
+    setup_time: fast
+    maturity: very-mature
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Java/Kotlin
+  # ─────────────────────────────────────────────────────────────────────────────
+  spring-boot:
+    name: "Spring Boot"
+    version: "3"
+    type: api
+    languages: [java, kotlin]
+    features:
+      - dependency-injection
+      - auto-configuration
+      - security
+      - data
+      - microservices
+    performance: high
+    learning_curve: hard
+    ecosystem_size: very-large
+    hosting:
+      recommended: [aws, gcp]
+      supported: [any]
+    best_for:
+      - enterprise
+      - large-teams
+      - java-teams
+    not_for:
+      - rapid-prototyping
+      - small-teams
+    setup_time: slow
+    maturity: very-mature
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Rust
+  # ─────────────────────────────────────────────────────────────────────────────
+  axum:
+    name: "Axum (Rust)"
+    version: "0.7"
+    type: api
+    languages: [rust]
+    features:
+      - async
+      - tower-ecosystem
+      - type-safe
+      - extractors
+    performance: extreme
+    learning_curve: hard
+    ecosystem_size: small
+    hosting:
+      recommended: [fly-io, shuttle]
+      supported: [aws, docker]
+    best_for:
+      - extreme-performance
+      - systems-programming
+      - rust-teams
+    not_for:
+      - rapid-prototyping
+      - most-teams
+    setup_time: slow
+    maturity: maturing
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DATABASES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+databases:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Managed PostgreSQL
+  # ─────────────────────────────────────────────────────────────────────────────
+  supabase:
+    name: "Supabase"
+    type: postgres
+    managed: true
+    features:
+      - realtime
+      - auth
+      - storage
+      - edge-functions
+      - vector
+      - row-level-security
+      - auto-api
+    free_tier: true
+    pricing: per-project
+    best_for:
+      - rapid-development
+      - realtime-apps
+      - auth-included
+    not_for:
+      - self-hosted-requirements
+      - complex-backend-logic
+    pairs_well_with: [nextjs, remix, nuxt, sveltekit]
+
+  neon:
+    name: "Neon"
+    type: postgres
+    managed: true
+    features:
+      - serverless
+      - branching
+      - autoscaling
+      - scale-to-zero
+    free_tier: true
+    pricing: usage-based
+    best_for:
+      - serverless-apps
+      - development-branches
+      - cost-optimization
+    not_for:
+      - always-on-workloads
+    pairs_well_with: [prisma, drizzle]
+
+  planetscale:
+    name: "PlanetScale"
+    type: mysql
+    managed: true
+    features:
+      - branching
+      - serverless
+      - vitess
+      - non-blocking-schema-changes
+    free_tier: true
+    pricing: usage-based
+    best_for:
+      - mysql-compatibility
+      - database-branching
+      - large-scale
+    not_for:
+      - foreign-keys  # vitess limitation
+      - postgres-preference
+    pairs_well_with: [prisma, drizzle]
+
+  turso:
+    name: "Turso"
+    type: sqlite
+    managed: true
+    features:
+      - edge-sqlite
+      - embedded-replicas
+      - low-latency
+      - libsql
+    free_tier: true
+    pricing: usage-based
+    best_for:
+      - edge-applications
+      - read-heavy
+      - low-latency
+    not_for:
+      - complex-queries
+      - heavy-writes
+    pairs_well_with: [sveltekit, remix, cloudflare]
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Self-Managed Relational
+  # ─────────────────────────────────────────────────────────────────────────────
+  postgres:
+    name: "PostgreSQL"
+    type: relational
+    managed: false
+    features:
+      - acid
+      - json
+      - full-text-search
+      - extensions
+      - pgvector
+    providers:
+      managed: [aws-rds, gcp-cloud-sql, azure-postgres, railway, render]
+      self-hosted: [docker, bare-metal]
+    best_for:
+      - most-applications
+      - complex-queries
+      - json-data
+    not_for:
+      - simple-key-value
+      - massive-scale  # without sharding
+    pairs_well_with: [prisma, drizzle, sqlalchemy, gorm]
+
+  mysql:
+    name: "MySQL"
+    type: relational
+    managed: false
+    features:
+      - acid
+      - replication
+      - json
+    providers:
+      managed: [aws-rds, gcp-cloud-sql, azure-mysql]
+      self-hosted: [docker, bare-metal]
+    best_for:
+      - read-heavy
+      - legacy-compatibility
+    not_for:
+      - complex-json
+      - advanced-features
+    pairs_well_with: [prisma, sequelize]
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # NoSQL
+  # ─────────────────────────────────────────────────────────────────────────────
+  mongodb:
+    name: "MongoDB Atlas"
+    type: document
+    managed: true
+    features:
+      - flexible-schema
+      - aggregation
+      - atlas-search
+      - vector-search
+      - change-streams
+    free_tier: true
+    pricing: per-cluster
+    best_for:
+      - flexible-schema
+      - rapid-iteration
+      - document-data
+    not_for:
+      - complex-relationships
+      - transactions-heavy
+    pairs_well_with: [mongoose, prisma]
+
+  dynamodb:
+    name: "DynamoDB"
+    type: key-value
+    managed: true
+    features:
+      - serverless
+      - auto-scaling
+      - global-tables
+      - streams
+    free_tier: true
+    pricing: usage-based
+    best_for:
+      - aws-infrastructure
+      - high-scale
+      - simple-access-patterns
+    not_for:
+      - complex-queries
+      - ad-hoc-queries
+      - relational-data
+    pairs_well_with: [aws-lambda, go, nodejs]
+
+  redis:
+    name: "Redis"
+    type: cache
+    managed: true
+    features:
+      - caching
+      - pub-sub
+      - queues
+      - rate-limiting
+    providers:
+      managed: [upstash, redis-cloud, aws-elasticache]
+    best_for:
+      - caching
+      - sessions
+      - real-time
+      - queues
+    not_for:
+      - primary-database
+      - complex-queries
+    pairs_well_with: [any]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ORMS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+orms:
+  prisma:
+    name: "Prisma"
+    languages: [typescript, javascript]
+    databases: [postgres, mysql, mongodb, sqlite, sqlserver]
+    features:
+      - type-safe
+      - migrations
+      - studio
+      - relations
+    learning_curve: easy
+    best_for:
+      - typescript-projects
+      - type-safety
+    not_for:
+      - complex-raw-queries
+      - edge-runtime  # limited
+
+  drizzle:
+    name: "Drizzle"
+    languages: [typescript, javascript]
+    databases: [postgres, mysql, sqlite]
+    features:
+      - type-safe
+      - sql-like
+      - edge-ready
+      - lightweight
+    learning_curve: medium
+    best_for:
+      - edge-applications
+      - sql-lovers
+      - performance
+    not_for:
+      - orm-style-preference
+
+  sqlalchemy:
+    name: "SQLAlchemy"
+    languages: [python]
+    databases: [postgres, mysql, sqlite, oracle, mssql]
+    features:
+      - orm
+      - core-sql
+      - migrations-alembic
+    learning_curve: medium
+    best_for:
+      - python-projects
+      - complex-queries
+    not_for:
+      - simple-queries  # overkill
+
+  gorm:
+    name: "GORM"
+    languages: [go]
+    databases: [postgres, mysql, sqlite, sqlserver]
+    features:
+      - orm
+      - migrations
+      - hooks
+    learning_curve: easy
+    best_for:
+      - go-projects
+      - rapid-development
+    not_for:
+      - raw-sql-preference
+      - performance-critical
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# AUTH PROVIDERS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+auth:
+  supabase-auth:
+    name: "Supabase Auth"
+    features: [email, oauth, magic-link, phone, organizations, mfa]
+    pricing: included-with-supabase
+    requires: supabase
+    best_for:
+      - supabase-projects
+      - quick-setup
+    not_for:
+      - non-supabase-projects
+
+  nextauth:
+    name: "NextAuth.js / Auth.js"
+    features: [email, oauth, credentials, magic-link, database-sessions]
+    pricing: free
+    requires: [nextjs]  # Auth.js supports more
+    best_for:
+      - nextjs-projects
+      - custom-auth-logic
+    not_for:
+      - enterprise-sso  # limited
+
+  clerk:
+    name: "Clerk"
+    features: [email, oauth, magic-link, organizations, user-management, mfa, passkeys]
+    pricing: freemium
+    free_tier: true
+    best_for:
+      - user-management-ui
+      - organizations
+      - quick-setup
+    not_for:
+      - budget-constrained  # can get expensive
+      - self-hosted
+
+  auth0:
+    name: "Auth0"
+    features: [email, oauth, sso, mfa, organizations, actions, machine-to-machine]
+    pricing: freemium
+    free_tier: true
+    best_for:
+      - enterprise
+      - sso-requirements
+      - complex-auth
+    not_for:
+      - simple-apps  # overkill
+      - budget-constrained
+
+  lucia:
+    name: "Lucia"
+    features: [sessions, oauth, email]
+    pricing: free
+    best_for:
+      - custom-auth
+      - learning
+      - sveltekit
+    not_for:
+      - enterprise  # less features
+      - user-management-ui
+
+  kinde:
+    name: "Kinde"
+    features: [email, oauth, sso, organizations, feature-flags]
+    pricing: freemium
+    free_tier: true
+    best_for:
+      - startups
+      - feature-flags-included
+    not_for:
+      - enterprise  # newer
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAYMENTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+payments:
+  stripe:
+    name: "Stripe"
+    features:
+      - subscriptions
+      - one-time
+      - invoicing
+      - tax
+      - billing-portal
+      - connect  # marketplace
+      - checkout
+      - elements
+    pricing: percentage
+    best_for:
+      - most-applications
+      - subscriptions
+      - global
+    not_for:
+      - high-risk  # strict policies
+
+  lemonsqueezy:
+    name: "Lemon Squeezy"
+    features:
+      - subscriptions
+      - one-time
+      - merchant-of-record
+      - tax-handling
+    pricing: percentage
+    best_for:
+      - solo-developers
+      - tax-handling
+      - digital-products
+    not_for:
+      - enterprise
+      - complex-billing
+
+  paddle:
+    name: "Paddle"
+    features:
+      - subscriptions
+      - merchant-of-record
+      - tax-handling
+      - invoicing
+    pricing: percentage
+    best_for:
+      - saas
+      - tax-handling
+      - global
+    not_for:
+      - marketplaces
+      - physical-goods
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# HOSTING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+hosting:
+  vercel:
+    name: "Vercel"
+    type: serverless
+    features:
+      - edge-functions
+      - preview-deployments
+      - analytics
+      - speed-insights
+    pricing: freemium
+    best_for:
+      - nextjs
+      - frontend
+      - jamstack
+    not_for:
+      - long-running-processes
+      - websockets
+
+  netlify:
+    name: "Netlify"
+    type: serverless
+    features:
+      - functions
+      - forms
+      - identity
+      - preview-deployments
+    pricing: freemium
+    best_for:
+      - static-sites
+      - jamstack
+    not_for:
+      - complex-backends
+
+  cloudflare-pages:
+    name: "Cloudflare Pages"
+    type: edge
+    features:
+      - workers
+      - d1
+      - r2-storage
+      - global-edge
+    pricing: freemium
+    best_for:
+      - edge-first
+      - global-performance
+    not_for:
+      - node-specific
+
+  railway:
+    name: "Railway"
+    type: paas
+    features:
+      - databases
+      - docker
+      - preview-environments
+      - templates
+    pricing: usage-based
+    best_for:
+      - full-stack
+      - databases
+      - quick-deploy
+    not_for:
+      - enterprise
+
+  render:
+    name: "Render"
+    type: paas
+    features:
+      - databases
+      - docker
+      - cron-jobs
+      - preview-environments
+    pricing: freemium
+    best_for:
+      - full-stack
+      - databases
+    not_for:
+      - edge-first
+
+  fly-io:
+    name: "Fly.io"
+    type: containers
+    features:
+      - global-deployment
+      - postgres
+      - gpus
+      - machines-api
+    pricing: usage-based
+    best_for:
+      - global-distribution
+      - go-services
+      - docker
+    not_for:
+      - serverless-preference
+
+  aws:
+    name: "AWS"
+    type: cloud
+    features:
+      - lambda
+      - ecs
+      - rds
+      - s3
+      - cloudfront
+      - everything
+    pricing: usage-based
+    best_for:
+      - enterprise
+      - complex-infrastructure
+      - scale
+    not_for:
+      - simple-apps  # overkill
+      - quick-prototypes
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# STYLING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+styling:
+  tailwind:
+    name: "Tailwind CSS"
+    version: "4"
+    features:
+      - utility-first
+      - jit
+      - design-system
+      - responsive
+      - dark-mode
+    learning_curve: easy
+    best_for:
+      - rapid-development
+      - consistent-design
+      - most-projects
+    not_for:
+      - semantic-css-preference
+
+  css-modules:
+    name: "CSS Modules"
+    features:
+      - scoped-css
+      - no-framework
+      - composable
+    learning_curve: easy
+    best_for:
+      - component-scoping
+      - minimal-dependencies
+    not_for:
+      - design-systems
+
+  styled-components:
+    name: "Styled Components"
+    features:
+      - css-in-js
+      - theming
+      - dynamic-styles
+    learning_curve: easy
+    best_for:
+      - dynamic-theming
+      - component-libraries
+    not_for:
+      - ssr  # hydration issues
+      - performance-critical
+
+  unocss:
+    name: "UnoCSS"
+    features:
+      - atomic-css
+      - presets
+      - fast
+    learning_curve: easy
+    best_for:
+      - vue-ecosystem
+      - customization
+    not_for:
+      - tailwind-ecosystem
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TESTING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+testing:
+  jest:
+    name: "Jest"
+    type: unit
+    languages: [typescript, javascript]
+    features:
+      - snapshots
+      - mocking
+      - coverage
+    best_for:
+      - react
+      - node
+    pairs_with: [react-testing-library]
+
+  vitest:
+    name: "Vitest"
+    type: unit
+    languages: [typescript, javascript]
+    features:
+      - fast
+      - esm
+      - vite-integration
+      - jest-compatible
+    best_for:
+      - vite-projects
+      - modern-esm
+    pairs_with: [testing-library]
+
+  playwright:
+    name: "Playwright"
+    type: e2e
+    languages: [typescript, javascript, python, java, csharp]
+    features:
+      - multi-browser
+      - auto-wait
+      - codegen
+      - trace-viewer
+    best_for:
+      - e2e-testing
+      - cross-browser
+    not_for:
+      - unit-testing
+
+  cypress:
+    name: "Cypress"
+    type: e2e
+    languages: [typescript, javascript]
+    features:
+      - time-travel
+      - real-browser
+      - component-testing
+    best_for:
+      - e2e-testing
+      - component-testing
+    not_for:
+      - multi-browser  # webkit limited
+
+  pytest:
+    name: "pytest"
+    type: unit
+    languages: [python]
+    features:
+      - fixtures
+      - plugins
+      - parametrize
+    best_for:
+      - python-testing
+
+  go-test:
+    name: "Go Test"
+    type: unit
+    languages: [go]
+    features:
+      - stdlib
+      - benchmarks
+      - fuzzing
+    best_for:
+      - go-testing
+    pairs_with: [testify]
+
+  rspec:
+    name: "RSpec"
+    type: unit
+    languages: [ruby]
+    features:
+      - bdd
+      - matchers
+      - mocks
+    best_for:
+      - ruby-testing
+      - rails
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# STACK ARCHETYPES
+# Pre-configured stack combinations that work well together
+# ═══════════════════════════════════════════════════════════════════════════════
+
+archetypes:
+  nextjs-supabase:
+    name: "Next.js + Supabase"
+    description: "Full-stack TypeScript with managed backend"
+    frontend: nextjs
+    backend: nextjs-api
+    database: supabase
+    auth: supabase-auth
+    hosting: vercel
+    styling: tailwind
+    testing:
+      unit: vitest
+      e2e: playwright
+    strengths:
+      - Fast development
+      - Low ops burden
+      - Great DX
+      - Built-in realtime
+      - Vector database included
+    weaknesses:
+      - Vendor lock-in
+      - Cost at scale
+      - Limited backend customization
+    best_for:
+      - MVPs
+      - Small teams
+      - TypeScript-only teams
+      - Realtime apps
+      - AI apps (vector)
+    not_for:
+      - Complex backend logic
+      - Self-hosted requirements
+      - Very high scale
+    estimated_costs:
+      mvp: "$25/mo"
+      small: "$100/mo"
+      medium: "$500/mo"
+    setup_time: "1-2 days"
+    time_to_mvp: "2-3 weeks"
+
+  nextjs-prisma:
+    name: "Next.js + Prisma + PostgreSQL"
+    description: "Full-stack TypeScript with more control"
+    frontend: nextjs
+    backend: nextjs-api
+    database: postgres
+    orm: prisma
+    auth: nextauth
+    hosting: vercel
+    database_hosting: neon
+    styling: tailwind
+    testing:
+      unit: vitest
+      e2e: playwright
+    strengths:
+      - More control than Supabase
+      - Portable (no vendor lock-in)
+      - Type-safe database access
+      - Lower cost at scale
+    weaknesses:
+      - More setup required
+      - Manage your own DB
+      - No built-in realtime
+    best_for:
+      - Growing startups
+      - Teams wanting portability
+      - Custom auth logic
+    not_for:
+      - Rapid MVPs
+      - Realtime-heavy
+    estimated_costs:
+      mvp: "$20/mo"
+      small: "$50/mo"
+      medium: "$200/mo"
+    setup_time: "2-3 days"
+    time_to_mvp: "3-4 weeks"
+
+  nextjs-go:
+    name: "Next.js + Go API + PostgreSQL"
+    description: "React frontend with high-performance Go backend"
+    frontend: nextjs
+    backend: go-chi
+    database: postgres
+    auth: custom
+    hosting:
+      frontend: vercel
+      backend: fly-io
+    database_hosting: fly-postgres
+    styling: tailwind
+    testing:
+      frontend: [vitest, playwright]
+      backend: go-test
+    strengths:
+      - Very high performance
+      - Type-safe frontend and backend
+      - Scales well
+      - Low cloud costs
+    weaknesses:
+      - Two languages to maintain
+      - More complex deployment
+      - Longer initial setup
+    best_for:
+      - Performance-critical apps
+      - Teams with Go experience
+      - High-scale applications
+    not_for:
+      - MVPs
+      - TypeScript-only teams
+    estimated_costs:
+      mvp: "$30/mo"
+      small: "$80/mo"
+      medium: "$150/mo"
+    setup_time: "3-5 days"
+    time_to_mvp: "5-6 weeks"
+
+  remix-cloudflare:
+    name: "Remix + Cloudflare"
+    description: "Edge-first full-stack React"
+    frontend: remix
+    backend: remix
+    database: turso
+    auth: lucia
+    hosting: cloudflare-pages
+    styling: tailwind
+    testing:
+      unit: vitest
+      e2e: playwright
+    strengths:
+      - Edge performance
+      - Low latency globally
+      - Cost-effective at scale
+      - Progressive enhancement
+    weaknesses:
+      - Smaller ecosystem
+      - Edge runtime limitations
+      - SQLite limitations
+    best_for:
+      - Global applications
+      - Content-heavy sites
+      - Cost-sensitive scale
+    not_for:
+      - Complex backends
+      - Heavy computation
+    estimated_costs:
+      mvp: "$0-10/mo"
+      small: "$20/mo"
+      medium: "$100/mo"
+    setup_time: "2-3 days"
+    time_to_mvp: "3-4 weeks"
+
+  sveltekit-supabase:
+    name: "SvelteKit + Supabase"
+    description: "Minimal JavaScript with managed backend"
+    frontend: sveltekit
+    backend: sveltekit
+    database: supabase
+    auth: supabase-auth
+    hosting: vercel
+    styling: tailwind
+    testing:
+      unit: vitest
+      e2e: playwright
+    strengths:
+      - Minimal bundle size
+      - Fast performance
+      - Managed backend
+      - Great DX
+    weaknesses:
+      - Smaller ecosystem
+      - Fewer developers
+      - Less enterprise adoption
+    best_for:
+      - Performance-critical
+      - Small teams
+      - Learning Svelte
+    not_for:
+      - Large teams
+      - Enterprise
+    estimated_costs:
+      mvp: "$25/mo"
+      small: "$100/mo"
+      medium: "$500/mo"
+    setup_time: "1-2 days"
+    time_to_mvp: "3-4 weeks"
+
+  python-fastapi:
+    name: "FastAPI + PostgreSQL"
+    description: "Python async API with ML capabilities"
+    frontend: none
+    backend: fastapi
+    database: postgres
+    orm: sqlalchemy
+    auth: custom
+    hosting: railway
+    styling: null
+    testing:
+      backend: pytest
+    strengths:
+      - Great for ML/AI workloads
+      - Excellent documentation
+      - Async performance
+      - Python ecosystem
+    weaknesses:
+      - No frontend included
+      - Python typing less strict
+      - Deployment more complex
+    best_for:
+      - ML/AI applications
+      - Data-heavy backends
+      - Python teams
+      - API-only services
+    not_for:
+      - TypeScript teams
+      - Frontend-heavy
+    estimated_costs:
+      mvp: "$10/mo"
+      small: "$50/mo"
+      medium: "$150/mo"
+    setup_time: "1-2 days"
+    time_to_mvp: "2-4 weeks"
+
+  rails-postgres:
+    name: "Ruby on Rails + PostgreSQL"
+    description: "Batteries-included full-stack framework"
+    frontend: rails-hotwire
+    backend: rails
+    database: postgres
+    auth: devise
+    hosting: render
+    styling: tailwind
+    testing:
+      backend: rspec
+      e2e: playwright
+    strengths:
+      - Rapid development
+      - Convention over configuration
+      - Mature ecosystem
+      - Full-stack solution
+    weaknesses:
+      - Ruby performance
+      - Fewer developers available
+      - Monolith architecture
+    best_for:
+      - Rapid prototyping
+      - CRUD applications
+      - Startups
+      - Ruby teams
+    not_for:
+      - Microservices
+      - High performance
+      - JavaScript teams
+    estimated_costs:
+      mvp: "$15/mo"
+      small: "$50/mo"
+      medium: "$200/mo"
+    setup_time: "1 day"
+    time_to_mvp: "2-3 weeks"
+
+  api-only-go:
+    name: "Go API Service"
+    description: "Backend API without frontend"
+    frontend: none
+    backend: go-chi
+    database: postgres
+    auth: jwt
+    hosting: fly-io
+    testing:
+      backend: go-test
+    strengths:
+      - High performance
+      - Low resource usage
+      - Simple deployment
+      - Small binary
+    weaknesses:
+      - No frontend
+      - More verbose code
+    best_for:
+      - API services
+      - Microservices
+      - Backend for mobile
+      - High performance
+    not_for:
+      - Rapid prototyping
+      - Full-stack needs
+    estimated_costs:
+      mvp: "$5/mo"
+      small: "$20/mo"
+      medium: "$80/mo"
+    setup_time: "1-2 days"
+    time_to_mvp: "3-4 weeks"
+
+  nuxt-supabase:
+    name: "Nuxt + Supabase"
+    description: "Full-stack Vue with managed backend"
+    frontend: nuxt
+    backend: nuxt
+    database: supabase
+    auth: supabase-auth
+    hosting: vercel
+    styling: tailwind
+    testing:
+      unit: vitest
+      e2e: playwright
+    strengths:
+      - Vue ecosystem
+      - Auto-imports
+      - Managed backend
+      - Great DX
+    weaknesses:
+      - Smaller than React
+      - Supabase lock-in
+    best_for:
+      - Vue teams
+      - Rapid development
+      - Small teams
+    not_for:
+      - React preference
+      - Enterprise
+    estimated_costs:
+      mvp: "$25/mo"
+      small: "$100/mo"
+      medium: "$500/mo"
+    setup_time: "1-2 days"
+    time_to_mvp: "2-3 weeks"

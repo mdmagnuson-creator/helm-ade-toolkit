@@ -1,0 +1,61 @@
+.PHONY: build run test clean migrate-up migrate-down docker-up docker-down
+
+# Build variables
+BINARY_NAME={{projectName}}
+BUILD_DIR=bin
+
+# Build the application
+build:
+	@echo "Building..."
+	@go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/server
+
+# Run the application
+run:
+	@go run ./cmd/server
+
+# Run with hot reload (requires air: go install github.com/cosmtrek/air@latest)
+dev:
+	@air
+
+# Run tests
+test:
+	@go test -v ./...
+
+# Run tests with coverage
+test-coverage:
+	@go test -v -coverprofile=coverage.out ./...
+	@go tool cover -html=coverage.out -o coverage.html
+
+# Clean build artifacts
+clean:
+	@rm -rf $(BUILD_DIR)
+	@rm -f coverage.out coverage.html
+
+# Database migrations
+migrate-up:
+	@./scripts/migrate.sh up
+
+migrate-down:
+	@./scripts/migrate.sh down
+
+# Docker
+docker-up:
+	@docker-compose up -d
+
+docker-down:
+	@docker-compose down
+
+docker-build:
+	@docker build -t {{projectName}}:latest .
+
+# Lint (requires golangci-lint)
+lint:
+	@golangci-lint run
+
+# Format
+fmt:
+	@go fmt ./...
+
+# Generate (if using go generate)
+generate:
+	@go generate ./...

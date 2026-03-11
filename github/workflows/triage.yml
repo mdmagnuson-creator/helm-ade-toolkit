@@ -1,0 +1,42 @@
+# Example workflow showing how to use the yo-go CI triage action
+# Copy this file to your repo's .github/workflows/ directory
+name: CI with Triage
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# Required permissions for auto-fix PR creation
+# - contents: write - needed to create commits and branches
+# - pull-requests: write - needed to create PRs
+# - models: read - needed to call GitHub Models API
+permissions:
+  contents: write
+  pull-requests: write
+  models: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build
+        run: echo "Replace with your build command"
+      
+      - name: Test
+        run: echo "Replace with your test command"
+
+      # Triage step runs only when any previous step fails
+      # The if: failure() condition ensures this only runs on failure
+      - name: Triage CI Failure
+        if: failure()
+        uses: your-org/yo-go/triage@main  # Replace with your repo reference
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Optional: Set in repo secrets (Settings > Secrets and variables > Actions)
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          # Optional: Defaults to openai/gpt-4o if not specified
+          model: 'openai/gpt-4o'

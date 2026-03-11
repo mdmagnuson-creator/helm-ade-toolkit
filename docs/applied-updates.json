@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "applied": [
+    {
+      "id": "2026-03-03-builder-environment-context-gap",
+      "appliedAt": "2026-03-03T23:45:00Z",
+      "appliedBy": "toolkit",
+      "updateType": "agent",
+      "summary": "Added environment-database context gap diagnosis to Builder"
+    }
+  ]
+}

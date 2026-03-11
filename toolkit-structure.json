@@ -1,0 +1,2907 @@
+{
+  "$schema": "https://opencode.ai/schemas/toolkit-structure.json",
+  "version": "1.0.0",
+  "generatedAt": "2026-03-08T23:30:00Z",
+  "repository": "https://github.com/mdmagnuson-creator/yo-go",
+  "agents": {
+    "total": 63,
+    "categories": {
+      "primary": {
+        "description": "User-invokable primary agents",
+        "agents": [
+          {
+            "name": "builder",
+            "file": "agents/builder.md",
+            "description": "Builds features from PRDs or ad-hoc requests by orchestrating implementation agents"
+          },
+          {
+            "name": "planner",
+            "file": "agents/planner.md",
+            "description": "Refine draft PRDs and prepare them for implementation"
+          },
+          {
+            "name": "toolkit",
+            "file": "agents/toolkit.md",
+            "description": "Maintains the AI toolkit - agents, skills, templates, and scaffolds"
+          },
+          {
+            "name": "ui-test-full-app-auditor",
+            "file": "agents/ui-test-full-app-auditor.md",
+            "description": "Autonomous E2E test auditor that analyzes apps and generates comprehensive test coverage"
+          }
+        ]
+      },
+      "implementation": {
+        "description": "Implementation-focused coding agents",
+        "agents": [
+          {
+            "name": "aws-dev",
+            "file": "agents/aws-dev.md",
+            "description": "Implements CloudFormation infrastructure tasks"
+          },
+          {
+            "name": "developer",
+            "file": "agents/developer.md",
+            "description": "Implements one task how the project wants"
+          },
+          {
+            "name": "docker-dev",
+            "file": "agents/docker-dev.md",
+            "description": "Implements Docker image and container configuration tasks"
+          },
+          {
+            "name": "go-dev",
+            "file": "agents/go-dev.md",
+            "description": "Implements Go tasks specializing in web services and AWS interactions"
+          },
+          {
+            "name": "hammer",
+            "file": "agents/hammer.md",
+            "description": "Implements one task to fix issues with pull requests"
+          },
+          {
+            "name": "java-dev",
+            "file": "agents/java-dev.md",
+            "description": "Implements Java tasks specializing in Netty and low-level networking"
+          },
+          {
+            "name": "overlord",
+            "file": "agents/overlord.md",
+            "description": "Implements one task how the project wants"
+          },
+          {
+            "name": "public-page-dev",
+            "file": "agents/public-page-dev.md",
+            "description": "Implements public-facing pages (marketing, legal, error) following brand guidelines and conversion best practices"
+          },
+          {
+            "name": "python-dev",
+            "file": "agents/python-dev.md",
+            "description": "Implements Python tasks specializing in LangChain and AI/ML pipelines"
+          },
+          {
+            "name": "react-dev",
+            "file": "agents/react-dev.md",
+            "description": "Implements React tasks specializing in UI consistency, Tailwind CSS, and TypeScript"
+          },
+          {
+            "name": "terraform-dev",
+            "file": "agents/terraform-dev.md",
+            "description": "Implements Terraform infrastructure tasks"
+          }
+        ]
+      },
+      "testing": {
+        "description": "Test creation and QA agents",
+        "agents": [
+          {
+            "name": "ui-tester-playwright",
+            "file": "agents/ui-tester-playwright.md",
+            "description": "Writes Playwright E2E tests for identified UI areas"
+          },
+          {
+            "name": "ui-test-reviewer",
+            "file": "agents/ui-test-reviewer.md",
+            "description": "Reviews UI changes and identifies all modified areas for E2E testing"
+          },
+          {
+            "name": "go-tester",
+            "file": "agents/go-tester.md",
+            "description": "Writes Go tests using testify and httptest for comprehensive test coverage"
+          },
+          {
+            "name": "jest-tester",
+            "file": "agents/jest-tester.md",
+            "description": "Writes backend Jest tests in TypeScript for comprehensive test coverage"
+          },
+          {
+            "name": "qa-browser-tester",
+            "file": "agents/qa-browser-tester.md",
+            "description": "Writes Playwright tests for QA findings by inspecting pages and delegating to ui-tester-playwright"
+          },
+          {
+            "name": "qa-explorer",
+            "file": "agents/qa-explorer.md",
+            "description": "Explores web applications to find bugs through adversarial testing"
+          },
+          {
+            "name": "qa",
+            "file": "agents/qa.md",
+            "description": "Coordinates QA testing by dispatching explorer and browser-tester subagents"
+          },
+          {
+            "name": "react-tester",
+            "file": "agents/react-tester.md",
+            "description": "Writes Jest tests for React components using React Testing Library and TypeScript"
+          },
+          {
+            "name": "tester",
+            "file": "agents/tester.md",
+            "description": "Orchestrates test writing by routing to specialist testing agents"
+          }
+        ]
+      },
+      "critics": {
+        "description": "Code review and quality critic agents",
+        "agents": [
+          {
+            "name": "aesthetic-critic",
+            "file": "agents/aesthetic-critic.md",
+            "description": "Reviews UI styling changes against the project's design system for visual consistency and dark mode correctness"
+          },
+          {
+            "name": "ansible-critic",
+            "file": "agents/ansible-critic.md",
+            "description": "Reviews Ansible roles and playbooks for idempotency, security, and best practices"
+          },
+          {
+            "name": "api-critic",
+            "file": "agents/api-critic.md",
+            "description": "Reviews API design for usability \u2014 confusing endpoints, inconsistent conventions, missing pagination, poor error responses"
+          },
+          {
+            "name": "backend-aws-critic",
+            "file": "agents/backend-aws-critic.md",
+            "description": "Reviews code calling AWS services for unhandled failure modes, missing permissions, and SDK misuse"
+          },
+          {
+            "name": "cloudformation-critic",
+            "file": "agents/cloudformation-critic.md",
+            "description": "Reviews CloudFormation templates for security, best practices, and operational safety"
+          },
+          {
+            "name": "comment-critic",
+            "file": "agents/comment-critic.md",
+            "description": "Reviews comments and removes noise \u2014 flags obvious comments that just restate the code"
+          },
+          {
+            "name": "copy-critic",
+            "file": "agents/copy-critic.md",
+            "description": "Reviews marketing copy for clarity, target market fit, feature accuracy, and brand voice consistency"
+          },
+          {
+            "name": "critic",
+            "file": "agents/critic.md",
+            "description": "Routes code review to the appropriate specialist critic(s) based on file types and content"
+          },
+          {
+            "name": "dx-critic",
+            "file": "agents/dx-critic.md",
+            "description": "Reviews exported/public package APIs for testability, consistency, and developer experience"
+          },
+          {
+            "name": "exploit-critic",
+            "file": "agents/exploit-critic.md",
+            "description": "Adversarial review that attempts to exploit code \u2014 finds injection, auth bypass, privilege escalation, and data exfiltration paths"
+          },
+          {
+            "name": "frontend-critic",
+            "file": "agents/frontend-critic.md",
+            "description": "Reviews frontend code for component design, performance, styling, and best practices"
+          },
+          {
+            "name": "handoff-contract-critic",
+            "file": "agents/handoff-contract-critic.md",
+            "description": "Checks builder/planner/toolkit routing contracts for ownership contradictions and scope drift"
+          },
+          {
+            "name": "network-critic",
+            "file": "agents/network-critic.md",
+            "description": "Reviews code making network requests for resilience, blocking behavior, and lock-during-IO problems"
+          },
+          {
+            "name": "oddball-critic",
+            "file": "agents/oddball-critic.md",
+            "description": "Reviews code for consistency with the existing codebase \u2014 flags patterns that look different from established conventions"
+          },
+          {
+            "name": "policy-testability-critic",
+            "file": "agents/policy-testability-critic.md",
+            "description": "Flags non-testable MUST/CRITICAL/NEVER rules and suggests enforceable rewrites"
+          },
+          {
+            "name": "prompt-critic",
+            "file": "agents/prompt-critic.md",
+            "description": "Reviews AI agent prompts, MCP server definitions, and tool configurations for clarity, ambiguity, and failure modes"
+          },
+          {
+            "name": "public-page-critic",
+            "file": "agents/public-page-critic.md",
+            "description": "Reviews public-facing pages for conversion optimization, accessibility, mobile UX, and brand consistency"
+          },
+          {
+            "name": "quality-critic",
+            "file": "agents/quality-critic.md",
+            "description": "Reviews UI for quality beyond correctness \u2014 visual regression, CLS, accessibility, and performance"
+          },
+          {
+            "name": "requirements-critic",
+            "file": "agents/requirements-critic.md",
+            "description": "Reviews code for decisions that will complicate or conflict with implementing remaining requirements"
+          },
+          {
+            "name": "security-critic",
+            "file": "agents/security-critic.md",
+            "description": "Reviews code for security scan findings \u2014 CSP, CORS, XSRF, SSRF, dependency CVEs, and compliance issues"
+          },
+          {
+            "name": "semantic-critic",
+            "file": "agents/semantic-critic.md",
+            "description": "Reviews diagrams, flows, and sequential content for logical coherence between visual and textual elements"
+          },
+          {
+            "name": "seo-critic",
+            "file": "agents/seo-critic.md",
+            "description": "Reviews public pages for SEO - meta tags, headings, structured data, page speed, and search engine best practices"
+          },
+          {
+            "name": "tailwind-critic",
+            "file": "agents/tailwind-critic.md",
+            "description": "Reviews Tailwind CSS usage for project-specific design system patterns and dark mode conventions"
+          },
+          {
+            "name": "update-schema-critic",
+            "file": "agents/update-schema-critic.md",
+            "description": "Validates project-updates file structure, required frontmatter, and required workflow sections"
+          },
+          {
+            "name": "workflow-enforcement-critic",
+            "file": "agents/workflow-enforcement-critic.md",
+            "description": "Verifies mandatory toolkit post-change workflow artifacts and completion reporting"
+          }
+        ]
+      },
+      "operational": {
+        "description": "Operational and coordination agents",
+        "agents": [
+          {
+            "name": "backend-critic-go",
+            "file": "agents/backend-critic-go.md",
+            "description": "Reviews backend Go code for API design, concurrency, error handling, and best practices (Gin, Lambda)"
+          },
+          {
+            "name": "backend-critic-java",
+            "file": "agents/backend-critic-java.md",
+            "description": "Reviews backend Java code for API design, concurrency, error handling, and best practices (Netty, Lambda)"
+          },
+          {
+            "name": "backend-critic-ts",
+            "file": "agents/backend-critic-ts.md",
+            "description": "Reviews backend TypeScript code for API design, async patterns, error handling, and best practices (Express, Lambda)"
+          },
+          {
+            "name": "debugger",
+            "file": "agents/debugger.md",
+            "description": "Investigates production issues by pulling ticket context, searching logs, and identifying likely defect areas"
+          },
+          {
+            "name": "docs-writer",
+            "file": "agents/docs-writer.md",
+            "description": "Creates and updates support documentation for user-facing features"
+          },
+          {
+            "name": "felix",
+            "file": "agents/felix.md",
+            "description": "Watches a PR for feedback and build failures."
+          },
+          {
+            "name": "merge-coordinator",
+            "file": "agents/merge-coordinator.md",
+            "description": "Processes the merge queue - rebases, tests, and merges PRs from parallel sessions"
+          },
+          {
+            "name": "prd-impact-analyzer",
+            "file": "agents/prd-impact-analyzer.md",
+            "description": "Analyzes impact of completed PRDs on other PRDs in the backlog"
+          },
+          {
+            "name": "prd",
+            "file": "agents/prd.md",
+            "description": "Augments a ticket with a dev plan"
+          },
+          {
+            "name": "screenshot-maintainer",
+            "file": "agents/screenshot-maintainer.md",
+            "description": "Maintains product screenshots used in marketing pages and support articles, auto-updating when UI changes"
+          },
+          {
+            "name": "session-status",
+            "file": "agents/session-status.md",
+            "description": "Display session status dashboard with conflict analysis"
+          },
+          {
+            "name": "support-article-writer",
+            "file": "agents/support-article-writer.md",
+            "description": "Writes and updates support articles with screenshots for product documentation"
+          },
+          {
+            "name": "tools-writer",
+            "file": "agents/tools-writer.md",
+            "description": "Creates and updates AI agent tools when features change"
+          },
+          {
+            "name": "wall-e",
+            "file": "agents/wall-e.md",
+            "description": "Cleans up a workspace"
+          }
+        ]
+      }
+    }
+  },
+  "skills": {
+    "total": 68,
+    "categories": {
+      "workflow": {
+        "description": "Workflow and lifecycle skills",
+        "skills": [
+          {
+            "name": "adhoc-workflow",
+            "path": "skills/adhoc-workflow/SKILL.md",
+            "description": "Ad-hoc mode workflow for Builder. Use when handling direct requests without a PRD, quick fixes, or one-off tasks. Triggers on: ad-hoc mode, quick fix, direct request, one-off task."
+          },
+          {
+            "name": "session-log",
+            "path": "skills/session-log/SKILL.md",
+            "description": "Manage persistent session logs for Builder. Use when initializing sessions, managing chunks, writing session state, or resuming sessions. Triggers on: session log, session state, chunk management, session resume, heartbeat, session init."
+          },
+          {
+            "name": "git-sync",
+            "path": "skills/git-sync/SKILL.md",
+            "description": "Team synchronization for multi-machine collaboration. Provides pull/push protocols for keeping repos in sync across team members. Triggers on: team sync, git sync, pull latest, push changes."
+          },
+          {
+            "name": "multi-session",
+            "path": "skills/multi-session/SKILL.md",
+            "description": "Multi-session coordination for parallel AI sessions. Provides session locks, lazy heartbeat, and merge queue management. Loaded conditionally when multiple sessions are detected."
+          },
+          {
+            "name": "post-completion",
+            "path": "skills/post-completion/SKILL.md",
+            "description": "Post-completion polish steps for Developer. Use when all PRD stories pass but before declaring COMPLETE. Triggers on: post-completion, polish, aesthetic review, post-change actions, final checks."
+          },
+          {
+            "name": "prd",
+            "path": "skills/prd/SKILL.md",
+            "description": "Generate a Product Requirements Document (PRD) for a new feature. Use when planning a feature, starting a new project, or when asked to create a PRD. Triggers on: create a prd, write prd for, plan this feature, requirements for, spec out."
+          },
+          {
+            "name": "prd-to-json",
+            "path": "skills/prd-to-json/SKILL.md",
+            "description": "Convert PRDs to prd.json format for the Developer autonomous agent system. Use when you have an existing PRD and need to convert it to Developer's JSON format. Triggers on: convert this prd, turn this into developer format, create prd.json from this, developer json."
+          },
+          {
+            "name": "prd-workflow",
+            "path": "skills/prd-workflow/SKILL.md",
+            "description": "PRD mode workflow for Builder. Use when building features from PRDs, implementing user stories, or managing PRD state transitions. Triggers on: PRD mode, build PRD, implement stories, ship PRD."
+          },
+          {
+            "name": "session-setup",
+            "path": "skills/session-setup/SKILL.md",
+            "description": "Always-on session initialization for Builder. Handles session ID, lock file, heartbeat setup, and multi-session detection. Loaded at every session start."
+          },
+          {
+            "name": "start-dev-server",
+            "path": "skills/start-dev-server/SKILL.md",
+            "description": "Start the development server for a project and wait for it to be ready. Use when you need to run the dev server for building, testing, or verification. Triggers on: start dev server, start server, run dev, npm run dev, start development server."
+          },
+          {
+            "name": "test-flow",
+            "path": "skills/test-flow/SKILL.md",
+            "description": "Unified test orchestrator \u2014 skip gate, activity resolution, quality check pipeline, completion prompt, and tier-2 skill loading. Triggers on: generate tests, run tests, test failures, E2E deferral, test flow."
+          },
+          {
+            "name": "test-verification-loop",
+            "path": "skills/test-verification-loop/SKILL.md",
+            "description": "3-pass stability verification and automated fix loop. Triggers on: stability check, verification loop, fix loop, 3-pass."
+          },
+          {
+            "name": "test-prerequisite-detection",
+            "path": "skills/test-prerequisite-detection/SKILL.md",
+            "description": "Detect and classify test prerequisites and blockers. Triggers on: prerequisite failure, blocker detection, test dependencies."
+          },
+          {
+            "name": "ui-test-flow",
+            "path": "skills/ui-test-flow/SKILL.md",
+            "description": "E2E test generation and execution workflow. Triggers on: run e2e, generate e2e, deferred e2e, e2e flow."
+          },
+          {
+            "name": "test-ui-verification",
+            "path": "skills/test-ui-verification/SKILL.md",
+            "description": "UI verification test patterns and flaky test handling. Triggers on: ui verification, flaky test, visual verification."
+          },
+          {
+            "name": "test-failure-handling",
+            "path": "skills/test-failure-handling/SKILL.md",
+            "description": "Test failure logging, manual fallback, and skip flows. Triggers on: test failed, skip test, abandon feature, manual fallback."
+          },
+          {
+            "name": "test-doc-sync",
+            "path": "skills/test-doc-sync/SKILL.md",
+            "description": "Test documentation sync workflow for keeping test files and docs aligned. Triggers on: test doc sync, sync test docs, update test documentation."
+          },
+          {
+            "name": "session-state",
+            "path": "skills/session-state/SKILL.md",
+            "description": "Session state management for resumability. Use when reading/writing session state, updating heartbeat, or recovering from compaction. Triggers on: session state, heartbeat, rate limit recovery, compaction recovery."
+          },
+          {
+            "name": "verification-contracts",
+            "path": "skills/verification-contracts/SKILL.md",
+            "description": "Create verification contracts for task completion. Defines success criteria, edge cases, and test activities. Triggers on: verification contract, success criteria, task verification."
+          }
+        ]
+      },
+      "content": {
+        "description": "Content and presentation skills",
+        "skills": [
+          {
+            "name": "marketing-copy",
+            "path": "skills/marketing-copy/SKILL.md",
+            "description": "Generate marketing copy from product documentation and PRDs. Use when you need to write headlines, value propositions, feature descriptions, CTAs, or other marketing text derived from the product. Triggers on: write marketing copy, generate headlines, create tagline, feature benefits, value proposition."
+          },
+          {
+            "name": "product-screenshots",
+            "path": "skills/product-screenshots/SKILL.md",
+            "description": "Capture and maintain product screenshots for marketing and support use. Use when you need to capture UI screenshots, refresh outdated screenshots, or check if screenshots need updating after UI changes. Triggers on: capture screenshots, update product images, refresh screenshots, screenshot the feature, marketing screenshots."
+          },
+          {
+            "name": "public-page",
+            "path": "skills/public-page/SKILL.md",
+            "description": "Generate public-facing pages (marketing, legal, error, changelog). Use when building landing pages, feature pages, pricing pages, terms of service, 404/500 pages, or changelogs. Triggers on: create landing page, build pricing page, new feature page, create 404 page, terms of service, changelog page."
+          },
+          {
+            "name": "screenshot",
+            "path": "skills/screenshot/SKILL.md",
+            "description": "Capture authenticated screenshots of web pages for visual verification. Use when you need to see rendered UI, verify dark mode styling, or check visual changes. Triggers on: take screenshot, capture screenshot, show me the page, visual check, verify styling."
+          },
+          {
+            "name": "human-voice",
+            "path": "skills/human-voice/SKILL.md",
+            "description": "Review and fix AI-generated writing patterns. Identifies em dash overuse, filler phrases, passive voice, hollow enthusiasm, and over-structuring. Triggers on: human voice, AI writing, natural tone, writing review, humanize content."
+          }
+        ]
+      },
+      "project": {
+        "description": "Project setup and architecture skills",
+        "skills": [
+          {
+            "name": "agent-audit",
+            "path": "skills/agent-audit/SKILL.md",
+            "description": "Audit AI toolkit agents for compliance and coverage gaps. Use when you need to check if agents follow conventions, or find missing agents for a project's stack. Triggers on: audit agents, agent compliance, toolkit gaps, missing agents, stack coverage."
+          },
+          {
+            "name": "agent-onboard",
+            "path": "skills/agent-onboard/SKILL.md",
+            "description": "No description provided"
+          },
+          {
+            "name": "project-bootstrap",
+            "path": "skills/project-bootstrap/SKILL.md",
+            "description": "Bootstrap a new or existing project with stack detection and project.json generation. Use when adding a new project, setting up agent system, or generating project manifest. Triggers on: add project, new project, bootstrap project, setup project, detect stack."
+          },
+          {
+            "name": "project-scaffold",
+            "path": "skills/project-scaffold/SKILL.md",
+            "description": "Generate project boilerplate from scaffold templates. Use when creating a new project after stack selection. Triggers on: scaffold project, generate boilerplate, create from template."
+          },
+          {
+            "name": "spec-analyzer",
+            "path": "skills/spec-analyzer/SKILL.md",
+            "description": "No description provided"
+          },
+          {
+            "name": "stack-advisor",
+            "path": "skills/stack-advisor/SKILL.md",
+            "description": "No description provided"
+          }
+        ]
+      },
+      "meta": {
+        "description": "Meta-generators for project-specific skills",
+        "skills": [
+          {
+            "name": "ai-tools-skill-generator",
+            "path": "skills/meta/ai-tools-skill-generator/SKILL.md",
+            "description": "Generate a project-specific AI tools skill. Use when a project has ai: true and aiTools configuration. Triggers on: generate ai tools skill, create chatbot tools, ai-tools-skill-generator."
+          },
+          {
+            "name": "api-endpoint-skill-generator",
+            "path": "skills/meta/api-endpoint-skill-generator/SKILL.md",
+            "description": "Generate a project-specific API patterns skill. Use when a project has api: true to document endpoint creation patterns. Triggers on: generate api skill, create endpoint patterns, api-endpoint-skill-generator."
+          },
+          {
+            "name": "auth-skill-generator",
+            "path": "skills/meta/auth-skill-generator/SKILL.md",
+            "description": "Generate a project-specific auth-flow skill. Use when a project has authentication: true but no auth-flow skill. Triggers on: generate auth skill, create auth patterns, auth-skill-generator."
+          },
+          {
+            "name": "crud-skill-generator",
+            "path": "skills/meta/crud-skill-generator/SKILL.md",
+            "description": "Generate a project-specific CRUD patterns skill. Use for any project with a database to document entity creation patterns. Triggers on: generate crud skill, create crud patterns, crud-skill-generator."
+          },
+          {
+            "name": "database-migration-skill-generator",
+            "path": "skills/meta/database-migration-skill-generator/SKILL.md",
+            "description": "Generate a project-specific database migration skill. Use for any project with a database to document migration patterns. Triggers on: generate migration skill, create migration patterns, database-migration-skill-generator."
+          },
+          {
+            "name": "email-skill-generator",
+            "path": "skills/meta/email-skill-generator/SKILL.md",
+            "description": "Generate a project-specific transactional email skill. Use when a project has email: true or email integration (resend, sendgrid, etc). Triggers on: generate email skill, create email patterns, email-skill-generator."
+          },
+          {
+            "name": "form-skill-generator",
+            "path": "skills/meta/form-skill-generator/SKILL.md",
+            "description": "Generate a project-specific form patterns skill. Use for frontend apps to document form handling. Triggers on: generate form skill, create form patterns, form-skill-generator."
+          },
+          {
+            "name": "multi-tenant-skill-generator",
+            "path": "skills/meta/multi-tenant-skill-generator/SKILL.md",
+            "description": "Generate a project-specific tenant-context skill. Use when a project has multiTenant: true but no tenant-context skill. Triggers on: generate tenant skill, create multi-tenant patterns, multi-tenant-skill-generator."
+          },
+          {
+            "name": "stripe-skill-generator",
+            "path": "skills/meta/stripe-skill-generator/SKILL.md",
+            "description": "Generate a project-specific payments skill for Stripe integration. Use when a project has stripe in integrations. Triggers on: generate stripe skill, create payment patterns, stripe-skill-generator."
+          },
+          {
+            "name": "supabase-skill-generator",
+            "path": "skills/meta/supabase-skill-generator/SKILL.md",
+            "description": "Generate a project-specific Supabase database skill covering RLS, client patterns, and query types. Use when a project has supabase in integrations. Triggers on: generate supabase skill, supabase patterns, supabase-skill-generator."
+          },
+          {
+            "name": "table-skill-generator",
+            "path": "skills/meta/table-skill-generator/SKILL.md",
+            "description": "Generate a project-specific data table patterns skill. Use for frontend apps to document table/list handling. Triggers on: generate table skill, create table patterns, table-skill-generator."
+          }
+        ]
+      },
+      "utilities": {
+        "description": "Utility and specialty skills",
+        "skills": [
+          {
+            "name": "auth-generic",
+            "path": "skills/auth-generic/SKILL.md",
+            "description": "Generic/custom authentication implementation for any provider. Use when project uses custom auth or unsupported provider. Triggers on: custom auth, generic login, auth-generic."
+          },
+          {
+            "name": "auth-headless",
+            "path": "skills/auth-headless/SKILL.md",
+            "description": "Headless authentication using API calls and session injection. Skips UI login for faster tests. Triggers on: headless auth, skip login ui, inject session, auth-headless."
+          },
+          {
+            "name": "auth-nextauth-credentials",
+            "path": "skills/auth-nextauth-credentials/SKILL.md",
+            "description": "NextAuth credentials (email/password) authentication for AI agents. Triggers on: nextauth login, nextauth credentials, auth-nextauth-credentials."
+          },
+          {
+            "name": "auth-supabase-otp",
+            "path": "skills/auth-supabase-otp/SKILL.md",
+            "description": "Supabase passwordless OTP authentication for AI agents. Handles magic link and email code flows. Triggers on: supabase otp, supabase magic link, auth-supabase-otp."
+          },
+          {
+            "name": "auth-supabase-password",
+            "path": "skills/auth-supabase-password/SKILL.md",
+            "description": "Supabase email/password authentication for AI agents. Triggers on: supabase password, supabase email login, auth-supabase-password."
+          },
+          {
+            "name": "browser-debugging",
+            "path": "skills/browser-debugging/SKILL.md",
+            "description": "Browser debugging escalation protocol for when tests pass but the feature doesn't work in the user's browser. Triggers on: tests pass but doesn't work, feature broken in browser, works in playwright but not browser, console screenshot, browser debugging."
+          },
+          {
+            "name": "builder-cli",
+            "path": "skills/builder-cli/SKILL.md",
+            "description": "CLI tool detection and proactive usage for Builder. Triggers on: cli command, project cli, use cli tools."
+          },
+          {
+            "name": "builder-delegation",
+            "path": "skills/builder-delegation/SKILL.md",
+            "description": "Sub-agent delegation patterns for Builder orchestration. Triggers on: delegate to, call subagent, orchestration patterns."
+          },
+          {
+            "name": "builder-verification",
+            "path": "skills/builder-verification/SKILL.md",
+            "description": "Verification handling for Builder sessions. Covers as-user verification, prerequisite/environment failures, verification-failures.json logging, and manual fallback options."
+          },
+          {
+            "name": "builder-dashboard",
+            "path": "skills/builder-dashboard/SKILL.md",
+            "description": "Dashboard templates for Builder session startup. Provides fresh and resume dashboard formats with session state, PRD progress, and vectorization status."
+          },
+          {
+            "name": "builder-error-recovery",
+            "path": "skills/builder-error-recovery/SKILL.md",
+            "description": "Error recovery patterns for Builder sessions. Covers transient error handling, sub-agent failure recovery, unexpected error prompts, and loop detection with bulk fix strategies."
+          },
+          {
+            "name": "cve",
+            "path": "skills/cve/SKILL.md",
+            "description": "Assess a CVE for exposure, exploitability, and remediation options across one or more repositories."
+          },
+          {
+            "name": "ui-test-ux-quality",
+            "path": "skills/ui-test-ux-quality/SKILL.md",
+            "description": "Quality-beyond-correctness E2E testing patterns. Catches visual glitches, performance issues, layout shifts, and intermediate bad states. Triggers on: flicker test, visual stability, performance budget, negative assertion, CLS test, drag drop test, animation test."
+          },
+          {
+            "name": "ui-test-electron",
+            "path": "skills/ui-test-electron/SKILL.md",
+            "description": "Playwright E2E testing patterns for Electron desktop applications. Covers app launch, main/renderer process testing, IPC mocking, and native dialog handling. Triggers on: electron test, desktop app test, ui-test-electron."
+          },
+          {
+            "name": "ui-test-full-app-audit",
+            "path": "skills/ui-test-full-app-audit/SKILL.md",
+            "description": "Comprehensive E2E test auditing workflow. Analyzes apps, generates test manifests, and executes with 5-retry resilience. Triggers on: e2e audit, full coverage audit, comprehensive e2e."
+          },
+          {
+            "name": "merge-conflicts",
+            "path": "skills/merge-conflicts/SKILL.md",
+            "description": "Resolve merge conflicts on a pull request by merging the target branch into the source branch and fixing conflicts. Use when a PR has merge conflicts, a branch needs to be updated, or when asked to fix conflicts. Triggers on: fix merge conflicts, resolve conflicts, merge conflicts on PR, update branch, rebase PR."
+          },
+          {
+            "name": "setup-auth",
+            "path": "skills/setup-auth/SKILL.md",
+            "description": "Interactive authentication configuration for AI agents. Scans codebase for auth providers, walks through configuration options, and writes to project.json. Triggers on: setup auth, configure authentication, /setup-auth, auth config."
+          },
+          {
+            "name": "test-user-cleanup",
+            "path": "skills/test-user-cleanup/SKILL.md",
+            "description": "Clean up dynamically created test users from the database. Prevents test user accumulation. Triggers on: cleanup test users, delete test accounts, test-user-cleanup."
+          },
+          {
+            "name": "vectorize",
+            "path": "skills/vectorize/SKILL.md",
+            "description": "Vectorize codebase and database schemas for semantic search. Uses OpenAI/Voyage embeddings with optional Contextual Retrieval. Triggers on: semantic search, vectorize codebase, code search, find similar code."
+          },
+          {
+            "name": "auth-config-check",
+            "path": "skills/auth-config-check/SKILL.md",
+            "description": "Check authentication configuration before E2E tests. Validates project.json auth settings and credentials. Triggers on: auth config check, e2e auth, test authentication."
+          },
+          {
+            "name": "critic-dispatch",
+            "path": "skills/critic-dispatch/SKILL.md",
+            "description": "Dispatch code reviews to appropriate critic agents based on file types. Routes to frontend, backend, security critics. Triggers on: critic dispatch, code review routing, dispatch critics."
+          },
+          {
+            "name": "dynamic-reassignment",
+            "path": "skills/dynamic-reassignment/SKILL.md",
+            "description": "Dynamic task reassignment on failure. Handles fallback chains, rate limit recovery, and escalation. Triggers on: agent failed, reassign task, fallback agent, escalate task."
+          },
+          {
+            "name": "self-correction",
+            "path": "skills/self-correction/SKILL.md",
+            "description": "Self-correction loop for fixing test and build failures. Max 3 attempts before escalation. Triggers on: fix loop, self correction, retry failed tests."
+          },
+          {
+            "name": "test-url-resolution",
+            "path": "skills/test-url-resolution/SKILL.md",
+            "description": "Resolve test base URL for E2E testing. Supports localhost, preview deployments (Vercel, Netlify, Railway, Render, Fly.io), and staging URLs. Triggers on: test url, resolve test url, preview url, staging url, TEST_BASE_URL."
+          },
+          {
+            "name": "vercel-supabase-alignment",
+            "path": "skills/vercel-supabase-alignment/SKILL.md",
+            "description": "Diagnose Vercel environment to Supabase project alignment issues. Helps identify which database is being targeted in multi-environment setups. Triggers on: database error, environment mismatch, wrong database, Vercel Supabase alignment."
+          },
+          {
+            "name": "oauth-callback-diagnostic",
+            "path": "skills/oauth-callback-diagnostic/SKILL.md",
+            "description": "Diagnose OAuth callback URL mismatches for desktop and web apps authenticating to third-party services (GitHub, Google, Azure AD, etc.). Triggers on: redirect_uri error, callback URL mismatch, OAuth callback not associated, OAuth redirect failed."
+          },
+          {
+            "name": "electron-build-deploy",
+            "path": "skills/electron-build-deploy/SKILL.md",
+            "description": "Build, deploy, and relaunch Electron desktop apps before Playwright verification. Provides explicit kill → copy → relaunch command sequence. Triggers on: test-flow Step 3.5 with apps.desktop.buildDeploy configured."
+          }
+        ]
+      }
+    }
+  },
+  "schemas": {
+    "total": 18,
+    "items": [
+      {
+        "name": "applied-updates.schema",
+        "file": "schemas/applied-updates.schema.json",
+        "description": "Tracks updates that have been applied to a project, enabling cross-machine sync and audit trail"
+      },
+      {
+        "name": "builder-config.schema",
+        "file": "schemas/builder-config.schema.json",
+        "description": "Builder configuration schema for session log system — lean execution thresholds, context budgets, and chunk settings"
+      },
+      {
+        "name": "chunk.schema",
+        "file": "schemas/chunk.schema.json",
+        "description": "Schema for session log chunks — story/task execution records with carry-forward context"
+      },
+      {
+        "name": "ui-test-audit-manifest.schema",
+        "file": "schemas/ui-test-audit-manifest.schema.json",
+        "description": "Schema for tracking comprehensive E2E test audits with resilient execution and per-test commit tracking"
+      },
+      {
+        "name": "merge-queue.schema",
+        "file": "schemas/merge-queue.schema.json",
+        "description": "Global merge queue for coordinating parallel session merges across projects"
+      },
+      {
+        "name": "prd-registry.schema",
+        "file": "schemas/prd-registry.schema.json",
+        "description": "Schema for project-level PRD registry tracking PRD lifecycle and conflicts"
+      },
+      {
+        "name": "project.schema",
+        "file": "schemas/project.schema.json",
+        "description": "Machine-readable project configuration for AI agents"
+      },
+      {
+        "name": "projects-registry.schema",
+        "file": "schemas/projects-registry.schema.json",
+        "description": "Registry of known projects for agent coordination"
+      },
+      {
+        "name": "requirements.schema",
+        "file": "schemas/requirements.schema.json",
+        "description": "Structured requirements extracted from a project spec or PRD for stack recommendation and scaffolding"
+      },
+      {
+        "name": "session.schema",
+        "file": "schemas/session.schema.json",
+        "description": "Schema for persistent session logs — session metadata, chunk references, and git integration"
+      },
+      {
+        "name": "skill-mapping.schema",
+        "file": "schemas/skill-mapping.schema.json",
+        "description": "Schema for framework-to-skill mapping definitions used for automatic skill suggestions"
+      },
+      {
+        "name": "task-registry.schema",
+        "file": "schemas/task-registry.schema.json",
+        "description": "Schema for project-level Task Spec registry tracking ad-hoc task lifecycle (parallel to prd-registry)"
+      },
+      {
+        "name": "toolkit-structure.schema",
+        "file": "schemas/toolkit-structure.schema.json",
+        "description": "Machine-readable manifest of the AI toolkit structure including agents, skills, schemas, scaffolds, and templates"
+      },
+      {
+        "name": "update-affinity-rules.schema",
+        "file": "schemas/update-affinity-rules.schema.json",
+        "description": "JSONPath-based rules for determining which projects are affected by toolkit changes"
+      },
+      {
+        "name": "update-registry.schema",
+        "file": "schemas/update-registry.schema.json",
+        "description": "Central registry of available updates for cross-machine sync and discovery"
+      },
+      {
+        "name": "workflow-defaults.schema",
+        "file": "schemas/workflow-defaults.schema.json",
+        "description": "Default workflow configurations for PRD and ad-hoc modes. These are used as fallback when projects don't define their own workflows."
+      },
+      {
+        "name": "test-activity-rules.schema",
+        "file": "schemas/test-activity-rules.schema.json",
+        "description": "Schema for signal-based test activity rules. Maps file patterns and code patterns to testing activities."
+      },
+      {
+        "name": "test-debt.schema",
+        "file": "schemas/test-debt.schema.json",
+        "description": "Schema for tracking test hotspots - files with past test failures that warrant escalated testing."
+      }
+    ]
+  },
+  "scaffolds": {
+    "total": 3,
+    "items": [
+      {
+        "name": "go-chi-postgres",
+        "path": "scaffolds/go-chi-postgres",
+        "description": "go-chi-postgres scaffold template"
+      },
+      {
+        "name": "nextjs-prisma",
+        "path": "scaffolds/nextjs-prisma",
+        "description": "nextjs-prisma scaffold template"
+      },
+      {
+        "name": "nextjs-supabase",
+        "path": "scaffolds/nextjs-supabase",
+        "description": "nextjs-supabase scaffold template"
+      }
+    ]
+  },
+  "templates": {
+    "coding": {
+      "description": "Coding convention templates",
+      "items": [
+        {
+          "name": "ARCHITECTURE",
+          "file": "templates/ARCHITECTURE.md",
+          "description": "Template file"
+        },
+        {
+          "name": "CONVENTIONS",
+          "file": "templates/CONVENTIONS.md",
+          "description": "Template file"
+        }
+      ]
+    },
+    "taskSpec": {
+      "description": "Task Spec templates for ad-hoc analysis phase",
+      "items": [
+        {
+          "name": "task-spec",
+          "file": "templates/task-spec.md",
+          "description": "Template for generating Task Spec documents during ad-hoc analysis"
+        },
+        {
+          "name": "task-promotion",
+          "file": "templates/task-promotion.md",
+          "description": "Template for Task Spec to PRD promotion handoff documents"
+        }
+      ]
+    },
+    "git": {
+      "description": "Git workflow templates",
+      "items": []
+    },
+    "other": {
+      "description": "Other templates",
+      "items": []
+    },
+    "agentTemplates": {
+      "description": "Project-specific agent templates",
+      "categories": {
+        "backend": [
+          {
+            "name": "go-chi",
+            "file": "agent-templates/backend/go-chi.md",
+            "description": "Agent template"
+          },
+          {
+            "name": "node-express",
+            "file": "agent-templates/backend/node-express.md",
+            "description": "Agent template"
+          },
+          {
+            "name": "python-fastapi",
+            "file": "agent-templates/backend/python-fastapi.md",
+            "description": "Agent template"
+          }
+        ],
+        "critics": [
+          {
+            "name": "go",
+            "file": "agent-templates/critics/go.md",
+            "description": "Agent template"
+          },
+          {
+            "name": "python",
+            "file": "agent-templates/critics/python.md",
+            "description": "Agent template"
+          },
+          {
+            "name": "typescript",
+            "file": "agent-templates/critics/typescript.md",
+            "description": "Agent template"
+          }
+        ],
+        "frontend": [
+          {
+            "name": "react",
+            "file": "agent-templates/frontend/react.md",
+            "description": "Agent template"
+          },
+          {
+            "name": "svelte",
+            "file": "agent-templates/frontend/svelte.md",
+            "description": "Agent template"
+          },
+          {
+            "name": "vue",
+            "file": "agent-templates/frontend/vue.md",
+            "description": "Agent template"
+          }
+        ],
+        "styling": [
+          {
+            "name": "tailwind",
+            "file": "agent-templates/styling/tailwind.md",
+            "description": "Agent template"
+          }
+        ],
+        "testing": [
+          {
+            "name": "go-test",
+            "file": "agent-templates/testing/go-test.md",
+            "description": "Agent template"
+          },
+          {
+            "name": "jest-react",
+            "file": "agent-templates/testing/jest-react.md",
+            "description": "Agent template"
+          },
+          {
+            "name": "playwright",
+            "file": "agent-templates/testing/playwright.md",
+            "description": "Agent template"
+          },
+          {
+            "name": "pytest",
+            "file": "agent-templates/testing/pytest.md",
+            "description": "Agent template"
+          }
+        ]
+      }
+    }
+  },
+  "data": {
+    "description": "Toolkit data files",
+    "items": [
+      {
+        "name": "capability-detection",
+        "file": "data/capability-detection.json",
+        "description": "Toolkit data file"
+      },
+      {
+        "name": "meta-skill-triggers",
+        "file": "data/meta-skill-triggers.json",
+        "description": "Toolkit data file"
+      },
+      {
+        "name": "skill-mapping",
+        "file": "data/skill-mapping.json",
+        "description": "Framework-to-skill mapping for automatic skill suggestions based on project apps"
+      },
+      {
+        "name": "stacks",
+        "file": "data/stacks.yaml",
+        "description": "Toolkit data file"
+      },
+      {
+        "name": "workflow-defaults",
+        "file": "data/workflow-defaults.json",
+        "description": "Toolkit data file"
+      },
+      {
+        "name": "test-activity-rules",
+        "file": "data/test-activity-rules.json",
+        "description": "Signal-based rules mapping file patterns and code patterns to testing activities for automatic test selection"
+      }
+    ]
+  },
+  "configuration": {
+    "opencode": {
+      "file": "opencode.json",
+      "description": "OpenCode global configuration"
+    }
+  },
+  "workflows": {
+    "description": "Agent workflow overview",
+    "overview": {
+      "summary": "Planner defines scope, Builder implements, Developer executes focused tasks, Critics review quality.",
+      "keyPrinciples": [
+        "Keep planning and implementation responsibilities separated",
+        "Preserve project context across delegations",
+        "Use critics and test automation to maintain quality"
+      ]
+    }
+  },
+  "changelog": {
+    "generatedFrom": "git log --since=30 days",
+    "entries": [
+      {
+        "type": "feat",
+        "scope": "agents",
+        "description": "add Step 4.5 (postChangeActions) to builder Story Processing Pipeline — mandatory post-commit execution with trigger evaluation and failure modes",
+        "hash": "b63cc1b"
+      },
+      {
+        "type": "feat",
+        "scope": "skills",
+        "description": "add Step 1.5 (postChangeActions) to adhoc-workflow Phase 2 Ship — mirrors Pipeline Step 4.5 for ad-hoc commit flow",
+        "hash": "b63cc1b"
+      },
+      {
+        "type": "refactor",
+        "scope": "skills",
+        "description": "strengthen test-flow Section 5.5 with MANDATORY gate, pipeline step reference, and all-commit-paths applicability",
+        "hash": "b63cc1b"
+      },
+      {
+        "type": "refactor",
+        "scope": "skills",
+        "description": "update prd-workflow pipeline summary and postChangeActions reference to use canonical Step 4.5",
+        "hash": "b63cc1b"
+      },
+      {
+        "type": "feat",
+        "scope": "schemas",
+        "description": "add postChangeActions configuration to project.schema.json — pending-update, agent, command, notify action types with trigger conditions (always, files-changed-in, feature-change, user-facing-change)",
+        "hash": "37faa43"
+      },
+      {
+        "type": "refactor",
+        "scope": "schemas",
+        "description": "remove support-article, tools, marketing from workflow step enums in project.schema.json and workflow-defaults.schema.json — replaced by postChangeActions",
+        "hash": "37faa43"
+      },
+      {
+        "type": "refactor",
+        "scope": "data",
+        "description": "remove support-article/tools/marketing conditionalSteps and stepReference entries from workflow-defaults.json — replaced by postChangeActions",
+        "hash": "37faa43"
+      },
+      {
+        "type": "feat",
+        "scope": "skills",
+        "description": "add Section 5.5 Post-Change Actions (After Commit) to test-flow — trigger evaluation, action execution, and error handling",
+        "hash": "37faa43"
+      },
+      {
+        "type": "refactor",
+        "scope": "skills",
+        "description": "replace hardcoded supportArticleRequired/toolsRequired/marketingRequired story flags with postChangeActions reference in prd-workflow",
+        "hash": "37faa43"
+      },
+      {
+        "type": "refactor",
+        "scope": "skills",
+        "description": "replace Step B (support articles) and Step D (copy review) with postChangeActions verification in post-completion",
+        "hash": "37faa43"
+      },
+      {
+        "type": "feat",
+        "scope": "skills",
+        "description": "add Post-Change Actions section to canonical source example in builder-delegation",
+        "hash": "37faa43"
+      },
+      {
+        "type": "feat",
+        "scope": "data",
+        "description": "add 2026-03-08-migrate-to-post-change-actions entry to update-registry.json with all-projects affinity",
+        "hash": "37faa43"
+      },
+      {
+        "type": "feat",
+        "scope": "templates",
+        "description": "create migrate-to-post-change-actions.md interactive migration template for all projects",
+        "hash": "37faa43"
+      },
+      {
+        "type": "refactor",
+        "scope": "schemas",
+        "description": "fix toolkit-structure.json schema entries — replace deleted builder-state.schema with session.schema, chunk.schema, builder-config.schema (total 16→18)",
+        "hash": "37faa43"
+      },
+      {
+        "type": "feat",
+        "scope": "agents",
+        "description": "add session log git integration section to builder — cross-machine resume, active session housekeeping, commit strategy (US-005)",
+        "hash": "ff6cfd3"
+      },
+      {
+        "type": "feat",
+        "scope": "agents",
+        "description": "add unified compaction recovery protocol to builder — single protocol for compaction + resume, session discovery (US-004)",
+        "hash": "e3deacc"
+      },
+      {
+        "type": "feat",
+        "scope": "skills",
+        "description": "add compaction recovery section to session-log skill — targeted file reads, recovery message format (US-004)",
+        "hash": "e3deacc"
+      },
+      {
+        "type": "feat",
+        "scope": "agents",
+        "description": "add lean execution mode to builder — automatic context shedding, chunk transitions, carry-forward rules (US-003)",
+        "hash": "23577f7"
+      },
+      {
+        "type": "feat",
+        "scope": "skills",
+        "description": "add chunk transition protocol and context shedding to session-log skill — max context budget, multi-task grouping (US-003)",
+        "hash": "23577f7"
+      },
+      {
+        "type": "feat",
+        "scope": "schemas",
+        "description": "create session.schema.json, chunk.schema.json, builder-config.schema.json for session log system (US-001)",
+        "hash": "d931c4e"
+      },
+      {
+        "type": "feat",
+        "scope": "skills",
+        "description": "create session-log skill — replaces builder-state with persistent session logs, commit ordering, heartbeat, branchless trunk semantics (US-002)",
+        "hash": "d931c4e"
+      },
+      {
+        "type": "refactor",
+        "scope": "agents",
+        "description": "migrate builder, developer, toolkit from builder-state to session-log — delete builder-state schema and skill (US-002)",
+        "hash": "d931c4e"
+      },
+      {
+        "type": "feat",
+        "scope": "schemas",
+        "description": "add buildDeploy configuration to project.schema.json — buildCommand, buildOutputApp, testApp, triggerPaths, autoDeployAfterStory, buildTimeoutMs",
+        "hash": "37fb22b"
+      },
+      {
+        "type": "feat",
+        "scope": "skills",
+        "description": "add triggerPaths glob matching algorithm to test-flow Step 3.5 and build-deploy completion report section",
+        "hash": "37fb22b"
+      },
+      {
+        "type": "feat",
+        "scope": "data",
+        "description": "add configure-electron-build-deploy update template and registry entry with electron-apps affinity",
+        "hash": "37fb22b"
+      },
+      {
+        "type": "feat",
+        "scope": "skills",
+        "description": "create electron-build-deploy skill — explicit kill → copy → relaunch command sequence for Electron apps before Playwright verification",
+        "hash": "c905a17"
+      },
+      {
+        "type": "feat",
+        "scope": "skills",
+        "description": "update test-flow Step 3.5 to load electron-build-deploy skill as first priority when buildDeploy is configured",
+        "hash": "c905a17"
+      },
+      {
+        "type": "docs",
+        "scope": "prds",
+        "description": "promote prd-electron-build-deploy from draft to ready — 6 stories, all open questions resolved, macOS only v1",
+        "hash": "c905a17"
+      },
+      {
+        "type": "feat",
+        "scope": "skills",
+        "description": "add oauth-callback-diagnostic skill — generalized OAuth redirect_uri mismatch diagnostic for any provider/app type",
+        "hash": "f7bf6ab"
+      },
+      {
+        "type": "docs",
+        "scope": "prds",
+        "description": "add draft PRD prd-electron-build-deploy — automate Electron build-deploy cycle in test-flow",
+        "hash": "f7bf6ab"
+      },
+      {
+        "type": "fix",
+        "scope": "skills",
+        "description": "reset top-level verificationContract/verificationResults/pendingTests at all task boundaries — prevents stale verification state from causing test-flow skips",
+        "hash": "e942c76"
+      },
+      {
+        "type": "fix",
+        "scope": "agents",
+        "description": "add per-story verification state reset to Story Processing Pipeline Step 1 in builder.md",
+        "hash": "e942c76"
+      },
+      {
+        "type": "fix",
+        "scope": "skills",
+        "description": "add staleness check to test-flow Verification Contract Integration — contracts predating current story are discarded",
+        "hash": "e942c76"
+      },
+      {
+        "type": "refactor",
+        "scope": "skills",
+        "description": "remove all competing Playwright gate mechanisms — testVerifySettings is now sole gate (US-001 through US-013)",
+        "hash": "e1c442f"
+      },
+      {
+        "type": "refactor",
+        "scope": "schemas",
+        "description": "remove rigorProfile, storyAssessment, e2e/e2eScope from project and test-activity-rules schemas",
+        "hash": "e1c442f"
+      },
+      {
+        "type": "feat",
+        "scope": "data",
+        "description": "add configure-test-verify-settings update template and registry entry for all-projects migration",
+        "hash": "e1c442f"
+      },
+      {
+        "type": "fix",
+        "scope": "skills",
+        "description": "add launchTarget resolution to e2e-electron skill — tests now read project.json to determine test directory, launch pattern (dev vs installed-app), and Playwright config",
+        "hash": "b82557e"
+      },
+      {
+        "type": "fix",
+        "scope": "agents",
+        "description": "add launchTarget/testDir/playwrightConfig/executablePath to tester.md Electron E2E delegation prompt",
+        "hash": "b82557e"
+      },
+      {
+        "type": "fix",
+        "scope": "agents",
+        "description": "add mandatory launchTarget awareness to e2e-playwright.md Electron detection (step 0d)",
+        "hash": "b82557e"
+      },
+      {
+        "type": "fix",
+        "scope": "skills",
+        "description": "consolidate E2E write+run into atomic operation in test-flow — eliminate separate [R]/[S] prompt after test generation",
+        "hash": "b82557e"
+      },
+      {
+        "type": "fix",
+        "scope": "skills",
+        "description": "add condition evaluation to postChangeWorkflow handler in test-ui-verification — steps with files-changed-in conditions are now skipped when unmatched",
+        "hash": "b82557e"
+      },
+      {
+        "type": "fix",
+        "scope": "skills",
+        "description": "strengthen webContent remote no-rebuild rule in test-ui-verification and test-flow — explicit table mapping change types to actions for remote desktop apps",
+        "hash": "b82557e"
+      },
+      {
+        "type": "fix",
+        "scope": "skills",
+        "description": "add failure behavior self-check to adhoc-workflow probe dispatch \u2014 if generated spec contains baseUrl for desktop app, STOP and regenerate with electron transport",
+        "hash": "bb9d519"
+      },
+      {
+        "type": "fix",
+        "scope": "skills",
+        "description": "Electron probe spec in adhoc-workflow now references project.json paths instead of template placeholders \u2014 always read executablePath/launchTarget from apps.desktop.testing",
+        "hash": "bb9d519"
+      },
+      {
+        "type": "fix",
+        "scope": "skills",
+        "description": "add architecture-aware probe dispatch to adhoc-workflow \u2014 Electron apps now get transport:electron spec instead of browser-only baseUrl",
+        "hash": "18d0fb8"
+      },
+      {
+        "type": "fix",
+        "scope": "agents",
+        "description": "add explicit prohibition against browser transport for desktop/Electron apps in builder.md gate",
+        "hash": "18d0fb8"
+      },
+      {
+        "type": "fix",
+        "scope": "skills",
+        "description": "add Architecture-Aware Probe Dispatch, Electron Probe Spec, and Electron Probe Flow to test-ui-verification",
+        "hash": "18d0fb8"
+      },
+      {
+        "date": "2026-03-06",
+        "changes": [
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "add probe-inapplicability rationalizations to NO-BYPASS RULE \u2014 close IPC/main-process/code-analysis-is-definitive bypass paths in adhoc-workflow",
+            "hash": "c56851f"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "add ops-only guard \u2014 source file modifications can never be classified as ops-only to avoid probe in adhoc-workflow",
+            "hash": "c56851f"
+          },
+          {
+            "type": "fix",
+            "scope": "agents",
+            "description": "add probe-inapplicability and ops-only misclassification prohibitions to builder.md gate",
+            "hash": "c56851f"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "fix stale Autonomous Auth Resolution reference to Auth Resolution Escalation in adhoc-workflow",
+            "hash": "c56851f"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add design decision detection (Step 0.1c) with planning considerations integration to adhoc-workflow (PRD adhoc-design-decisions US-001/US-003)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add design decision questions UI with lettered options and skip detection for trivial tasks (PRD adhoc-design-decisions US-002/US-006)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add IMPLEMENTATION DECISIONS section to ANALYSIS COMPLETE dashboard (PRD adhoc-design-decisions US-004)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add implementation decisions to Task Spec acceptance criteria and mandatory Playwright analysis confirmation (PRD adhoc-design-decisions US-005/US-007)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "refactor",
+            "scope": "skills",
+            "description": "merge test-quality-checks and test-activity-resolution into test-flow (~698 lines), delete merged skills (PRD adhoc-design-decisions US-008)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "refactor",
+            "scope": "skills",
+            "description": "replace inline quality checks in adhoc-workflow with test-flow reference, 232-line reduction (PRD adhoc-design-decisions US-009)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "refactor",
+            "scope": "skills",
+            "description": "replace inline quality checks in prd-workflow with skill references, 439-line reduction (PRD adhoc-design-decisions US-010)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "refactor",
+            "scope": "agents",
+            "description": "replace builder.md verification pipeline with single test-flow call, 43-line reduction (PRD adhoc-design-decisions US-011)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "refactor",
+            "scope": "skills",
+            "description": "remove isUIProject() gate \u2014 all projects get full Playwright verification across 7 files (PRD adhoc-design-decisions US-012)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "feat",
+            "scope": "schemas",
+            "description": "add unified activeWork state model to builder-state.schema.json, remove activePrd/activeTask/adhocQueue (PRD adhoc-design-decisions US-014)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add mandatory Story Processing Pipeline to builder.md, migrate all state references to activeWork (PRD adhoc-design-decisions US-015)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add [F] flow chart option to ANALYSIS COMPLETE dashboards in adhoc-workflow and prd-workflow (PRD adhoc-design-decisions US-016)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add activeWork session resume dashboard with failed/in-progress story handling to builder.md and builder-state (PRD adhoc-design-decisions US-017)",
+            "hash": "61b8c05"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "split ANALYSIS COMPLETE dashboard into separate Recommended Approach and Alternatives sections in adhoc-workflow",
+            "hash": "ce54491"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "remove skipped from builder.md probe gate \u2014 accept only confirmed, partially-confirmed, user-skipped (PRD mandatory-probe-enforcement US-001)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "remove Electron-specific qualifier from builder.md prohibitions \u2014 universal never-skip language (PRD mandatory-probe-enforcement US-002)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "replace Skip Conditions with Mandatory Enforcement section in test-ui-verification (PRD mandatory-probe-enforcement US-003)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "remove skipped from probe results tables, add user-skipped in test-ui-verification (PRD mandatory-probe-enforcement US-004)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "expand NO-BYPASS RULE with invalid rationalizations table and mandatory resolutions in adhoc-workflow (PRD mandatory-probe-enforcement US-005)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "remove skipped from probe results processing, add user-skipped in adhoc-workflow (PRD mandatory-probe-enforcement US-006)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "replace probe-was-skipped dashboard handling with mandatory enforcement statement in adhoc-workflow (PRD mandatory-probe-enforcement US-007)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "remove skipped from dashboard display table, add user-skipped in adhoc-workflow (PRD mandatory-probe-enforcement US-008)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add contradicted \u2192 re-probe loop (max 2 attempts) in adhoc-workflow (PRD mandatory-probe-enforcement US-009)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add contradicted as gate-blocking status with state machine documentation in builder.md (PRD mandatory-probe-enforcement US-010)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "remove agents.analysisProbe config option from test-ui-verification and adhoc-workflow, keep analysisProbeTimeoutMs (PRD mandatory-probe-enforcement US-011)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "replace Autonomous Auth Resolution with Auth Resolution Escalation with user-assisted [S]/[H]/[C] prompt in adhoc-workflow (PRD mandatory-probe-enforcement US-012)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add 6-step auth escalation ladder with user assistance to test-ui-verification (PRD mandatory-probe-enforcement US-013)",
+            "hash": "0c2de58"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add ops-only task classification (source-change / ops-with-runtime-impact / ops-only) to adhoc-workflow analysis phase",
+            "hash": "754e157"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add mandatory VERIFICATION PLAN section to ANALYSIS COMPLETE dashboard in adhoc-workflow with ops-only example",
+            "hash": "754e157"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add post-ops verification checkpoint (Step 1.2a) to adhoc-workflow for ops-only tasks with runtime impact",
+            "hash": "754e157"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add ops-only task verification (Step 7) to Verification Pipeline Resolution for browser-visible ops fixes",
+            "hash": "754e157"
+          }
+        ]
+      },
+      {
+        "date": "2026-03-05",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "replace playwright-required config gate with automatic UI project detection via isUIProject() in test-ui-verification (PRD mandatory-playwright-between-stories US-003)",
+            "hash": "943abed"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "remove E2E deferral for UI projects \u2014 deferred resolves as immediate when isUIProject() in test-activity-resolution and test-e2e-flow (PRD mandatory-playwright-between-stories US-002)",
+            "hash": "943abed"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "wire postChangeWorkflow into PRD per-story quality checks loop in prd-workflow and test-quality-checks (PRD mandatory-playwright-between-stories US-001/004)",
+            "hash": "943abed"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add Playwright installation check with install/skip prompt and session caching to prd-workflow (PRD mandatory-playwright-between-stories US-005)",
+            "hash": "943abed"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add story-scoped Playwright test selection with 1-hop dependency edges to prd-workflow (PRD mandatory-playwright-between-stories US-006)",
+            "hash": "943abed"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add 5-attempt Playwright retry strategy with skip-and-log to prd-workflow (PRD mandatory-playwright-between-stories US-007)",
+            "hash": "943abed"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add story-scoped Playwright (Step 5) and retry strategy (Step 6) to Verification Pipeline Resolution in builder agent (PRD mandatory-playwright-between-stories US-006/007)",
+            "hash": "943abed"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "align adhoc-workflow UI Verification Enforcement with automatic isUIProject() detection (PRD mandatory-playwright-between-stories US-003)",
+            "hash": "943abed"
+          },
+          {
+            "type": "refactor",
+            "scope": "templates",
+            "description": "rewrite architecture-aware-verification update template from step-by-step interactive to analyze-first pattern with single comprehensive dashboard",
+            "hash": "ba708e2"
+          },
+          {
+            "type": "fix",
+            "scope": "developer",
+            "description": "add Canonical Source Fidelity rule to prevent plausible fabrication of field names and config schemas",
+            "hash": "d6b4248"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "add Canonical Content for Documentation Tasks section to builder-delegation skill for inline source embedding",
+            "hash": "d6b4248"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add postChangeWorkflow, headless CLI auth, and acquisition block to project.schema.json (PRD architecture-aware-verification US-001)",
+            "hash": "932502b"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add Verification Pipeline Resolution section for auto-inferring rebuild/relaunch vs HMR (PRD architecture-aware-verification US-002)",
+            "hash": "932502b"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add rebuild-then-launch-app and ensure-electron-running strategies to test-ui-verification, adhoc-workflow step 3.5, and test-quality-checks (PRD architecture-aware-verification US-003)",
+            "hash": "932502b"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add CLI auth method to auth-headless, acquisition validation to auth-config-check, CLI wizard to setup-auth (PRD architecture-aware-verification US-004)",
+            "hash": "932502b"
+          },
+          {
+            "type": "feat",
+            "scope": "registry",
+            "description": "add architecture-aware-verification update template and registry entry for interactive project rollout (PRD architecture-aware-verification US-005)",
+            "hash": "932502b"
+          },
+          {
+            "type": "fix",
+            "scope": "agents",
+            "description": "add Temporary Files Policy to all implementation subagents (developer, hammer, overlord, go-dev, react-dev, java-dev, python-dev, playwright-dev) to prevent /tmp/ usage",
+            "hash": "8f4642a"
+          },
+          {
+            "type": "fix",
+            "scope": "guardrails",
+            "description": "strengthen AGENTS.md Temporary Files section with rationale (module resolution, permissions, macOS /private/tmp mapping)",
+            "hash": "8f4642a"
+          },
+          {
+            "type": "fix",
+            "scope": "guardrails",
+            "description": "clarify Safe alternatives to reference project-local .tmp/ instead of ambiguous .tmp/",
+            "hash": "b06f536"
+          },
+          {
+            "type": "fix",
+            "scope": "analysis-probe",
+            "description": "require probing actual target pages with autonomous auth resolution",
+            "hash": "67323ab"
+          },
+          {
+            "type": "fix",
+            "scope": "analysis-gate",
+            "description": "make Playwright probe mandatory with no bypass rationalizations",
+            "hash": "c3c0b6d"
+          },
+          {
+            "type": "refactor",
+            "scope": "builder",
+            "description": "extract error recovery to builder-error-recovery skill (-89 lines)",
+            "hash": "58e0a0a"
+          },
+          {
+            "type": "refactor",
+            "scope": "builder",
+            "description": "extract dashboard templates to builder-dashboard skill (-126 lines)",
+            "hash": "e265e42"
+          },
+          {
+            "type": "refactor",
+            "scope": "builder",
+            "description": "trim skill reference stubs to single-line references (-52 lines)",
+            "hash": "5b91425"
+          },
+          {
+            "type": "refactor",
+            "scope": "builder",
+            "description": "extract verification handling to builder-verification skill (-335 lines)",
+            "hash": "5df07b0"
+          },
+          {
+            "type": "refactor",
+            "scope": "builder-state",
+            "description": "replace solo/multi section with always-on session coordination",
+            "hash": "196d6f1"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "deprecate agents.multiSession, register central update for all projects",
+            "hash": "dbff022"
+          },
+          {
+            "type": "refactor",
+            "scope": "developer",
+            "description": "make session coordination always-on, remove solo/multi branching",
+            "hash": "bc43ba5"
+          },
+          {
+            "type": "feat",
+            "scope": "multi-session",
+            "description": "implement lazy heartbeat for solo sessions (local-only when solo, full git round-trip when multi)",
+            "hash": "e5e8e87"
+          },
+          {
+            "type": "refactor",
+            "scope": "builder",
+            "description": "remove solo/multi branching, add session-setup skill reference",
+            "hash": "b0edc8b"
+          },
+          {
+            "type": "feat",
+            "scope": "session-unification",
+            "description": "create session-setup skill and trim multi-session skill",
+            "hash": "b3a276c"
+          },
+          {
+            "type": "docs",
+            "scope": "prd",
+            "description": "promote prd-session-unification to ready status",
+            "hash": "39ab463"
+          },
+          {
+            "type": "docs",
+            "scope": "prd",
+            "description": "add session-unification and builder-skill-extraction PRDs",
+            "hash": "03e699c"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add mandatory Playwright analysis probe to ad-hoc Analysis Gate",
+            "hash": "1d04f23"
+          }
+        ]
+      },
+      {
+        "date": "2026-03-04",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "skill",
+            "description": "add Electron execution path detection and routing to test-e2e-flow skill",
+            "hash": "d03dd95"
+          },
+          {
+            "type": "feat",
+            "scope": "registry",
+            "description": "add Electron E2E execution path update template to update registry",
+            "hash": "9dc6585"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add webContent and remoteUrl fields to apps schema for desktop app architecture detection",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add desktop app detection and webContent questions to project-bootstrap skill",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add architecture-aware verification strategy to test-flow skill",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add Step 0.0a pre-analysis screenshot to adhoc-workflow skill",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add desktop app startup support to start-dev-server skill",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add zombie process cleanup patterns to e2e-electron skill",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add zombie process pre-check to test-flow skill",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add test documentation sync section for pre-commit stale reference detection",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "developer",
+            "description": "add test documentation sync step 6 before commit in Phase 3",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "fix",
+            "scope": "builder",
+            "description": "add CORS/headers/security file patterns to test-activity-rules.json for e2e: immediate",
+            "hash": "89ccf22"
+          },
+          {
+            "type": "fix",
+            "scope": "builder",
+            "description": "add 'Never Use curl/wget for Browser Verification' section prohibiting curl for CORS verification",
+            "hash": "89ccf22"
+          },
+          {
+            "type": "fix",
+            "scope": "adhoc-workflow",
+            "description": "add 'User Summary Detection' section clarifying summaries accelerate analysis but don't skip verification",
+            "hash": "89ccf22"
+          },
+          {
+            "type": "fix",
+            "scope": "guardrails",
+            "description": "clarify PR creation to protected branches is allowed, only auto-merge is blocked",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "fix",
+            "scope": "adhoc-workflow",
+            "description": "add explicit git.agentWorkflow enforcement to Phase 2: Ship with PR prompt",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "fix",
+            "scope": "builder",
+            "description": "make Analysis Gate compaction-resilient with mandatory state checkpoint before @developer delegation",
+            "hash": "3458200"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add CLI state persistence and proactive CLI usage triggers for compaction resilience",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add availableCLIs to builder-state schema for CLI state persistence",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add environment-database context diagnosis protocol and vercel-supabase-alignment skill",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "extend project.schema.json environments with database, branch, vercelEnvironment, desktop mappings",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "docs",
+            "scope": "research",
+            "description": "add LLM techniques synthesis report with 6 actionable recommendations",
+            "hash": "18d0fb8"
+          }
+        ]
+      },
+      {
+        "date": "2026-03-03",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "guardrails",
+            "description": "add canonical Git Completion Workflow to AGENTS.md for unified PRD and ad-hoc git behavior",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "update prd-workflow Phase 3: Ship to use git.agentWorkflow and reference canonical workflow",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "update adhoc-workflow to reference canonical Git Completion Workflow in AGENTS.md",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "fix",
+            "scope": "schema",
+            "description": "clarify requiresHumanApproval allows PRs but blocks auto-merge",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "docs",
+            "scope": "prd",
+            "description": "implement PRD for unified git completion workflow (moved to docs/prds/)",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "fix",
+            "scope": "guardrails",
+            "description": "clarify PR creation allowed to protected branches, only auto-merge blocked",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "add explicit git.agentWorkflow enforcement to adhoc-workflow Phase 2: Ship",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "docs",
+            "scope": "prd",
+            "description": "add PRD for consistent git workflow completion behavior",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "remove deprecated agents.gitWorkflow, trunkMode, autoCommit, autoPush from project.schema.json (US-001)",
+            "hash": "9907098"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add git.agentWorkflow for branch targeting configuration (US-002)",
+            "hash": "74b71d4"
+          },
+          {
+            "type": "feat",
+            "scope": "guardrails",
+            "description": "add Git Workflow Enforcement section to AGENTS.md (US-007)",
+            "hash": "3e56396"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "add Option C central registry instructions for schema migrations (US-008)",
+            "hash": "6b0c065"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add project context loading and git workflow validation (US-003)",
+            "hash": "fdf0178"
+          },
+          {
+            "type": "feat",
+            "scope": "planner",
+            "description": "add project context loading and git workflow enforcement (US-004)",
+            "hash": "af7b452"
+          },
+          {
+            "type": "feat",
+            "scope": "developer",
+            "description": "add git workflow extraction and enforcement (US-005)",
+            "hash": "50d99fd"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "enforce relatedProjects lookup - no name-based guessing (US-006)",
+            "hash": "d0382c9"
+          },
+          {
+            "type": "feat",
+            "scope": "updates",
+            "description": "add interactive git config migration to central registry (US-009)",
+            "hash": "5693d72"
+          },
+          {
+            "type": "docs",
+            "scope": "prd",
+            "description": "add PRD for project context awareness and git workflow enforcement",
+            "hash": "b55c976"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add examples to 41 agents for improved few-shot prompting (20 critics, 2 testers, 7 operational, 3 E2E/review, 9 implementation)",
+            "hash": "d7fe17a"
+          },
+          {
+            "type": "docs",
+            "scope": "prd",
+            "description": "add PRD for agent examples enrichment",
+            "hash": "1422d16"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add ANALYSIS GATE guardrail for ad-hoc enforcement (US-001)",
+            "hash": "0007172"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add out-of-scope request detection during PRD mode (US-002)",
+            "hash": "8f33176"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add analysisCompleted state checkpoint enforcement (US-003)",
+            "hash": "912513a"
+          },
+          {
+            "type": "feat",
+            "scope": "adhoc-workflow",
+            "description": "add mandatory completion report template (US-004)",
+            "hash": "85ef549"
+          },
+          {
+            "type": "feat",
+            "scope": "adhoc-workflow",
+            "description": "enforce clarifying questions for MEDIUM/LOW confidence (US-005)",
+            "hash": "37ce543"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add explicit never auto-start prohibitions (US-006)",
+            "hash": "447726a"
+          },
+          {
+            "type": "feat",
+            "scope": "vectorize",
+            "description": "add vectorization visibility improvements to Builder",
+            "hash": "38ce661"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add prerequisite failure detection with @prerequisites/@feature-assertions markers",
+            "hash": "3d78173"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add automated fix loop with classification (prerequisite vs feature vs environment)",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add 3-pass stability verification (requiredPasses config, pass counter, reset on fix)",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add environment prerequisite handling with skill-based recovery",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add skill creation request flow for missing environment skills",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add failure logging (verification-failures.json) and manual fallback options",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add blocker tracking (test-debt.json) and bulk re-verification command",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add verification config: requiredPasses, autoFixLoop, fixAttemptTimeoutMinutes, runBroaderTestsAfterFix",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "testing",
+            "description": "add non-localhost testing support with URL resolution priority chain",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add test-url-resolution skill for preview/staging URL resolution",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add agents.verification.testBaseUrl field for explicit URL override",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "refactor",
+            "scope": "agents",
+            "description": "update e2e-playwright, playwright-dev, tester agents for URL resolution",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "refactor",
+            "scope": "agents",
+            "description": "update secondary agents (qa-browser-tester, e2e-reviewer, screenshot-maintainer, support-article-writer)",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "refactor",
+            "scope": "skills",
+            "description": "update test-flow and coding-playwright templates for TEST_BASE_URL pattern",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add remote health check with retry to start-dev-server skill",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add preview environment detection and CLI triggers",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add completion messages, skip patterns, and override mechanism for UI verification",
+            "hash": "c1db447"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add flaky test detection and resolution with quarantine option",
+            "hash": "213464f"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add verification mode to e2e-playwright and test review to quality-critic",
+            "hash": "31f19c7"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add UI verification enforcement to workflows (test-flow, adhoc, prd, builder)",
+            "hash": "4c3c870"
+          },
+          {
+            "type": "feat",
+            "scope": "verification",
+            "description": "add agents.verification config schema and bootstrap defaults",
+            "hash": "b91d4de"
+          },
+          {
+            "type": "fix",
+            "scope": "vectorize",
+            "description": "add token-aware batching for Voyage API to handle large codebases",
+            "hash": "82eb485"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add single-instance lock pattern to e2e-electron skill for preventing multiple app instances",
+            "hash": "d99b4a4"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add vectorization status section to fresh and resume dashboards",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add blocking stale index prompt with R/S/D options when index >24h old",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "docs",
+            "scope": "vectorize",
+            "description": "document token-aware batching in SKILL.md",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "vectorize",
+            "description": "add verbosity control to embeddings (default summary, --verbose for details, --quiet for CI)",
+            "hash": "18d0fb8"
+          }
+        ]
+      },
+      {
+        "date": "2026-03-02",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "add project.json for toolkit with relatedProjects configuration",
+            "hash": "a846deb"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "use relatedProjects for website sync lookup instead of name-based search",
+            "hash": "6960d3c"
+          },
+          {
+            "type": "docs",
+            "scope": null,
+            "description": "add related projects helper pattern documentation",
+            "hash": "23c386c"
+          },
+          {
+            "type": "feat",
+            "scope": "bootstrap",
+            "description": "add related projects configuration step with inverse relationship support",
+            "hash": "2cbf291"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add relatedProjects array to project.json schema",
+            "hash": "7c7a059"
+          },
+          {
+            "type": "feat",
+            "scope": "vectorize",
+            "description": "add CLI wrapper script for local execution",
+            "hash": "61d4fce"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add semantic search integration to key agents (builder, planner, developer, tester, critic)",
+            "hash": "7116696"
+          },
+          {
+            "type": "feat",
+            "scope": "vectorize",
+            "description": "add database schema extraction with RLS and binary column support",
+            "hash": "69aab4a"
+          },
+          {
+            "type": "feat",
+            "scope": "vectorize",
+            "description": "add contextual retrieval with prompt caching for cost reduction",
+            "hash": "8476bf6"
+          },
+          {
+            "type": "feat",
+            "scope": "vectorize",
+            "description": "complete Phase 2 - relationships, git history, test mapping, summaries",
+            "hash": "0b79550"
+          },
+          {
+            "type": "feat",
+            "scope": "vectorize",
+            "description": "complete Phase 1 - core search MVP with hybrid BM25+semantic search",
+            "hash": "a3430d1"
+          },
+          {
+            "type": "docs",
+            "scope": "prd",
+            "description": "enhance vectorization PRD v2.0 with relationship indexing",
+            "hash": "4ed1da8"
+          },
+          {
+            "type": "feat",
+            "scope": "vectorize",
+            "description": "add Voyage AI embedding support",
+            "hash": "befe6da"
+          },
+          {
+            "type": "fix",
+            "scope": "playwright",
+            "description": "add no-webServer config pattern to prevent dev server shutdown",
+            "hash": "48956cd"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "add project extraction capability for monorepo splitting",
+            "hash": "b2c9b7c"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "restore CI=true enforcement to adhoc-workflow to prevent orphaned vitest processes",
+            "hash": "fba9e0f"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add task-registry schema for ad-hoc Task Spec lifecycle tracking",
+            "hash": "92c40d4"
+          },
+          {
+            "type": "feat",
+            "scope": "templates",
+            "description": "add task-spec and task-promotion templates for ad-hoc analysis phase",
+            "hash": "92c40d4"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add full analysis phase and Task Spec lifecycle to adhoc-workflow skill",
+            "hash": "92c40d4"
+          },
+          {
+            "type": "feat",
+            "scope": "planner",
+            "description": "add Task Spec promotion pickup to Planner startup",
+            "hash": "92c40d4"
+          },
+          {
+            "type": "docs",
+            "scope": "prd",
+            "description": "promote ad-hoc analysis phase PRD to ready status",
+            "hash": "cb3fe16"
+          }
+        ]
+      },
+      {
+        "date": "2026-03-01",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "expand git.autoCommit to support onStoryComplete, onFileChange, manual modes",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "fix",
+            "scope": "toolkit-structure",
+            "description": "move e2e-auditor from testing to primary category (matches mode: primary)",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add loop detection and bulk fix guidance to prevent repetitive one-by-one fixes",
+            "hash": "ee6c60c"
+          }
+        ]
+      },
+      {
+        "date": "2026-02-28",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add e2e-auditor agent for comprehensive autonomous E2E test auditing",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add e2e-full-audit skill for audit workflow patterns and resilient execution",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add e2e-audit-manifest schema for test tracking with 5-retry resilience",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add audit-mode support to e2e-playwright agent",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add e2e-auditor integration section to test-flow skill",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add dynamic reassignment with fallback chains (PRD #3)",
+            "hash": "122c2ad"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add checkpoint serialization for task resumption (PRD #2)",
+            "hash": "f972aa2"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add verification contracts for pre-delegation (PRD #1)",
+            "hash": "3a165d1"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add test failure output policy to all testing agents",
+            "hash": "540885b"
+          },
+          {
+            "type": "fix",
+            "scope": "toolkit",
+            "description": "fix website sync to write to website project repo for cross-machine sync",
+            "hash": "97c5253"
+          },
+          {
+            "type": "fix",
+            "scope": "toolkit",
+            "description": "add website impact assessment to post-change workflow",
+            "hash": "72d5f4d"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "add mandatory PRD story status updates to prd-workflow skill",
+            "hash": "7f5cb05"
+          },
+          {
+            "type": "feat",
+            "scope": "vectorization",
+            "description": "add vectorize skill for codebase and database schema semantic search",
+            "hash": "0d37901"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add vectorization configuration to project.schema.json",
+            "hash": "0d37901"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "integrate vectorization setup into project-bootstrap flow",
+            "hash": "0d37901"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add vectorization prompt to builder session startup",
+            "hash": "0d37901"
+          }
+        ]
+      },
+      {
+        "date": "2026-02-27",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "testing",
+            "description": "implement automatic test activity selection - signal-based test routing replaces manual rigor selection",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add test-activity-rules and test-debt schemas for automatic test selection",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "refactor",
+            "scope": "skills",
+            "description": "remove rigor profile selection from prd-workflow and test-flow skills",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add dependency smoke testing to e2e-reviewer agent",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "updates",
+            "description": "add central registry sync for cross-machine project updates",
+            "hash": "18d0fb8"
+          },
+          {
+            "type": "feat",
+            "scope": "updates",
+            "description": "implement enhanced pending-updates system with cross-machine sync",
+            "hash": "65fee7a"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add applied-updates, update-affinity-rules, update-registry schemas",
+            "hash": "65fee7a"
+          },
+          {
+            "type": "feat",
+            "scope": "scripts",
+            "description": "add generate-project-updates and migrate-project-updates scripts",
+            "hash": "65fee7a"
+          },
+          {
+            "type": "docs",
+            "scope": "prd",
+            "description": "add enhanced pending-updates system PRD",
+            "hash": "edae5a2"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add executablePath and devLaunchArgs to apps.testing",
+            "hash": "06a3bc9"
+          },
+          {
+            "type": "fix",
+            "scope": "agents",
+            "description": "fix state file commit ordering to prevent PRD state drift",
+            "hash": "906718a"
+          },
+          {
+            "type": "feat",
+            "scope": null,
+            "description": "implement multi-platform app support and Electron E2E testing (PRD-001)",
+            "hash": "8fe71b4"
+          },
+          {
+            "type": "docs",
+            "scope": "prd",
+            "description": "add multi-platform apps and electron testing PRD",
+            "hash": "7c7f44c"
+          }
+        ]
+      },
+      {
+        "date": "2026-02-26",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": null,
+            "description": "allow primary agents to update project registry",
+            "hash": "8eab08d"
+          },
+          {
+            "type": "chore",
+            "scope": null,
+            "description": "queue toolkit website sync",
+            "hash": "1dafb88"
+          },
+          {
+            "type": "feat",
+            "scope": null,
+            "description": "add rate limit resilience across primary agents",
+            "hash": "9cf499d"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "add compaction resilience with currentTask state",
+            "hash": "7fbb1b8"
+          },
+          {
+            "type": "docs",
+            "scope": null,
+            "description": "add PRD for context compaction resilience",
+            "hash": "118461c"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "add commit gate to prevent skipping post-change workflow",
+            "hash": "27854f7"
+          },
+          {
+            "type": "chore",
+            "scope": null,
+            "description": "update toolkit-structure.json changelog for recent commits",
+            "hash": "4530239"
+          },
+          {
+            "type": "feat",
+            "scope": "builder",
+            "description": "add tool error recovery for 499/timeout failures",
+            "hash": "0107872"
+          },
+          {
+            "type": "docs",
+            "scope": null,
+            "description": "add PRD for agent model tiering system",
+            "hash": "f69ba6a"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "add CI=true to per-task quality checks to prevent orphaned Vitest processes",
+            "hash": "ba0f1d6"
+          }
+        ]
+      },
+      {
+        "date": "2026-02-25",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "developer",
+            "description": "consolidate root cause analysis with UI diagnostic protocol",
+            "hash": "3dcfbed"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "unify per-task quality checks across ad-hoc and PRD modes",
+            "hash": "945432e"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add root cause analysis requirements to prevent band-aid fixes",
+            "hash": "de4aa07"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "add context block requirements to adhoc-workflow and simplify test-flow for adhoc mode",
+            "hash": "1e58282"
+          },
+          {
+            "type": "chore",
+            "scope": null,
+            "description": "update toolkit-structure.json and README for auth skills",
+            "hash": "24f0377"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "add inline auth setup flow to Builder - checks for auth config before auth-dependent tasks",
+            "hash": "535b51c"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "add setup-auth skill for interactive auth configuration",
+            "hash": "3bb8790"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "add session reuse support to auth skills",
+            "hash": "483ce24"
+          },
+          {
+            "type": "docs",
+            "scope": "auth",
+            "description": "add authentication configuration documentation",
+            "hash": "6962b24"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "update E2E testing agents to use auth config",
+            "hash": "e3b6d90"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "update screenshot skill to use auth config",
+            "hash": "32d1db0"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "add auth-headless skill for fast E2E tests",
+            "hash": "6fbe789"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "add test-user-cleanup skill",
+            "hash": "3964d12"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "add auth-generic skill for custom auth systems",
+            "hash": "70e7416"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "add auth-nextauth-credentials skill",
+            "hash": "52a1931"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "add auth-supabase-password skill",
+            "hash": "0c21fd4"
+          },
+          {
+            "type": "feat",
+            "scope": "auth",
+            "description": "add authentication schema and auth-supabase-otp skill",
+            "hash": "de105ec"
+          },
+          {
+            "type": "feat",
+            "scope": "prd",
+            "description": "add project authentication configuration PRD",
+            "hash": "a661384"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "constrain screenshot height to 4000px for Claude vision API",
+            "hash": "606cce5"
+          },
+          {
+            "type": "fix",
+            "scope": "agents",
+            "description": "critics return findings to parent instead of writing to shared docs/review.md",
+            "hash": "68ccfff"
+          },
+          {
+            "type": "feat",
+            "scope": "config",
+            "description": "add codeRoot and toolkitPath for configurable directory structure",
+            "hash": "5be28d0"
+          },
+          {
+            "type": "fix",
+            "scope": "agents",
+            "description": "extend autoCommit enforcement to all commit locations",
+            "hash": "c07f25f"
+          },
+          {
+            "type": "fix",
+            "scope": "agents",
+            "description": "add hardened identity locks and intent mismatch detection to prevent role drift after compaction",
+            "hash": "0ad247f"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add git.autoCommit setting to disable agent commits",
+            "hash": "e767126"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "support no-local-runtime projects with devPort: null",
+            "hash": "e76474e"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "kill orphaned dev server processes on timeout/failure",
+            "hash": "f68cfa2"
+          },
+          {
+            "type": "fix",
+            "scope": "agents",
+            "description": "add comprehensive CI=true enforcement to prevent orphaned test processes",
+            "hash": "d0c8512"
+          },
+          {
+            "type": "fix",
+            "scope": "skills",
+            "description": "add automatic dependency recovery to start-dev-server skill",
+            "hash": "0435dc8"
+          }
+        ]
+      },
+      {
+        "date": "2026-02-24",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add browser-debugging skill for tests-pass-but-browser-fails scenarios",
+            "hash": "e426c35"
+          },
+          {
+            "type": "feat",
+            "scope": "agents",
+            "description": "add React StrictMode/stale closure awareness to frontend-critic and react-dev",
+            "hash": "e426c35"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "add bootstrap/onboard capability to toolkit agent",
+            "hash": "a6d0299"
+          },
+          {
+            "type": "fix",
+            "scope": "toolkit",
+            "description": "handle missing projects.json gracefully in builder/planner startup",
+            "hash": "f260f7a"
+          }
+        ]
+      },
+      {
+        "date": "2026-02-23",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "support multi-service dev environments in schema and start-dev-server skill",
+            "hash": "abc30b3"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "allow both Builder and Planner to handle any project update",
+            "hash": "0f9a233"
+          },
+          {
+            "type": "feat",
+            "scope": "schema",
+            "description": "add environments configuration to project schema",
+            "hash": "51e71ea"
+          },
+          {
+            "type": "feat",
+            "scope": "skills",
+            "description": "add start-dev-server skill for automatic dev server startup",
+            "hash": "2d2c9d4"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "set username to 'yo' for Yo Go branding",
+            "hash": "ba81dfd"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "rename toolkit branding to yo-go",
+            "hash": "6f17610"
+          },
+          {
+            "type": "fix",
+            "scope": "toolkit",
+            "description": "enforce project-local temp artifact policy",
+            "hash": "d01253a"
+          },
+          {
+            "type": "refactor",
+            "scope": "toolkit",
+            "description": "remove Context7 references from prompts",
+            "hash": "df267c5"
+          },
+          {
+            "type": "fix",
+            "scope": "toolkit",
+            "description": "remove MCP and Context7 from default config",
+            "hash": "50541f5"
+          },
+          {
+            "type": "fix",
+            "scope": "toolkit",
+            "description": "scope post-change workflow to behavior changes",
+            "hash": "1969b91"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "automate builder architecture and E2E policies",
+            "hash": "3838614"
+          }
+        ]
+      },
+      {
+        "date": "2026-02-22",
+        "changes": [
+          {
+            "type": "feat",
+            "scope": "planner",
+            "description": "add planning consideration passthrough for PRD workflows",
+            "hash": "ff0aa73"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "harden dev-server readiness and local website-sync modes",
+            "hash": "2e0403b"
+          },
+          {
+            "type": "feat",
+            "scope": "toolkit",
+            "description": "streamline bootstrap and harden public repo setup",
+            "hash": "db50069"
+          },
+          {
+            "type": "feat",
+            "scope": "governance",
+            "description": "simplify root guidance and restore generic CVE skill",
+            "hash": "35a88e3"
+          },
+          {
+            "type": "fix",
+            "scope": "planner",
+            "description": "author PRD definition of done by default",
+            "hash": "ceb06d4"
+          },
+          {
+            "type": "fix",
+            "scope": "toolkit",
+            "description": "reference planner as PRD rules source",
+            "hash": "bea5b46"
+          }
+        ]
+      }
+    ]
+  }
+}

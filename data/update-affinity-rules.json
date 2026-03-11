@@ -1,0 +1,115 @@
+{
+  "$schema": "../schemas/update-affinity-rules.schema.json",
+  "description": "JSONPath-based rules for determining which projects are affected by toolkit changes",
+  "rules": [
+    {
+      "id": "desktop-apps",
+      "description": "Projects with desktop applications",
+      "match": {
+        "path": "apps",
+        "condition": "hasValueWhere",
+        "where": {
+          "type": "desktop"
+        }
+      }
+    },
+    {
+      "id": "electron-apps",
+      "description": "Projects with Electron desktop applications",
+      "match": {
+        "path": "apps",
+        "condition": "hasValueWhere",
+        "where": {
+          "framework": "electron"
+        }
+      }
+    },
+    {
+      "id": "electron-without-e2e",
+      "description": "Electron apps without E2E testing configured",
+      "match": {
+        "path": "apps",
+        "condition": "hasValueWhere",
+        "where": {
+          "framework": "electron",
+          "testing.framework": null
+        }
+      }
+    },
+    {
+      "id": "mobile-apps",
+      "description": "Projects with mobile applications",
+      "match": {
+        "path": "apps",
+        "condition": "hasValueWhere",
+        "where": {
+          "type": "mobile"
+        }
+      }
+    },
+    {
+      "id": "nextjs-apps",
+      "description": "Projects using Next.js framework",
+      "match": {
+        "path": "apps",
+        "condition": "hasValueWhere",
+        "where": {
+          "framework": "nextjs"
+        }
+      }
+    },
+    {
+      "id": "has-supabase",
+      "description": "Projects using Supabase",
+      "match": {
+        "path": "database.provider",
+        "condition": "equals",
+        "value": "supabase"
+      }
+    },
+    {
+      "id": "has-stripe",
+      "description": "Projects with Stripe integration",
+      "match": {
+        "path": "integrations",
+        "condition": "contains",
+        "value": "stripe"
+      }
+    },
+    {
+      "id": "has-ai-features",
+      "description": "Projects with AI/chatbot features",
+      "match": {
+        "path": "capabilities.ai",
+        "condition": "equals",
+        "value": true
+      }
+    },
+    {
+      "id": "typescript-projects",
+      "description": "Projects using TypeScript",
+      "match": {
+        "path": "stack.languages",
+        "condition": "contains",
+        "value": "typescript"
+      }
+    },
+    {
+      "id": "go-projects",
+      "description": "Projects using Go",
+      "match": {
+        "path": "stack.languages",
+        "condition": "contains",
+        "value": "go"
+      }
+    },
+    {
+      "id": "all-projects",
+      "description": "All projects with agent system enabled",
+      "match": {
+        "path": "_always",
+        "condition": "always"
+      }
+    }
+  ]
+}

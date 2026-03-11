@@ -1,0 +1,21 @@
+node_modules
+.vscode
+.DS_Store
+*.log
+.env
+.env.local
+.tmp/
+.opencode/
+
+# Instance-specific mutable state (NOT part of toolkit)
+projects.json
+builder-config.json
+bun.lock
+package.json
+
+# Agent communication queues (instance-specific)
+project-updates/
+pending-updates/
+
+# Local user overrides (machine-specific)
+.local/toolkit-overrides.json

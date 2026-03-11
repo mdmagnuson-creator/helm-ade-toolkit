@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/mdmagnuson-creator/yo-go/main/schemas/project.schema.json",
+  "schemaVersion": 3,
+  "name": "yo-go",
+  "description": "AI development toolkit - agents, skills, templates, scaffolds, and schemas for autonomous development",
+  "hasAgentSystem": true,
+  "stacks": {
+    "toolkit": {
+      "language": "markdown",
+      "format": "yaml+json"
+    }
+  },
+  "commands": {
+    "validate": "scripts/validate-toolkit-postchange.sh .",
+    "lint": "scripts/validate-handoff-contracts.sh ."
+  },
+  "capabilities": {
+    "api": false,
+    "authentication": false,
+    "database": false,
+    "email": false,
+    "multiTenant": false,
+    "aiTools": true
+  },
+  "integrations": [],
+  "gitHubRepo": "mdmagnuson-creator/yo-go",
+  "git": {
+    "agentWorkflow": {
+      "defaultBranch": "main",
+      "workBranch": "main",
+      "pushTo": "main",
+      "createPrTo": "main",
+      "requiresHumanApproval": []
+    }
+  },
+  "relatedProjects": [
+    {
+      "projectId": "opencode-toolkit-website",
+      "relationship": "documentation-site",
+      "description": "Public documentation website for the AI toolkit"
+    }
+  ]
+}

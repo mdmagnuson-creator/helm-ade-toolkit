@@ -1,0 +1,28 @@
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  // Enable React strict mode for better development experience
+  reactStrictMode: true,
+  
+  // Configure image domains if using external images
+  images: {
+    remotePatterns: [
+      {{#if (eq stack.database.provider 'supabase')}}
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+      {{/if}}
+    ],
+  },
+  
+  // Experimental features
+  experimental: {
+    // Enable server actions
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
+};
+
+export default nextConfig;

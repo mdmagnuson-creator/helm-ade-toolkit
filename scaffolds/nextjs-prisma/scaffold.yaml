@@ -1,0 +1,250 @@
+name: nextjs-prisma
+description: Next.js 15 with Prisma ORM, PostgreSQL, NextAuth.js, Tailwind CSS v4, TypeScript
+version: "1.0"
+
+# Variables collected during scaffolding
+variables:
+  - name: projectName
+    prompt: "Project name"
+    transform: kebab-case
+    required: true
+    source: context.projectName
+  
+  - name: description
+    prompt: "Project description"
+    required: true
+    source: context.description
+  
+  - name: databaseUrl
+    prompt: "PostgreSQL connection URL (or 'local' for local development)"
+    default: local
+  
+  - name: devPort
+    prompt: "Development server port"
+    default: "3000"
+
+# Base dependencies (always installed)
+dependencies:
+  production:
+    - name: next
+      version: "^15.0.0"
+    - name: react
+      version: "^19.0.0"
+    - name: react-dom
+      version: "^19.0.0"
+    - name: "@prisma/client"
+      version: "^5.20.0"
+    - name: next-auth
+      version: "^5.0.0"
+    - name: "@auth/prisma-adapter"
+      version: "^2.6.0"
+    - name: tailwindcss
+      version: "^4.0.0"
+    - name: clsx
+      version: "^2.1.0"
+    - name: tailwind-merge
+      version: "^2.5.0"
+    - name: lucide-react
+      version: "^0.400.0"
+    - name: zod
+      version: "^3.23.0"
+  
+  development:
+    - name: typescript
+      version: "^5.6.0"
+    - name: "@types/react"
+      version: "^19.0.0"
+    - name: "@types/react-dom"
+      version: "^19.0.0"
+    - name: "@types/node"
+      version: "^22.0.0"
+    - name: prisma
+      version: "^5.20.0"
+    - name: eslint
+      version: "^9.0.0"
+    - name: eslint-config-next
+      version: "^15.0.0"
+    - name: prettier
+      version: "^3.3.0"
+    - name: prettier-plugin-tailwindcss
+      version: "^0.6.0"
+
+# Conditional dependencies based on features
+conditionalDependencies:
+  - if: capabilities.payments
+    add:
+      - name: stripe
+        version: "^16.0.0"
+      - name: "@stripe/stripe-js"
+        version: "^4.0.0"
+  
+  - if: capabilities.email
+    add:
+      - name: resend
+        version: "^4.0.0"
+  
+  - if: capabilities.ai
+    add:
+      - name: openai
+        version: "^4.60.0"
+      - name: ai
+        version: "^3.4.0"
+  
+  - if: testing.unit == 'jest'
+    add:
+      - name: jest
+        version: "^29.7.0"
+        dev: true
+      - name: "@testing-library/react"
+        version: "^16.0.0"
+        dev: true
+      - name: "@testing-library/jest-dom"
+        version: "^6.5.0"
+        dev: true
+      - name: jest-environment-jsdom
+        version: "^29.7.0"
+        dev: true
+  
+  - if: testing.e2e == 'playwright'
+    add:
+      - name: "@playwright/test"
+        version: "^1.47.0"
+        dev: true
+
+# Directory structure to create
+structure:
+  - src/app
+  - src/app/(auth)
+  - src/app/(dashboard)
+  - src/app/api
+  - src/app/api/auth
+  - src/components/ui
+  - src/components/forms
+  - src/components/layout
+  - src/hooks
+  - src/lib
+  - src/lib/auth
+  - src/lib/db
+  - src/types
+  - prisma
+  - docs
+  - docs/prds
+  - docs/drafts
+  - docs/agents
+  - public
+
+# Files to generate
+files:
+  # Root config files
+  - template: package.json.hbs
+    output: package.json
+  
+  - template: tsconfig.json
+    output: tsconfig.json
+  
+  - template: next.config.ts.hbs
+    output: next.config.ts
+  
+  - template: tailwind.config.ts
+    output: tailwind.config.ts
+  
+  - template: postcss.config.js
+    output: postcss.config.js
+  
+  - template: .eslintrc.json
+    output: .eslintrc.json
+  
+  - template: .prettierrc
+    output: .prettierrc
+  
+  - template: .gitignore
+    output: .gitignore
+  
+  - template: .env.example.hbs
+    output: .env.example
+  
+  - template: .env.local.hbs
+    output: .env.local
+  
+  # Prisma
+  - template: prisma/schema.prisma.hbs
+    output: prisma/schema.prisma
+  
+  # App files
+  - template: app/layout.tsx.hbs
+    output: src/app/layout.tsx
+  
+  - template: app/page.tsx.hbs
+    output: src/app/page.tsx
+  
+  - template: app/globals.css
+    output: src/app/globals.css
+  
+  # Auth
+  - template: lib/auth/config.ts.hbs
+    output: src/lib/auth/config.ts
+  
+  - template: app/api/auth/[...nextauth]/route.ts.hbs
+    output: src/app/api/auth/[...nextauth]/route.ts
+  
+  - template: middleware.ts.hbs
+    output: src/middleware.ts
+  
+  # Database client
+  - template: lib/db/index.ts.hbs
+    output: src/lib/db/index.ts
+  
+  # Utilities
+  - template: lib/utils.ts
+    output: src/lib/utils.ts
+  
+  - template: lib/cn.ts
+    output: src/lib/cn.ts
+  
+  # Components (reuse from supabase scaffold)
+  - template: components/ui/button.tsx
+    output: src/components/ui/button.tsx
+  
+  - template: components/ui/input.tsx
+    output: src/components/ui/input.tsx
+  
+  - template: components/ui/card.tsx
+    output: src/components/ui/card.tsx
+  
+  - template: components/ui/loading-spinner.tsx
+    output: src/components/ui/loading-spinner.tsx
+  
+  # Types
+  - template: types/index.ts
+    output: src/types/index.ts
+  
+  # Documentation
+  - template: AGENTS.md.hbs
+    output: AGENTS.md
+  
+  - template: README.md.hbs
+    output: README.md
+
+# Commands to run after scaffold
+postScaffold:
+  - command: npm install
+    workdir: .
+    description: Install dependencies
+  
+  - command: npx prisma generate
+    workdir: .
+    description: Generate Prisma client
+  
+  - command: git init
+    workdir: .
+    description: Initialize git repository
+  
+  - command: git add .
+    workdir: .
+    description: Stage all files
+  
+  - command: git commit -m "Initial scaffold from nextjs-prisma"
+    workdir: .
+    description: Create initial commit
+    requiresConfirmation: true
+    confirmationPrompt: "Create initial commit? [Y/n]"

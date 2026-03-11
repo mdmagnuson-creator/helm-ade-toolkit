@@ -1,0 +1,27 @@
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  // Enable React strict mode for better development experience
+  reactStrictMode: true,
+  
+  // Configure image domains if using external images
+  images: {
+    remotePatterns: [
+      // Add external image domains as needed
+      // {
+      //   protocol: 'https',
+      //   hostname: 'example.com',
+      // },
+    ],
+  },
+  
+  // Experimental features
+  experimental: {
+    // Enable server actions
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
+};
+
+export default nextConfig;

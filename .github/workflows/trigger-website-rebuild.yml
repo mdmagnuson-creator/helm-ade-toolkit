@@ -1,0 +1,26 @@
+# Trigger toolkit-website rebuild when toolkit content changes
+name: Trigger Website Rebuild
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'agents/**'
+      - 'skills/**'
+      - 'scaffolds/**'
+      - 'agent-templates/**'
+      - 'automations/**'
+      - 'mcp/**'
+      - 'templates/**'
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger toolkit-website rebuild
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.WEBSITE_DISPATCH_TOKEN }}
+          repository: ${{ github.repository_owner }}/opencode-toolkit-website
+          event-type: toolkit-updated
+          client-payload: '{"sha": "${{ github.sha }}", "ref": "${{ github.ref }}"}'

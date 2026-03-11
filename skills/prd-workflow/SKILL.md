@@ -45,7 +45,7 @@ PRD mode implements features defined in `docs/prds/prd-[name].json`. It operates
 │  CLAIM PHASE    │ ──► │  BUILD PHASE    │ ──► │   SHIP PHASE    │ ──► │ CLEANUP PHASE   │
 │                 │     │                 │     │                 │     │                 │
 │ Check conflicts │     │ Implement each  │     │ Run tests, PR,  │     │ Archive PRD,    │
-│ setup branch    │     │ story in order  │     │ merge queue     │     │ generate script │
+│ setup branch    │     │ story in order  │     │ merge           │     │ generate script │
 └─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
@@ -133,7 +133,7 @@ Rules:
   - Execute directly on default branch
   - Do not create/checkout feature branches
   - Treat PRD `branchName` as metadata only
-  - Skip PR creation/merge-queue flow unless user explicitly overrides
+  - Skip PR creation unless user explicitly overrides
 - `trunk + pr-based` or non-trunk workflows:
   - Use existing branch + PR flow in this skill
 
@@ -631,44 +631,11 @@ gh pr create --base {createPrTo} --title "feat: {description from prd.json}" --b
 
 **If `createPrTo` NOT in `requiresHumanApproval`:**
 
-Check `docs/project.json` → `agents.mergeQueue.enabled` (default: true).
-
-**If merge queue is enabled:**
-
-1. Read `$OPENCODE_CONFIG/merge-queue.json`
-
-2. Get list of files changed in this branch:
-   ```bash
-   git diff --name-only origin/<defaultBranch>...HEAD
-   ```
-
-3. Check for conflict risk with existing queue entries
-
-4. Create queue entry:
-   ```json
-   {
-     "id": "entry-<random>",
-     "projectId": "<current-project-id>",
-     "prdId": "<prd-id or null>",
-     "branch": "<branch-name>",
-     "prNumber": <pr-number>,
-     "prUrl": "<pr-url>",
-     "status": "queued",
-     "priority": "<from prd priority or 'normal'>",
-     "queuedAt": "<now>",
-     "sessionId": "<session-id>",
-     "filesChanged": ["<list of changed files>"],
-     "conflictRisk": ["<conflicting entry IDs>"]
-   }
-   ```
-
-5. Add to `queue` array and save `merge-queue.json`
-
-6. Report: "PR #{number} added to merge queue."
-
-**If merge queue is disabled:**
-
 Merge immediately after CI passes (or call @felix for CI wait).
+
+```bash
+gh pr merge <prNumber> --squash --delete-branch
+```
 
 ### Step 7: Report Completion and Update Session
 
@@ -679,7 +646,6 @@ Report the final state:
 | Pushed only (no PR) | "Changes pushed to {pushTo}. Create PR when ready. Status: `in_progress`" |
 | PR created, awaiting human | "PR #{number} created. Human approval required to merge. Status: `pr_open`" |
 | PR created and merged | "PR #{number} merged to {createPrTo}. Status: `completed` (pending cleanup)" |
-| PR created, in queue | "PR #{number} added to merge queue. Status: `pr_open`" |
 
 Update session lock to appropriate status based on outcome.
 

@@ -1804,53 +1804,6 @@
           "default": true,
           "description": "Whether PR approval is required before auto-merge (only applies when autoMerge is not 'off')"
         },
-        "mergeQueue": {
-          "type": "object",
-          "description": "Merge queue configuration for coordinating parallel session merges",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "default": true,
-              "description": "Whether to use merge queue (false = legacy behavior, no queue)"
-            },
-            "autoProcess": {
-              "type": "boolean",
-              "default": false,
-              "description": "Automatically process queue when entry is added (vs manual @merge-coordinator)"
-            },
-            "strategy": {
-              "type": "string",
-              "enum": ["squash", "merge", "rebase"],
-              "default": "squash",
-              "description": "Git merge strategy to use"
-            },
-            "requireApproval": {
-              "type": "boolean",
-              "default": false,
-              "description": "Require PR approval before auto-merge through queue"
-            },
-            "runTestsAfterRebase": {
-              "type": "boolean",
-              "default": true,
-              "description": "Run full test suite after rebasing (slower but safer)"
-            },
-            "runE2EAfterRebase": {
-              "type": "boolean",
-              "default": true,
-              "description": "Run E2E tests after rebasing (requires dev server)"
-            },
-            "notifyOnComplete": {
-              "type": "boolean",
-              "default": true,
-              "description": "Log notification when merge completes or fails"
-            },
-            "deleteOnComplete": {
-              "type": "boolean",
-              "default": true,
-              "description": "Delete branch after successful merge"
-            }
-          }
-        },
         "fallbackChains": {
           "type": "object",
           "description": "Per-project fallback chain overrides for agent reassignment. Merges with toolkit defaults unless override is true.",

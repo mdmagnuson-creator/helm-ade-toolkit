@@ -414,7 +414,7 @@ Only create `pending-updates/` requests for **significant gaps** that would affe
    - If solo session: Just run quality checks (no rebase coordination needed)
 
 3. **Merge to default branch:**
-   - If multiple sessions active: Use merge queue if enabled
+   - If multiple sessions active: Create PR for human review
    - If solo session: Direct merge or push
 
 4. **Archive the PRD**

@@ -67,20 +67,12 @@ Path: /Users/.../example-scheduler
    - If updates exist, read each file to get the title and priority
    - Include in the dashboard output (see Step 4)
 
-6. **Read global merge queue:**
-   ```bash
-   cat $OPENCODE_CONFIG/merge-queue.json
-   ```
-   - Filter entries for this project by `projectId`
-   - Count queued, processing, failed, blocked entries
-   - Include in dashboard output (see Step 4)
-
-7. **List PRD branches:**
+6. **List PRD branches:**
    ```bash
    git branch -r | grep 'origin/feature/' | sed 's/origin\///'
    ```
 
-8. **Check branch status:**
+7. **Check branch status:**
    For each PRD branch, get commits ahead/behind the default branch:
    ```bash
    git rev-list --left-right --count origin/<defaultBranch>...origin/<branch>
@@ -195,20 +187,6 @@ AWAITING ACTION (needs push, PR, or merge)
   prd-comprehensive-docs   committed   📤 Needs push (git push)
   prd-api-refactor         pushed      📝 Needs PR (gh pr create)
   prd-homepage-navigation  pr_open     ⏳ PR #42 awaiting merge
-
-MERGE QUEUE (for this project)
-───────────────────────────────────────────────────────────────────────
-  Status     PRD/Adhoc                    PR      Priority
-  queued     prd-error-logging            #42     high
-  queued     adhoc-fix-footer-typo        #43     normal
-  
-  ❌ Failed:
-  • prd-api-refactor (PR #40) - test-failure
-  
-  ⏸️ Blocked:
-  • prd-permissions (PR #41) - needs approval
-
-  Run @merge-coordinator to process the queue.
 
 PRD BRANCHES
 ───────────────────────────────────────────────────────────────────────

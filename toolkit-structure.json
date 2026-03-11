@@ -305,11 +305,6 @@
             "description": "Watches a PR for feedback and build failures."
           },
           {
-            "name": "merge-coordinator",
-            "file": "agents/merge-coordinator.md",
-            "description": "Processes the merge queue - rebases, tests, and merges PRs from parallel sessions"
-          },
-          {
             "name": "prd-impact-analyzer",
             "file": "agents/prd-impact-analyzer.md",
             "description": "Analyzes impact of completed PRDs on other PRDs in the backlog"
@@ -372,7 +367,7 @@
           {
             "name": "multi-session",
             "path": "skills/multi-session/SKILL.md",
-            "description": "Multi-session coordination for parallel AI sessions. Provides session locks, lazy heartbeat, and merge queue management. Loaded conditionally when multiple sessions are detected."
+            "description": "Multi-session coordination for parallel AI sessions. Provides session locks and lazy heartbeat. Loaded conditionally when multiple sessions are detected."
           },
           {
             "name": "post-completion",
@@ -740,11 +735,6 @@
         "name": "ui-test-audit-manifest.schema",
         "file": "schemas/ui-test-audit-manifest.schema.json",
         "description": "Schema for tracking comprehensive E2E test audits with resilient execution and per-test commit tracking"
-      },
-      {
-        "name": "merge-queue.schema",
-        "file": "schemas/merge-queue.schema.json",
-        "description": "Global merge queue for coordinating parallel session merges across projects"
       },
       {
         "name": "prd-registry.schema",

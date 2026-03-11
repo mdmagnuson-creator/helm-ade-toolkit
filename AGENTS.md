@@ -393,10 +393,7 @@ gh pr create --base {createPrTo} --title "[title]" --body "[body]"
 
 If auto-merge is allowed (target NOT in `requiresHumanApproval`):
 
-| Project Setting | Action |
-|----------------|--------|
-| Merge queue enabled | Add to merge queue |
-| No merge queue | Merge immediately after CI passes |
+Merge immediately after CI passes.
 
 If auto-merge is blocked (target in `requiresHumanApproval`):
 
@@ -415,7 +412,6 @@ Report the final state:
 | Pushed only (no PR) | "Changes pushed to {pushTo}. Create PR when ready." |
 | PR created, awaiting human | "PR #{number} created. Human approval required to merge." |
 | PR created and merged | "PR #{number} merged to {createPrTo}." |
-| PR created, in queue | "PR #{number} added to merge queue." |
 
 ---
 

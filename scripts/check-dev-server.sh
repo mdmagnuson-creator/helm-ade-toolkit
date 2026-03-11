@@ -52,21 +52,19 @@ fi
 
 PROJECT_PATH="$(cd "$PROJECT_PATH" && pwd)"
 
-OPENCODE_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
-PROJECTS_JSON="$OPENCODE_CONFIG/projects.json"
-if [[ ! -f "$PROJECTS_JSON" ]]; then
-  echo "startup failed: missing projects registry"
+PROJECT_JSON="$PROJECT_PATH/docs/project.json"
+if [[ ! -f "$PROJECT_JSON" ]]; then
+  echo "startup failed: missing docs/project.json"
   exit 1
 fi
 
-DEV_PORT="$(jq -r --arg p "$PROJECT_PATH" '.projects[] | select(.path == $p) | .devPort' "$PROJECTS_JSON" | head -n 1)"
+DEV_PORT="$(jq -r '.devPort // .apps[0].devPort // empty' "$PROJECT_JSON" | head -n 1)"
 if [[ -z "$DEV_PORT" || "$DEV_PORT" == "null" ]]; then
-  echo "startup failed: no devPort mapping for project path"
+  echo "startup failed: no devPort in docs/project.json"
   exit 1
 fi
 
 if [[ -z "$START_CMD" ]]; then
-  PROJECT_JSON="$PROJECT_PATH/docs/project.json"
   if [[ -f "$PROJECT_JSON" ]]; then
     START_CMD="$(jq -r '.commands.dev // empty' "$PROJECT_JSON")"
   fi

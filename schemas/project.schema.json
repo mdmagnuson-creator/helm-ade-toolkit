@@ -15,6 +15,10 @@
       "type": "string",
       "description": "Brief description of what this project does"
     },
+    "devPort": {
+      "type": "integer",
+      "description": "Development server port number. Used by agents for dev server health checks and test URL resolution."
+    },
 
     "environments": {
       "type": "object",
@@ -286,7 +290,8 @@
           },
           "frameworkVersion": { "type": "string" },
           "entryPoint": { "type": "string", "description": "Main entry directory or file" },
-          "port": { "type": "integer", "description": "DEPRECATED: Use devPort in projects.json registry instead. This field is ignored by agents." },
+          "port": { "type": "integer", "description": "DEPRECATED: Use root-level devPort or apps[].devPort instead. This field is ignored by agents." },
+          "devPort": { "type": "integer", "description": "Development server port for this specific app. Overrides root-level devPort." },
           "structure": {
             "type": "object",
             "description": "Key directories within this app",
@@ -690,11 +695,11 @@
 
     "devServer": {
       "type": "object",
-      "description": "Development server configuration. NOTE: The port is stored in $OPENCODE_CONFIG/projects.json (projects[].devPort), NOT here. This section is for health checks and startup options only.",
+      "description": "Development server configuration. The port is specified at root-level devPort or per-app in apps[].devPort.",
       "properties": {
         "healthCheck": {
           "type": "string",
-          "description": "URL path to check if server is ready (e.g., / or /api/health). Combined with port from projects.json to form full URL."
+          "description": "URL path to check if server is ready (e.g., / or /api/health). Combined with devPort to form full URL."
         },
         "startupTimeout": {
           "type": "integer",
@@ -1869,7 +1874,7 @@
         "properties": {
           "projectId": {
             "type": "string",
-            "description": "Project ID from projects.json registry"
+            "description": "Project identifier (matches docs/project.json name field)"
           },
           "relationship": {
             "type": "string",

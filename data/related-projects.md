@@ -12,7 +12,7 @@ Each entry in the `relatedProjects` array has:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `projectId` | Yes | Project ID from `projects.json` registry |
+| `projectId` | Yes | Project identifier (matches target project's docs/project.json name field) |
 | `relationship` | Yes | Relationship type (see conventions below) |
 | `label` | No | Disambiguation label for multiple same-type relationships |
 | `description` | No | Human-readable description |
@@ -60,10 +60,20 @@ get_related_project() {
     return 1
   fi
   
-  # Resolve to path via projects.json
-  jq -r --arg id "$project_id" \
-    '.projects[] | select(.id == $id) | .path' \
-    $OPENCODE_CONFIG/projects.json
+  # Resolve path: scan sibling directories for matching project.json name
+  local parent_dir
+  parent_dir=$(dirname "$HELM_PROJECT_PATH")
+  for dir in "$parent_dir"/*/; do
+    local name
+    name=$(jq -r '.name // empty' "$dir/docs/project.json" 2>/dev/null)
+    if [ "$name" == "$project_id" ]; then
+      echo "$dir"
+      return 0
+    fi
+  done
+  
+  echo ""
+  return 1
 }
 ```
 
@@ -101,27 +111,24 @@ For simple one-off lookups without defining the function:
 ```bash
 # Direct lookup (documentation-site example)
 PROJECT_ID=$(jq -r '.relatedProjects[] | select(.relationship == "documentation-site") | .projectId' docs/project.json 2>/dev/null)
-WEBSITE_PATH=$(jq -r --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | .path' $OPENCODE_CONFIG/projects.json)
+# Resolve by scanning sibling project directories
+PARENT_DIR=$(dirname "$HELM_PROJECT_PATH")
+WEBSITE_PATH=$(for dir in "$PARENT_DIR"/*/; do
+  name=$(jq -r '.name // empty' "$dir/docs/project.json" 2>/dev/null)
+  [ "$name" == "$PROJECT_ID" ] && echo "$dir" && break
+done)
 ```
 
 ## Fallback Pattern
 
-When migrating from name-based lookups, use this pattern:
-
 ```bash
-# Try relatedProjects first
+# Lookup via relatedProjects (the only supported method)
 PROJECT_ID=$(jq -r '.relatedProjects[] | select(.relationship == "documentation-site") | .projectId' docs/project.json 2>/dev/null)
 
 if [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "null" ]; then
-  # Resolve via relatedProjects (preferred)
-  WEBSITE_PATH=$(jq -r --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | .path' $OPENCODE_CONFIG/projects.json)
+  WEBSITE_PATH=$(get_related_project "documentation-site")
 else
-  # Fallback: search by name pattern (legacy)
-  WEBSITE_PATH=$(jq -r '.projects[] | select(.id | contains("website")) | .path' $OPENCODE_CONFIG/projects.json | head -1)
-  
-  if [ -n "$WEBSITE_PATH" ]; then
-    echo "Warning: Using fallback name match. Consider configuring relatedProjects."
-  fi
+  echo "Warning: No documentation-site relationship configured in docs/project.json"
 fi
 ```
 
@@ -161,7 +168,7 @@ ANY_DOCS=$(get_related_project "documentation-site")
 
 ## Validation
 
-Related project references should point to valid project IDs in the registry. Invalid references will return empty paths.
+Related project references should point to valid project identifiers. Invalid references will return empty paths.
 
 To check if a relationship is valid:
 

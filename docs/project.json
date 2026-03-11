@@ -1,7 +1,7 @@
 {
-  "$schema": "https://raw.githubusercontent.com/mdmagnuson-creator/yo-go/main/schemas/project.schema.json",
+  "$schema": "https://raw.githubusercontent.com/mdmagnuson/helm-ade-toolkit/main/schemas/project.schema.json",
   "schemaVersion": 3,
-  "name": "yo-go",
+  "name": "helm-ade-toolkit",
   "description": "AI development toolkit - agents, skills, templates, scaffolds, and schemas for autonomous development",
   "hasAgentSystem": true,
   "stacks": {
@@ -23,7 +23,7 @@
     "aiTools": true
   },
   "integrations": [],
-  "gitHubRepo": "mdmagnuson-creator/yo-go",
+  "gitHubRepo": "mdmagnuson/helm-ade-toolkit",
   "git": {
     "agentWorkflow": {
       "defaultBranch": "main",

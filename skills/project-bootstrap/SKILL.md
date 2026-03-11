@@ -2057,7 +2057,7 @@ Related projects help agents automatically find:
   • Admin dashboards (for operational features)
 
 Registered projects:
-  1. yo-go (AI toolkit)
+  1. helm-ade-toolkit (AI toolkit)
   2. helm-ade (SaaS application)
   3. helm-api (Go API backend)
   4. opencode-toolkit-website (documentation)
@@ -2072,25 +2072,25 @@ Select related projects (comma-separated numbers, or 'skip'):
 Ask about the relationship type:
 
 ```
-Selected: yo-go
+Selected: helm-ade-toolkit
 
-What is the relationship of THIS project to yo-go?
-(How does this project relate to yo-go?)
+What is the relationship of THIS project to helm-ade-toolkit?
+(How does this project relate to helm-ade-toolkit?)
 
   Common types:
-    • documentation-site    This documents yo-go
-    • documented-project    This is documented by yo-go
-    • marketing-site        This markets yo-go
-    • marketed-product      This is marketed by yo-go
-    • api-backend           This is the API for yo-go
-    • frontend-client       This is a frontend for yo-go
-    • admin-dashboard       This manages yo-go
-    • managed-service       This is managed by yo-go
-    • shared-library        This is shared code for yo-go
-    • dependent-project     This depends on yo-go
-    • monorepo-sibling      This is in the same monorepo as yo-go
-    • test-harness          This tests yo-go
-    • tested-system         This is tested by yo-go
+    • documentation-site    This documents helm-ade-toolkit
+    • documented-project    This is documented by helm-ade-toolkit
+    • marketing-site        This markets helm-ade-toolkit
+    • marketed-product      This is marketed by helm-ade-toolkit
+    • api-backend           This is the API for helm-ade-toolkit
+    • frontend-client       This is a frontend for helm-ade-toolkit
+    • admin-dashboard       This manages helm-ade-toolkit
+    • managed-service       This is managed by helm-ade-toolkit
+    • shared-library        This is shared code for helm-ade-toolkit
+    • dependent-project     This depends on helm-ade-toolkit
+    • monorepo-sibling      This is in the same monorepo as helm-ade-toolkit
+    • test-harness          This tests helm-ade-toolkit
+    • tested-system         This is tested by helm-ade-toolkit
 
 Or type a custom relationship name.
 
@@ -2111,9 +2111,9 @@ After configuring a relationship, offer to add the inverse:
 ```
 ───────────────────────────────────────────────────────────────────────
 
-Add inverse relationship to yo-go?
+Add inverse relationship to helm-ade-toolkit?
 
-This will add to yo-go/docs/project.json:
+This will add to helm-ade-toolkit/docs/project.json:
   {
     "projectId": "<this-project-id>",
     "relationship": "documentation-site",
@@ -2123,7 +2123,7 @@ This will add to yo-go/docs/project.json:
 Add inverse? (y/n)
 > y
 
-✅ Updated yo-go/docs/project.json
+✅ Updated helm-ade-toolkit/docs/project.json
 ───────────────────────────────────────────────────────────────────────
 
 Add more related projects? (y/n)
@@ -2176,7 +2176,7 @@ After configuring related projects, add to the project's `docs/project.json`:
 {
   "relatedProjects": [
     {
-      "projectId": "yo-go",
+      "projectId": "helm-ade-toolkit",
       "relationship": "documented-project",
       "description": "The AI toolkit this site documents"
     }

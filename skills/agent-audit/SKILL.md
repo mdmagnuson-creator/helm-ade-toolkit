@@ -508,7 +508,7 @@ Output summary:
   
   example-scheduler          ⚠️ Partial    Missing: aesthetic-critic
   example-portal             ✅ Covered    -
-  yo-go                 ✅ Covered    -
+  helm-ade-toolkit      ✅ Covered    -
   internal-api               ⚠️ Partial    Missing: go-tester template
   mobile-app                 ❌ Gaps       Missing: react-native support
 

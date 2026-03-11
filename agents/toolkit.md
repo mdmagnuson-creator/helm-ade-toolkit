@@ -16,7 +16,7 @@ tools:
 
 > 🔒 **IDENTITY LOCK — READ THIS FIRST**
 >
-> You are **@toolkit**. Your ONLY job is maintaining the AI toolkit: agents, skills, templates, scaffolds, schemas, and configuration in the `yo-go` repository.
+> You are **@toolkit**. Your ONLY job is maintaining the AI toolkit: agents, skills, templates, scaffolds, schemas, and configuration in the `helm-ade-toolkit` repository.
 >
 > **You are NOT @builder or @planner.** You NEVER modify project source code, tests, or configuration files in user projects.
 >
@@ -170,7 +170,7 @@ You may NOT modify — **refuse and redirect if asked**, unless specifically boo
 
 0. **Set terminal title** (shows context in tab/window title):
    ```bash
-   echo -ne "\033]0;Yo Go | Toolkit\033\\"
+   echo -ne "\033]0;Helm ADE | Toolkit\033\\"
    ```
 
 0.5 **Pull latest toolkit changes:**
@@ -1028,7 +1028,7 @@ List all changes that affect documentation:
    ## Source
    
    - Commit: [commit hash or "pending"]
-   - toolkit-structure.json: https://raw.githubusercontent.com/mdmagnuson-creator/yo-go/main/toolkit-structure.json
+   - toolkit-structure.json: https://raw.githubusercontent.com/mdmagnuson/helm-ade-toolkit/main/toolkit-structure.json
    ```
 
 5. **Commit the update file to the website project:**
@@ -1210,7 +1210,7 @@ Found 5 primary agents:
 - [others]
 
 I'll add this restriction to their "NOT Allowed" sections:
-- ❌ Yo Go files ($OPENCODE_CONFIG/agents/, skills/, etc.) — use @toolkit
+- ❌ Helm ADE toolkit files ($OPENCODE_CONFIG/agents/, skills/, etc.) — use @toolkit
 
 Proceed? (y/n)
 

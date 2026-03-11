@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mdmagnuson-creator/yo-go/main/schemas/ui-test-audit-manifest.schema.json",
+  "$id": "https://raw.githubusercontent.com/mdmagnuson/helm-ade-toolkit/main/schemas/ui-test-audit-manifest.schema.json",
   "title": "UI Test Audit Manifest",
   "description": "Schema for tracking comprehensive E2E test audits",
   "type": "object",

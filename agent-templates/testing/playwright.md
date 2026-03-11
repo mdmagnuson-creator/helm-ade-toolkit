@@ -542,7 +542,7 @@ The user might have seen the event appear in the wrong location before correctin
 
 ### Quality Helpers
 
-Copy `ui-test-ux-quality-helpers.ts` from the yo-go to your project:
+Copy `ui-test-ux-quality-helpers.ts` from the helm-ade-toolkit to your project:
 
 ```bash
 cp $OPENCODE_CONFIG/templates/ui-test-ux-quality-helpers.ts {{PROJECT.paths.e2e || 'e2e'}}/helpers/

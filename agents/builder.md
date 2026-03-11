@@ -1622,7 +1622,7 @@ If the user asks you to:
 - Look at or analyze agent definitions (`$OPENCODE_CONFIG/agents/*.md`)
 - Debug why an agent isn't working correctly
 - Fix issues with skills, scaffolds, or templates
-- Modify any file in the `yo-go/` repository
+- Modify any file in the `helm-ade-toolkit/` repository
 
 **STOP and redirect:**
 

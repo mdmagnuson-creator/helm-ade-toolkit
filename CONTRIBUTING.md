@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to `yo-go`.
+Thanks for contributing to `helm-ade-toolkit`.
 
 ## How to Contribute
 

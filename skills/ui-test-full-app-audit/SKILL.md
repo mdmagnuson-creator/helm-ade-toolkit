@@ -53,7 +53,7 @@ The audit manifest tracks all tests and their execution status:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/mdmagnuson-creator/yo-go/main/schemas/ui-test-audit-manifest.schema.json",
+  "$schema": "https://raw.githubusercontent.com/mdmagnuson/helm-ade-toolkit/main/schemas/ui-test-audit-manifest.schema.json",
   "version": "1.0.0",
   "generatedAt": "2026-02-28T10:00:00Z",
   "project": {

@@ -643,43 +643,6 @@
           "default": "release/*",
           "description": "Pattern for release branches (git-flow and release-branches strategies)"
         },
-        "teamSync": {
-          "type": "object",
-          "description": "Team synchronization settings for multi-machine collaboration. When enabled, agents pull before operations and push after commits.",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable automatic git pull/push for team synchronization"
-            },
-            "pullBeforeWork": {
-              "type": "boolean",
-              "default": true,
-              "description": "Pull latest changes at session start and before/after commits"
-            },
-            "pushAfterCommit": {
-              "type": "boolean",
-              "default": true,
-              "description": "Automatically push after each commit"
-            },
-            "confirmBeforePush": {
-              "type": "boolean",
-              "default": true,
-              "description": "Ask user for confirmation before pushing"
-            },
-            "pushRetries": {
-              "type": "integer",
-              "default": 3,
-              "description": "Number of retry attempts for push failures (network issues)"
-            },
-            "conflictBehavior": {
-              "type": "string",
-              "enum": ["stop-and-alert", "auto-merge", "stash-and-alert"],
-              "default": "stop-and-alert",
-              "description": "How to handle conflicts: stop-and-alert (safest), auto-merge (attempt git merge), stash-and-alert (stash local, pull, alert)"
-            }
-          }
-        },
         "agentWorkflow": {
           "type": "object",
           "description": "How agents interact with git branches. See AGENTS.md 'Git Completion Workflow' for the canonical workflow. PRs to requiresHumanApproval branches are allowed but auto-merge is blocked. Default cascade: pushTo → workBranch → defaultBranch.",

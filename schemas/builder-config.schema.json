@@ -66,13 +66,6 @@
                   "items": { "type": "string" }
                 }
               }
-            },
-            "teamSync": {
-              "type": "object",
-              "properties": {
-                "enabled": { "type": "boolean" },
-                "pushAfterCommit": { "type": "boolean" }
-              }
             }
           }
         },

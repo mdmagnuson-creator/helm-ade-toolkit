@@ -100,7 +100,6 @@ This section ensures you NEVER accidentally:
 > See AGENTS.md "Git Workflow Enforcement" section for validation protocol and error formats.
 
 **Planner-specific rules:**
-- PRD auto-commits (team sync) must respect `git.agentWorkflow.pushTo`
 - If `git.agentWorkflow` is missing and push is needed, BLOCK and prompt user to configure
 - Protected branches (`requiresHumanApproval`) block ALL push operations — no exceptions
 
@@ -175,19 +174,7 @@ When planning flows require temporary artifacts, use project-local temp storage 
 
 After environment is confirmed:
 
-1. **Team Sync (if enabled):**
-   
-   Check `project.json` → `git.teamSync.enabled`. If `true`:
-   ```bash
-   cd <project> && git fetch origin && \
-   BEHIND=$(git rev-list HEAD..origin/$(git rev-parse --abbrev-ref HEAD) --count 2>/dev/null || echo "0") && \
-   echo "Commits behind: $BEHIND"
-   ```
-   - If behind and no local changes: `git pull --ff-only`
-   - If behind with local changes: **STOP** and alert user (see `git-sync` skill for conflict resolution)
-   - If up to date: continue
-
-2. **Read files in parallel:**
+1. **Read files in parallel:**
    ```
    In parallel:
    - cat <project>/docs/prd-registry.json
@@ -208,7 +195,6 @@ After environment is confirmed:
    | Git workflow | `git.agentWorkflow` | Branch targets, push/PR rules |
    | Related projects | `relatedProjects` | Cross-project PRD creation |
    | Default branch | `git.defaultBranch` | Fallback for workflow |
-   | Team sync | `git.teamSync` | Auto-commit PRD changes |
    
    If `git.agentWorkflow` is missing, note it for later (will prompt user if git operations needed).
    If `relatedProjects` is present, note available relationships for cross-project PRD handling.
@@ -427,118 +413,9 @@ When a PRD affects multiple projects, load the `cross-project-prds` skill for th
 - ❌ Write to existing project files outside of `docs/` — tell user to use @builder
 - ❌ Modify files in projects you didn't just create
 
-**Exception: Team Sync Mode**
-When `project.json` → `git.teamSync.enabled` is `true`:
-- ✅ You may commit PRD-related files (see "PRD Auto-Commit" section)
-- ✅ You may push to remote (with user confirmation if `confirmBeforePush` is true)
-
 Exception for project updates:
 - ✅ You may delete processed files in `$OPENCODE_CONFIG/project-updates/[project-id]/` after successful `U` handling
 - ❌ Do not edit any other toolkit files
-
-## PRD Auto-Commit (Team Sync)
-
-> ⚠️ **Only applies when `git.teamSync.enabled` is `true` in `project.json`**
-
-When team sync is enabled, automatically commit and push PRD changes to keep team members synchronized.
-
-### When to Auto-Commit
-
-Commit after these operations:
-- Creating a new PRD draft
-- Refining/updating a PRD draft
-- Moving a PRD to ready status
-- Archiving a completed PRD
-- Abandoning a PRD
-- Creating a bug PRD
-- Updating `prd-registry.json`
-
-### Files to Include
-
-```bash
-git add docs/drafts/ docs/prds/ docs/bugs/ docs/completed/ docs/abandoned/ docs/prd-registry.json
-```
-
-### Commit Message Format
-
-```
-docs(prd): {action} {prd-name}
-```
-
-Examples:
-- `docs(prd): create draft user-authentication`
-- `docs(prd): refine draft user-authentication`
-- `docs(prd): move user-authentication to ready`
-- `docs(prd): archive completed user-authentication`
-- `docs(prd): create bug login-redirect-loop`
-
-### Auto-Commit Flow
-
-> ⛔ **Check `git.autoCommit` first:** If `project.json` → `git.autoCommit` is `false`, skip steps 3-6 and report what would be committed instead. Stage files but do NOT commit.
-
-After each PRD operation:
-
-1. **Stage PRD files:**
-   ```bash
-   git add docs/drafts/ docs/prds/ docs/bugs/ docs/completed/ docs/abandoned/ docs/prd-registry.json 2>/dev/null
-   ```
-
-2. **Check if anything staged:**
-   ```bash
-   git diff --cached --quiet && echo "Nothing to commit"
-   ```
-   If nothing staged, skip commit.
-
-3. **Commit:**
-   ```bash
-   git commit -m "docs(prd): {action} {prd-name}"
-   ```
-
-4. **Validate push target (BEFORE pushing):**
-   
-   > ⚓ **AGENTS.md: Git Workflow Enforcement**
-   
-   Read `git.agentWorkflow` and validate:
-   - If `git.agentWorkflow` not defined: BLOCK push, prompt user to configure
-   - If current branch in `requiresHumanApproval`: BLOCK push (see error format in AGENTS.md)
-   - If current branch ≠ `pushTo`: BLOCK push (wrong target error)
-   
-   Only proceed to step 5 if validation passes.
-
-5. **Push (with confirmation if configured):**
-   
-   Check `git.teamSync.confirmBeforePush`:
-   - If `true`: Ask user "Push to remote? (y/n)"
-   - If `false`: Push automatically
-   
-   ```bash
-   git pull --rebase origin $(git rev-parse --abbrev-ref HEAD) && \
-   git push origin $(git rev-parse --abbrev-ref HEAD)
-   ```
-
-6. **Handle push failure:**
-   - Retry up to `git.teamSync.pushRetries` times (default 3)
-   - If all retries fail, alert user but continue (commits are saved locally)
-
-### Conflict Handling
-
-If pull before push reveals conflicts:
-
-```
-⚠️ GIT SYNC CONFLICT
-
-Cannot push: your branch has diverged from origin.
-
-Please resolve manually:
-1. Run: git status (to see conflicting files)
-2. Resolve conflicts in your editor
-3. Run: git add . && git rebase --continue
-4. Then restart the session
-
-Your PRD changes are committed locally and safe.
-```
-
-**STOP** and do not continue until user resolves.
 
 ## Requesting Toolkit Updates
 

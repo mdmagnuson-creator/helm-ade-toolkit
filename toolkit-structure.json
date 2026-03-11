@@ -360,11 +360,6 @@
             "description": "Manage persistent session logs for Builder. Use when initializing sessions, managing chunks, writing session state, or resuming sessions. Triggers on: session log, session state, chunk management, session resume, heartbeat, session init."
           },
           {
-            "name": "git-sync",
-            "path": "skills/git-sync/SKILL.md",
-            "description": "Team synchronization for multi-machine collaboration. Provides pull/push protocols for keeping repos in sync across team members. Triggers on: team sync, git sync, pull latest, push changes."
-          },
-          {
             "name": "multi-session",
             "path": "skills/multi-session/SKILL.md",
             "description": "Multi-session coordination for parallel AI sessions. Provides session locks and lazy heartbeat. Loaded conditionally when multiple sessions are detected."

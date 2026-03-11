@@ -719,34 +719,7 @@ After the user selects a project number, show a **fast inline dashboard** — no
    - Legacy fallback: `$OPENCODE_CONFIG/project-updates/[project-id]/*.md`
    - Filter: Skip any update whose ID appears in `docs/applied-updates.json`
 
-3. **Team Sync - Pull Latest (if enabled):**
-
-   Check `project.json` → `git.teamSync.enabled`. If `true`:
-   ```bash
-   cd <project> && git fetch origin && \
-   BRANCH=$(git rev-parse --abbrev-ref HEAD) && \
-   BEHIND=$(git rev-list HEAD..origin/$BRANCH --count 2>/dev/null || echo "0") && \
-   LOCAL_CHANGES=$(git status --porcelain) && \
-   echo "Branch: $BRANCH, Behind: $BEHIND, Local changes: $([ -n "$LOCAL_CHANGES" ] && echo "yes" || echo "no")"
-   ```
-   
-   - If `BEHIND = 0`: Already up to date, continue
-   - If `BEHIND > 0` and no local changes: `git pull --ff-only origin $BRANCH`
-   - If `BEHIND > 0` with local changes: **STOP** and alert user:
-     ```
-     ⚠️ GIT SYNC CONFLICT
-     
-     Your branch is behind origin by {BEHIND} commits, but you have uncommitted local changes.
-     
-     Please resolve manually before continuing:
-     1. Stash changes: git stash
-     2. Pull latest: git pull
-     3. Restore changes: git stash pop
-     
-     Then restart the session.
-     ```
-
-4. **Load and cache project context:**
+3. **Load and cache project context:**
 
    Extract and cache project context from `project.json` for compaction resilience:
    
@@ -757,10 +730,9 @@ After the user selects a project number, show a **fast inline dashboard** — no
      git: {
        defaultBranch: project.git?.defaultBranch || "main",
        branchingStrategy: project.git?.branchingStrategy || "trunk-based",
-       autoCommit: project.git?.autoCommit ?? true,
-       agentWorkflow: project.git?.agentWorkflow || null,
-       teamSync: project.git?.teamSync || { enabled: false }
-     },
+        autoCommit: project.git?.autoCommit ?? true,
+        agentWorkflow: project.git?.agentWorkflow || null
+      },
      environments: project.environments || {},
      relatedProjects: project.relatedProjects || []
    }
@@ -1449,67 +1421,6 @@ See [Git Auto-Commit Enforcement](#git-auto-commit-enforcement) for the full beh
 - `manual` → `manual`
 
 See `adhoc-workflow` and `prd-workflow` skills for full commit flow details.
-
-## Team Sync - Push After Commit
-
-> ⚠️ **Only applies when `git.teamSync.enabled` is `true` in `project.json`**
-
-When team sync is enabled, automatically push after each commit to keep team members synchronized.
-
-### Push Protocol
-
-After each commit:
-
-1. **Pull before push (to minimize conflicts):**
-   ```bash
-   git fetch origin
-   BRANCH=$(git rev-parse --abbrev-ref HEAD)
-   BEHIND=$(git rev-list HEAD..origin/$BRANCH --count 2>/dev/null || echo "0")
-   
-   if [ "$BEHIND" -gt 0 ]; then
-     git pull --rebase origin $BRANCH
-   fi
-   ```
-
-2. **Confirm (if configured):**
-   
-   Check `git.teamSync.confirmBeforePush`. If `true`:
-   ```
-   Ready to push to origin/{BRANCH}:
-   
-   {git log origin/$BRANCH..HEAD --oneline}
-   
-   Push these commits? (y/n)
-   ```
-   Wait for user response. If `n`, skip push but continue working.
-
-3. **Push with retries:**
-   ```bash
-   # Retry up to git.teamSync.pushRetries times (default 3)
-   git push origin $BRANCH
-   ```
-
-4. **Handle failures:**
-   - **Rebase conflict**: STOP and alert user with resolution instructions
-   - **Network failure** (after retries): Alert user but continue working (commits are saved locally)
-
-### Conflict Handling
-
-If rebase conflicts occur:
-```
-⚠️ REBASE CONFLICT
-
-Cannot push: merge conflict during rebase.
-
-Please resolve manually:
-1. Fix conflicts in the listed files
-2. Run: git add . && git rebase --continue
-3. Then: git push origin {BRANCH}
-
-Your implementation changes are committed locally and safe.
-```
-
-**STOP** workflow and wait for user to resolve.
 
 ---
 

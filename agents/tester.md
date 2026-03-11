@@ -74,7 +74,7 @@ Use documentation lookup tools.
       - These override global testers for this project
    
    e. **Check for platform-specific apps (Electron, mobile, etc.):**
-      - Read `~/.config/opencode/data/skill-mapping.json` for routing decisions
+      - Read `$OPENCODE_CONFIG/data/skill-mapping.json` for routing decisions
       - Scan `project.json` apps for platform-specific frameworks:
         - `framework: 'electron'` or `type: 'desktop'` → route E2E to @ui-tester-playwright with `ui-test-electron` skill hint
         - `framework: 'react-native'` or `type: 'mobile'` → route E2E to appropriate mobile testing (stub for future)

@@ -522,7 +522,7 @@ Check `project.json → testing.qualityChecks`:
 Run @quality-critic with context:
 ```
 Run @quality-critic with:
-  devServerUrl: http://localhost:{devPort}  # Get devPort from ~/.config/opencode/projects.json
+  devServerUrl: http://localhost:{devPort}  # Get devPort from $OPENCODE_CONFIG/projects.json
   changedFiles: [files changed in this PRD/session]
   mode: comprehensive  // for PRD completion
 ```
@@ -654,7 +654,7 @@ Check `docs/project.json` → `agents.mergeQueue.enabled` (default: true).
 
 **If merge queue is enabled:**
 
-1. Read `~/.config/opencode/merge-queue.json`
+1. Read `$OPENCODE_CONFIG/merge-queue.json`
 
 2. Get list of files changed in this branch:
    ```bash

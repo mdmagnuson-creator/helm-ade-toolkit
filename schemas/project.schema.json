@@ -727,7 +727,7 @@
 
     "devServer": {
       "type": "object",
-      "description": "Development server configuration. NOTE: The port is stored in ~/.config/opencode/projects.json (projects[].devPort), NOT here. This section is for health checks and startup options only.",
+      "description": "Development server configuration. NOTE: The port is stored in $OPENCODE_CONFIG/projects.json (projects[].devPort), NOT here. This section is for health checks and startup options only.",
       "properties": {
         "healthCheck": {
           "type": "string",
@@ -1061,7 +1061,7 @@
 
     "workflows": {
       "type": "object",
-      "description": "Project-specific workflow overrides. If not defined, defaults are read from ~/.config/opencode/data/workflow-defaults.json. See that file for current defaults and available steps.",
+      "description": "Project-specific workflow overrides. If not defined, defaults are read from $OPENCODE_CONFIG/data/workflow-defaults.json. See that file for current defaults and available steps.",
       "properties": {
         "adhoc": {
           "type": "array",

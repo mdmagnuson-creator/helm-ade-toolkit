@@ -54,7 +54,7 @@ The paper describes "adaptive execution" — the ability to switch delegatees mi
 **Choice:** Define defaults in toolkit, allow per-project overrides in `project.json`.
 
 **Implementation:**
-- Toolkit provides `~/.config/opencode/data/fallback-chains.yaml` with defaults
+- Toolkit provides `$OPENCODE_CONFIG/data/fallback-chains.yaml` with defaults
 - Projects can override in `project.json → agents.fallbackChains`
 - Project chains merge with (not replace) defaults unless `"override": true`
 
@@ -164,7 +164,7 @@ Selection process:
 
 ### Fallback Chain Schema
 
-Add to `~/.config/opencode/data/fallback-chains.yaml`:
+Add to `$OPENCODE_CONFIG/data/fallback-chains.yaml`:
 
 ```yaml
 # Default fallback chains for agent reassignment
@@ -475,7 +475,7 @@ As Builder, I need to handle context overflow by starting a fresh session with t
 As a toolkit maintainer, I need default fallback chains defined so that reassignment works out of the box.
 
 **Acceptance Criteria:**
-- [ ] Create `~/.config/opencode/data/fallback-chains.yaml` with chains for:
+- [ ] Create `$OPENCODE_CONFIG/data/fallback-chains.yaml` with chains for:
   - Frontend: react-dev → developer
   - Backend: go-dev, java-dev, python-dev → developer
   - Testing: jest-tester → tester → developer, etc.
@@ -518,7 +518,7 @@ As a project maintainer, I need to customize fallback chains for my project so t
 
 **Technical Notes:**
 - Most projects won't use this — defaults should be good enough
-- Custom agents must exist in `~/.config/opencode/agents/` or project's agent dir
+- Custom agents must exist in `$OPENCODE_CONFIG/agents/` or project's agent dir
 - Merge mode: project chains override matching keys, defaults for rest
 
 ### US-007: Verification-Based Failure Detection

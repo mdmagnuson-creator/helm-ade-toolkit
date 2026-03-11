@@ -56,7 +56,7 @@ The URL is resolved in this order (first match wins):
 # Check for testBaseUrl in projects.json registry
 TEST_URL=$(jq -r --arg path "$PROJECT_PATH" \
   '.projects[] | select(.path == $path) | .testBaseUrl // empty' \
-  ~/.config/opencode/projects.json)
+  $OPENCODE_CONFIG/projects.json)
 
 if [ -n "$TEST_URL" ]; then
   echo "🌐 Test environment: Custom"
@@ -179,7 +179,7 @@ fi
 # Check for devPort in projects.json
 DEV_PORT=$(jq -r --arg path "$PROJECT_PATH" \
   '.projects[] | select(.path == $path) | .devPort // empty' \
-  ~/.config/opencode/projects.json)
+  $OPENCODE_CONFIG/projects.json)
 
 if [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ]; then
   TEST_URL="http://localhost:$DEV_PORT"
@@ -225,7 +225,7 @@ PROJECT_PATH="${1:-.}"
 # 1. Check projects.json testBaseUrl
 TEST_URL=$(jq -r --arg path "$PROJECT_PATH" \
   '.projects[] | select(.path == $path) | .testBaseUrl // empty' \
-  ~/.config/opencode/projects.json 2>/dev/null)
+  $OPENCODE_CONFIG/projects.json 2>/dev/null)
 
 if [ -n "$TEST_URL" ]; then
   echo "🌐 Test environment: Custom (projects.json)"
@@ -304,7 +304,7 @@ fi
 # 5. Fall back to localhost
 DEV_PORT=$(jq -r --arg path "$PROJECT_PATH" \
   '.projects[] | select(.path == $path) | .devPort // empty' \
-  ~/.config/opencode/projects.json 2>/dev/null)
+  $OPENCODE_CONFIG/projects.json 2>/dev/null)
 
 if [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ]; then
   TEST_URL="http://localhost:$DEV_PORT"
@@ -337,7 +337,7 @@ Before running tests, resolve the test URL:
 1. **Check explicit config:**
    ```bash
    # Check projects.json for testBaseUrl
-   TEST_URL=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .testBaseUrl // empty' ~/.config/opencode/projects.json)
+   TEST_URL=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .testBaseUrl // empty' $OPENCODE_CONFIG/projects.json)
    
    # If not set, check project.json
    [ -z "$TEST_URL" ] && TEST_URL=$(jq -r '.agents.verification.testBaseUrl // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
@@ -360,7 +360,7 @@ Before running tests, resolve the test URL:
 4. **Fall back to localhost:**
    ```bash
    if [ -z "$TEST_URL" ]; then
-     DEV_PORT=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .devPort // empty' ~/.config/opencode/projects.json)
+     DEV_PORT=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .devPort // empty' $OPENCODE_CONFIG/projects.json)
      [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ] && TEST_URL="http://localhost:$DEV_PORT"
    fi
    ```

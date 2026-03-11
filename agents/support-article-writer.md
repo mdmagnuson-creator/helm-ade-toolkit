@@ -160,11 +160,11 @@ Invoke this agent when:
 
 > ⚠️ **CRITICAL: Always read port from project registry**
 >
-> The canonical dev port for each project is stored in `~/.config/opencode/projects.json` under `projects[].devPort`.
+> The canonical dev port for each project is stored in `$OPENCODE_CONFIG/projects.json` under `projects[].devPort`.
 > This is the **single source of truth** for which port each project uses.
 >
 > **BEFORE** accessing any URLs:
-> 1. Read `~/.config/opencode/projects.json`
+> 1. Read `$OPENCODE_CONFIG/projects.json`
 > 2. Find the project entry by `id` or `path`
 > 3. Use the `devPort` value from that entry
 >

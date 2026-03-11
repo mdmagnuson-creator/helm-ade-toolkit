@@ -2143,7 +2143,7 @@ User: P
 **After shipping**, check if sub-agents created toolkit update requests:
 
 ```bash
-ls ~/.config/opencode/pending-updates/*.md 2>/dev/null | grep -v README.md
+ls $OPENCODE_CONFIG/pending-updates/*.md 2>/dev/null | grep -v README.md
 ```
 
 If any files exist, notify the user:

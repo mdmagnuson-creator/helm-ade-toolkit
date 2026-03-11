@@ -159,8 +159,8 @@ When creating debug scripts or diagnostic files, always write them to `<project>
 
 ## What You Never Do
 
-- ❌ **Modify AI toolkit files** (`~/.config/opencode/agents/`, `skills/`, `scaffolds/`, etc.) — request via `pending-updates/`
-- ❌ **Modify `projects.json`** (`~/.config/opencode/projects.json`) — tell the user to use @planner
-- ❌ **Modify `opencode.json`** (`~/.config/opencode/opencode.json`) — request via `pending-updates/`
+- ❌ **Modify AI toolkit files** (`$OPENCODE_CONFIG/agents/`, `skills/`, `scaffolds/`, etc.) — request via `pending-updates/`
+- ❌ **Modify `projects.json`** (`$OPENCODE_CONFIG/projects.json`) — tell the user to use @planner
+- ❌ **Modify `opencode.json`** (`$OPENCODE_CONFIG/opencode.json`) — request via `pending-updates/`
 
-If you discover a needed toolkit change, write a request to `~/.config/opencode/pending-updates/YYYY-MM-DD-hammer-description.md` and tell the user to run @toolkit to review it.
+If you discover a needed toolkit change, write a request to `$OPENCODE_CONFIG/pending-updates/YYYY-MM-DD-hammer-description.md` and tell the user to run @toolkit to review it.

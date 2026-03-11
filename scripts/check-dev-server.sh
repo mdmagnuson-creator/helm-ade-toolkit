@@ -52,7 +52,8 @@ fi
 
 PROJECT_PATH="$(cd "$PROJECT_PATH" && pwd)"
 
-PROJECTS_JSON="$HOME/.config/opencode/projects.json"
+OPENCODE_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+PROJECTS_JSON="$OPENCODE_CONFIG/projects.json"
 if [[ ! -f "$PROJECTS_JSON" ]]; then
   echo "startup failed: missing projects registry"
   exit 1

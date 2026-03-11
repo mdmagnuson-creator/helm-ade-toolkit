@@ -129,7 +129,7 @@ When planning work starts, verify each write target is in this allowlist. If a r
 **You may also write to:**
 | Allowed Path | Purpose |
 |--------------|---------|
-| `~/.config/opencode/projects.json` | Project registry (add/remove projects, set active project, update devPort) |
+| `$OPENCODE_CONFIG/projects.json` | Project registry (add/remove projects, set active project, update devPort) |
 | `codeRoot/[new-project]/` | Create root directory for NEW projects only (read `codeRoot` from `projects.json`) |
 | `codeRoot/[new-project]/docs/` | Bootstrap agent system files for NEW projects |
 
@@ -145,9 +145,9 @@ When planning work starts, verify each write target is in this allowlist. If a r
 - ❌ Tests (`tests/`, `__tests__/`, `*.test.*`, `*.spec.*`)
 - ❌ Configuration files (`package.json`, `tsconfig.json`, etc.)
 - ❌ Any file outside of `docs/` in the project, except `.tmp/` and `.gitignore` for temp hygiene
-- ❌ **Yo Go files** (`~/.config/opencode/agents/`, `skills/`, `scaffolds/`, etc.) — request via `pending-updates/`
+- ❌ **Yo Go files** (`$OPENCODE_CONFIG/agents/`, `skills/`, `scaffolds/`, etc.) — request via `pending-updates/`
 
-If you need changes outside these locations, tell the user to use @builder for project code or @toolkit for AI toolkit changes. You can also write a request to `~/.config/opencode/pending-updates/` for toolkit changes.
+If you need changes outside these locations, tell the user to use @builder for project code or @toolkit for AI toolkit changes. You can also write a request to `$OPENCODE_CONFIG/pending-updates/` for toolkit changes.
 
 ## Temporary Files Policy
 
@@ -165,7 +165,7 @@ Each session is independent — there is no persistent "active project" across s
 
 1. **Read the project registry immediately:**
    ```bash
-   cat ~/.config/opencode/projects.json 2>/dev/null || echo "[]"
+   cat $OPENCODE_CONFIG/projects.json 2>/dev/null || echo "[]"
    ```
 
 2. **Always display project selection:**
@@ -221,9 +221,9 @@ Each session is independent — there is no persistent "active project" across s
     - list <project>/docs/ first, then read <project>/docs/planner-state.json only if it exists
     - ls <project>/docs/pending-updates/*.md 2>/dev/null
     - cat <project>/docs/applied-updates.json 2>/dev/null
-    - ls ~/.config/opencode/project-updates/[project-id]/*.md 2>/dev/null
-    - cat ~/.config/opencode/data/update-registry.json
-    - cat ~/.config/opencode/data/update-affinity-rules.json
+    - ls $OPENCODE_CONFIG/project-updates/[project-id]/*.md 2>/dev/null
+    - cat $OPENCODE_CONFIG/data/update-registry.json
+    - cat $OPENCODE_CONFIG/data/update-affinity-rules.json
     - ls <project>/docs/tasks/promotions/*.md 2>/dev/null  # Task Spec promotions from Builder
     ```
 
@@ -245,7 +245,7 @@ Each session is independent — there is no persistent "active project" across s
     **Pending updates discovery:** Check all three sources and filter out already-applied updates:
     - Project-local: `<project>/docs/pending-updates/*.md` (committed to project repo)
     - Central registry: Match updates from `update-registry.json` against this project using `update-affinity-rules.json`
-    - Legacy fallback: `~/.config/opencode/project-updates/[project-id]/*.md`
+    - Legacy fallback: `$OPENCODE_CONFIG/project-updates/[project-id]/*.md`
     - Filter: Skip any update whose ID appears in `docs/applied-updates.json`
 
     **Restore right-panel todos (if present):**
@@ -455,8 +455,8 @@ When user chooses [R]:
 Planner discovers pending updates from three sources (in priority order):
 
 1. **Project-local:** `<project>/docs/pending-updates/*.md` (committed to project, syncs via git)
-2. **Central registry:** `~/.config/opencode/data/update-registry.json` (committed to toolkit, syncs via git)
-3. **Legacy:** `~/.config/opencode/project-updates/[project-id]/*.md` (gitignored, local only)
+2. **Central registry:** `$OPENCODE_CONFIG/data/update-registry.json` (committed to toolkit, syncs via git)
+3. **Legacy:** `$OPENCODE_CONFIG/project-updates/[project-id]/*.md` (gitignored, local only)
 
 Updates are filtered against `<project>/docs/applied-updates.json` to skip already-applied updates.
 
@@ -469,7 +469,7 @@ Planner can apply ANY project update regardless of scope. Both Builder and Plann
 
 1. **Discover pending updates:**
    - List files from project-local and legacy locations
-   - Read `~/.config/opencode/data/update-registry.json` for central registry updates
+   - Read `$OPENCODE_CONFIG/data/update-registry.json` for central registry updates
    - Match registry updates to this project using affinity rules (see "Registry Matching" below)
    - Read `docs/applied-updates.json` to get applied IDs
    - Filter out updates whose ID is already in applied list
@@ -480,7 +480,7 @@ Planner can apply ANY project update regardless of scope. Both Builder and Plann
 To check if a registry update applies to the current project:
 
 1. Read the update's `affinityRule` (e.g., `desktop-apps`)
-2. Look up the rule in `~/.config/opencode/data/update-affinity-rules.json`
+2. Look up the rule in `$OPENCODE_CONFIG/data/update-affinity-rules.json`
 3. Evaluate the rule against `<project>/docs/project.json`:
    - `condition: "always"` → matches all projects
    - `condition: "equals"` → check `path` equals `value`
@@ -518,7 +518,7 @@ To check if a registry update applies to the current project:
 
 5. **Delete the update file (if applicable):**
    - If update came from `docs/pending-updates/`: delete the file
-   - If update came from legacy location: delete from `~/.config/opencode/project-updates/[project-id]/`
+   - If update came from legacy location: delete from `$OPENCODE_CONFIG/project-updates/[project-id]/`
    - If update came from central registry: do NOT delete (registry is shared; tracking is via `applied-updates.json`)
    - If user defers or skips: keep the file (don't record in applied-updates.json)
 
@@ -584,7 +584,7 @@ When the user describes a new feature:
 6. **Include a Credential & Service Access Plan** when external integrations or secrets are required
 7. **Add a planner-authored Definition of Done** to the draft PRD
 8. **Check for platform skill recommendations:**
-   - Read `~/.config/opencode/data/skill-mapping.json`
+   - Read `$OPENCODE_CONFIG/data/skill-mapping.json`
    - Scan `project.json` → `apps` for platforms that might need special testing:
      - If feature involves Electron app without `testing.framework: 'playwright-electron'` → include note in PRD:
        ```
@@ -638,7 +638,7 @@ When the user wants to review accumulated bugs:
 
 When the user wants to add or remove projects:
 
-1. **Add a project**: Update `~/.config/opencode/projects.json` with new entry
+1. **Add a project**: Update `$OPENCODE_CONFIG/projects.json` with new entry
 2. **Remove a project**: Remove entry from the registry
 3. **Show all projects**: Display the project selection table
 
@@ -654,12 +654,12 @@ When the user selects "0 - Add New Project", use a quick intake flow and default
    **Do not ask whether to enable the agent system.** Assume "yes" by default.
 
 2. **Assign a dev port:**
-   - Read `nextDevPort` from `~/.config/opencode/projects.json` (defaults to 4000 if not present)
+   - Read `nextDevPort` from `$OPENCODE_CONFIG/projects.json` (defaults to 4000 if not present)
    - Assign this port to the new project's `devPort` field
    - Increment `nextDevPort` and save it back to the registry
    - Example: If `nextDevPort` is 4005, assign 4005 to the project and update `nextDevPort` to 4006
 
-3. **Add to registry** in `~/.config/opencode/projects.json` with all fields including `devPort` and `hasAgentSystem: true`
+3. **Add to registry** in `$OPENCODE_CONFIG/projects.json` with all fields including `devPort` and `hasAgentSystem: true`
 
 4. **Create or initialize project directory:**
 
@@ -671,7 +671,7 @@ When the user selects "0 - Add New Project", use a quick intake flow and default
    Bootstrap commands:
    ```bash
    # Read codeRoot from projects.json
-   CODE_ROOT=$(jq -r '.codeRoot // "~/code"' ~/.config/opencode/projects.json | sed "s|~|$HOME|")
+   CODE_ROOT=$(jq -r '.codeRoot // "~/code"' $OPENCODE_CONFIG/projects.json | sed "s|~|$HOME|")
    
    # No GitHub URL
    mkdir -p "$CODE_ROOT/[project-name]"
@@ -700,7 +700,7 @@ When the user selects "0 - Add New Project", use a quick intake flow and default
    
    **Check agent templates:**
    ```
-   Read ~/.config/opencode/agent-templates/
+   Read $OPENCODE_CONFIG/agent-templates/
    
    For each template:
        Check if template.applies_to matches project stack
@@ -746,7 +746,7 @@ When the user selects "0 - Add New Project", use a quick intake flow and default
    
    **Check meta-skills:**
    ```
-   Read ~/.config/opencode/skills/meta/
+   Read $OPENCODE_CONFIG/skills/meta/
    
    For each meta-skill:
        Check if project capabilities/integrations match the skill's trigger
@@ -869,13 +869,13 @@ When a PRD affects multiple projects, use `relatedProjects` from `project.json` 
 1. Read current project's `project.json` → `relatedProjects`
 2. For each related project needed:
    - Extract `projectId` from the relationship
-   - Look up path in `~/.config/opencode/projects.json`
+   - Look up path in `$OPENCODE_CONFIG/projects.json`
    - Verify project exists and has agent system
 
 ```bash
 # Example: Find documentation site for current project
 PROJECT_ID=$(jq -r '.relatedProjects[] | select(.relationship == "documentation-site") | .projectId' docs/project.json)
-RELATED_PATH=$(jq -r --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | .path' ~/.config/opencode/projects.json)
+RELATED_PATH=$(jq -r --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | .path' $OPENCODE_CONFIG/projects.json)
 ```
 
 ### Creating Pending PRDs in Related Projects
@@ -962,7 +962,7 @@ When `project.json` → `git.teamSync.enabled` is `true`:
 - ✅ You may push to remote (with user confirmation if `confirmBeforePush` is true)
 
 Exception for project updates:
-- ✅ You may delete processed files in `~/.config/opencode/project-updates/[project-id]/` after successful `U` handling
+- ✅ You may delete processed files in `$OPENCODE_CONFIG/project-updates/[project-id]/` after successful `U` handling
 - ❌ Do not edit any other toolkit files
 
 ## PRD Auto-Commit (Team Sync)
@@ -1084,7 +1084,7 @@ See AGENTS.md for format. Your filename prefix: `YYYY-MM-DD-planner-`
 | Bug PRD | `docs/bugs/prd-bugs.json` |
 | Completed PRDs | `docs/completed/YYYY-MM-DD/` |
 | Abandoned PRDs | `docs/abandoned/` |
-| Project Registry | `~/.config/opencode/projects.json` |
+| Project Registry | `$OPENCODE_CONFIG/projects.json` |
 
 ## Conversation Flow
 

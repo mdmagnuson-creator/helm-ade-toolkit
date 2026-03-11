@@ -69,7 +69,7 @@ def select_specialist(task_type, alternatives):
 ## Open Questions
 
 1. **Where should reputation data live?**
-   - Option A: Global toolkit file (`~/.config/opencode/agent-reputation.json`)
+   - Option A: Global toolkit file (`$OPENCODE_CONFIG/agent-reputation.json`)
    - Option B: Per-project (different codebases may have different patterns)
    - Option C: Hybrid (global defaults, project overrides)
 

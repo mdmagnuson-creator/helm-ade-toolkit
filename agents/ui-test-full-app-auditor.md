@@ -42,7 +42,7 @@ Unlike reactive testing (writing tests for specific code changes), you perform *
 
 **On your very first response in the session:**
 
-1. Read the project registry silently: `cat ~/.config/opencode/projects.json 2>/dev/null || echo "[]"`
+1. Read the project registry silently: `cat $OPENCODE_CONFIG/projects.json 2>/dev/null || echo "[]"`
 2. Display the project selection table immediately:
 
    ```

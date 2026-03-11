@@ -13,7 +13,7 @@ Scan all agents in the AI toolkit for project-context compliance and toolkit cov
 
 ## Purpose
 
-Ensures all agents in `~/.config/opencode/agents/` follow the established conventions for:
+Ensures all agents in `$OPENCODE_CONFIG/agents/` follow the established conventions for:
 1. Loading project context on startup
 2. Checking for project-specific overrides
 3. Respecting project conventions and stack choices
@@ -32,7 +32,7 @@ Ensures all agents in `~/.config/opencode/agents/` follow the established conven
 
 | Input | Required | Description |
 |-------|----------|-------------|
-| `path` | No | Path to scan (default: `~/.config/opencode/agents/`) |
+| `path` | No | Path to scan (default: `$OPENCODE_CONFIG/agents/`) |
 | `fix` | No | Automatically fix non-compliant agents (default: false) |
 | `report` | No | Output format: `table`, `json`, `markdown` (default: table) |
 | `include_templates` | No | Also scan agent-templates/ (default: false) |
@@ -46,7 +46,7 @@ Ensures all agents in `~/.config/opencode/agents/` follow the established conven
 
 | Criterion | Weight | Description |
 |-----------|--------|-------------|
-| Project Registry Check | Required | References `~/.config/opencode/projects.json` |
+| Project Registry Check | Required | References `$OPENCODE_CONFIG/projects.json` |
 | Project Config Loading | Required | References `docs/project.json` |
 | Conventions Loading | Required | References `docs/CONVENTIONS.md` |
 
@@ -79,7 +79,7 @@ Some agents are exempt from project context requirements:
 
 ```bash
 # List all agent files
-ls -la ~/.config/opencode/agents/*.md
+ls -la $OPENCODE_CONFIG/agents/*.md
 ```
 
 Build a list of all agents to audit.
@@ -160,9 +160,9 @@ Scanning: react-dev.md
   
   Run the following to fix non-compliant agents:
   
-    /agent-onboard ~/.config/opencode/agents/react-dev.md
-    /agent-onboard ~/.config/opencode/agents/go-dev.md
-    /agent-onboard ~/.config/opencode/agents/vue-dev.md
+    /agent-onboard $OPENCODE_CONFIG/agents/react-dev.md
+    /agent-onboard $OPENCODE_CONFIG/agents/go-dev.md
+    /agent-onboard $OPENCODE_CONFIG/agents/vue-dev.md
     ...
   
   Or run with --fix to auto-remediate all:
@@ -189,7 +189,7 @@ Scanning: react-dev.md
       "type": "specialist",
       "status": "non-compliant",
       "missing": ["registry", "config", "conventions"],
-      "fixCommand": "/agent-onboard ~/.config/opencode/agents/react-dev.md"
+      "fixCommand": "/agent-onboard $OPENCODE_CONFIG/agents/react-dev.md"
     }
   ]
 }
@@ -236,7 +236,7 @@ Look for this pattern or similar:
 ```markdown
 ## Project Context
 
-- References to `~/.config/opencode/projects.json`
+- References to `$OPENCODE_CONFIG/projects.json`
 - References to `docs/project.json`
 - References to `docs/CONVENTIONS.md`
 ```
@@ -257,7 +257,7 @@ Look for this pattern or similar:
 ## Routing
 
 1. Check `<project>/docs/agents/` first
-2. Fall back to `~/.config/opencode/agents/`
+2. Fall back to `$OPENCODE_CONFIG/agents/`
 3. Inject project context into agent prompt
 ```
 
@@ -305,7 +305,7 @@ Automatically adds project context sections to all non-compliant agents.
 /agent-audit --include-templates
 ```
 
-Also scans `~/.config/opencode/agent-templates/` for compliance.
+Also scans `$OPENCODE_CONFIG/agent-templates/` for compliance.
 
 ## Integration with CI/CD
 
@@ -370,16 +370,16 @@ Scan the toolkit for available coverage:
 
 ```bash
 # List all agents
-ls ~/.config/opencode/agents/*.md
+ls $OPENCODE_CONFIG/agents/*.md
 
 # List all agent templates (organized by category)
-ls ~/.config/opencode/agent-templates/*/*.md
+ls $OPENCODE_CONFIG/agent-templates/*/*.md
 
 # List all skills
-ls ~/.config/opencode/skills/*/SKILL.md
+ls $OPENCODE_CONFIG/skills/*/SKILL.md
 
 # Read agent template metadata
-for f in ~/.config/opencode/agent-templates/*/*.md; do
+for f in $OPENCODE_CONFIG/agent-templates/*/*.md; do
   head -20 "$f"  # Extract frontmatter with applies_to
 done
 ```
@@ -486,7 +486,7 @@ When `--all` is specified, analyze all registered projects:
 
 ```bash
 # Get all registered projects
-cat ~/.config/opencode/projects.json
+cat $OPENCODE_CONFIG/projects.json
 ```
 
 For each project:
@@ -525,8 +525,8 @@ Output summary:
   • GraphQL (2 projects) — No graphql-critic agent exists
   
   Consider creating:
-    ~/.config/opencode/pending-updates/react-native-support.md
-    ~/.config/opencode/pending-updates/graphql-critic.md
+    $OPENCODE_CONFIG/pending-updates/react-native-support.md
+    $OPENCODE_CONFIG/pending-updates/graphql-critic.md
 
 ═══════════════════════════════════════════════════════════════════════
 ```
@@ -612,6 +612,6 @@ The `agent-audit` skill provides the **deep analysis** when requested.
 ### Toolkit Agent
 
 When gap analysis identifies missing toolkit coverage, it can:
-1. Create pending update requests in `~/.config/opencode/pending-updates/`
+1. Create pending update requests in `$OPENCODE_CONFIG/pending-updates/`
 2. Suggest @toolkit commands to create new agents
 3. Identify agent templates that should be created

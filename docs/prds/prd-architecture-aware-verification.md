@@ -644,6 +644,6 @@ The update template instructs Builder to review each project and configure it. B
 ## Supersedes
 
 This PRD supersedes the Builder pending update at:
-`~/.config/opencode/pending-updates/2026-03-05-builder-post-change-workflow.md`
+`$OPENCODE_CONFIG/pending-updates/2026-03-05-builder-post-change-workflow.md`
 
 The pending update's `postChangeWorkflow` proposal is incorporated as the optional override mechanism (Story 1), while the primary fix is auto-inference from app architecture (Story 2). The auth acquisition gap (Stories 4-5) is additional scope not covered by the original pending update.

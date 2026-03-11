@@ -7,7 +7,7 @@ set -euo pipefail
 #   ./scripts/migrate-project-updates.sh [--dry-run] [--no-commit]
 #
 # This script:
-# 1. Finds all update files in ~/.config/opencode/project-updates/
+# 1. Finds all update files in $OPENCODE_CONFIG/project-updates/
 # 2. Copies them to each project's docs/pending-updates/
 # 3. Adds 'updateType: schema' to frontmatter if missing
 # 4. Commits the changes in each project
@@ -33,8 +33,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Resolve config directory (respects XDG_CONFIG_HOME for Helm)
+OPENCODE_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+
 # Find legacy updates directory
-LEGACY_DIR="$HOME/.config/opencode/project-updates"
+LEGACY_DIR="$OPENCODE_CONFIG/project-updates"
 
 if [[ ! -d "$LEGACY_DIR" ]]; then
   echo "No legacy project-updates directory found at $LEGACY_DIR"
@@ -43,7 +46,7 @@ if [[ ! -d "$LEGACY_DIR" ]]; then
 fi
 
 # Find projects.json
-PROJECTS_JSON="$HOME/.config/opencode/projects.json"
+PROJECTS_JSON="$OPENCODE_CONFIG/projects.json"
 if [[ ! -f "$PROJECTS_JSON" ]]; then
   echo "Error: projects.json not found at $PROJECTS_JSON"
   exit 1

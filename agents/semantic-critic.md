@@ -59,12 +59,12 @@ These are bugs that pass visual inspection but confuse users trying to understan
 > **NEVER hardcode ports** (3000, 4000, 5001, etc.). Each project has its own port.
 >
 > **Get the correct port:**
-> 1. Read `~/.config/opencode/projects.json`
+> 1. Read `$OPENCODE_CONFIG/projects.json`
 > 2. Find the project entry by path
 > 3. Use the `devPort` value (e.g., 4001, 4002, 5001)
 >
 > ```bash
-> jq '.projects[] | select(.path | contains("project-name")) | .devPort' ~/.config/opencode/projects.json
+> jq '.projects[] | select(.path | contains("project-name")) | .devPort' $OPENCODE_CONFIG/projects.json
 > ```
 >
 > Use `http://localhost:<devPort>/path` when constructing URLs.

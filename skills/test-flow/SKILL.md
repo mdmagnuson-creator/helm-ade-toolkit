@@ -82,7 +82,7 @@ Task complete
 ┌─────────────────────────────────────────────────────────────────────┐
 │ STEP 2: Resolve Activities                                          │
 │                                                                     │
-│ Read: ~/.config/opencode/data/test-activity-rules.json             │
+│ Read: $OPENCODE_CONFIG/data/test-activity-rules.json             │
 │ Read: <project>/docs/test-debt.json (hotspots)                     │
 │                                                                     │
 │ For each changed file:                                              │
@@ -124,7 +124,7 @@ Task complete
 ```
 function resolveActivities(changedFiles, diffContent, project):
   # Load rules
-  rules = read("~/.config/opencode/data/test-activity-rules.json")
+  rules = read("$OPENCODE_CONFIG/data/test-activity-rules.json")
   hotspots = read("<project>/docs/test-debt.json") or { hotspots: {} }
 
   activities = {

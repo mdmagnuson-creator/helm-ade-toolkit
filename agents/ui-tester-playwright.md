@@ -44,7 +44,7 @@ See AGENTS.md. Never truncate test failure output — show complete errors and s
       - If `authentication.method` is `none`, skip authentication
    
    d. **Check for platform-specific testing (Electron, mobile, etc.):**
-      - Read `~/.config/opencode/data/skill-mapping.json` for framework→skill lookup
+      - Read `$OPENCODE_CONFIG/data/skill-mapping.json` for framework→skill lookup
       - Check `project.json` apps for platform-specific configurations:
         - If any app has `framework: 'electron'` or `testing.framework: 'playwright-electron'` → load `ui-test-electron` skill
         - If any app has `type: 'desktop'` and `package.json` contains `electron` dependency → load `ui-test-electron` skill
@@ -82,11 +82,11 @@ See AGENTS.md. Never truncate test failure output — show complete errors and s
       
       ```bash
       # Quick resolution (see test-url-resolution skill for full script)
-      TEST_URL=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .testBaseUrl // empty' ~/.config/opencode/projects.json)
+      TEST_URL=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .testBaseUrl // empty' $OPENCODE_CONFIG/projects.json)
       [ -z "$TEST_URL" ] && TEST_URL=$(jq -r '.agents.verification.testBaseUrl // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
       [ -z "$TEST_URL" ] && [ -n "$VERCEL_URL" ] && TEST_URL="https://$VERCEL_URL"
       [ -z "$TEST_URL" ] && TEST_URL=$(jq -r '.environments.staging.url // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
-      [ -z "$TEST_URL" ] && DEV_PORT=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .devPort // empty' ~/.config/opencode/projects.json) && [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ] && TEST_URL="http://localhost:$DEV_PORT"
+      [ -z "$TEST_URL" ] && DEV_PORT=$(jq -r --arg path "$PROJECT_PATH" '.projects[] | select(.path == $path) | .devPort // empty' $OPENCODE_CONFIG/projects.json) && [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ] && TEST_URL="http://localhost:$DEV_PORT"
       ```
       
       **If TEST_URL cannot be resolved:**
@@ -1018,7 +1018,7 @@ Each UI area should have tests for:
 >
 > Do NOT hardcode port numbers. Do NOT assume port 3000. Always resolve from the chain.
 
-When invoked by @builder, the server is already started. If running standalone, check `~/.config/opencode/projects.json` for the project's `devPort` and ensure the server is running on that port.
+When invoked by @builder, the server is already started. If running standalone, check `$OPENCODE_CONFIG/projects.json` for the project's `devPort` and ensure the server is running on that port.
 
 Run the tests with list reporter:
 
@@ -1339,7 +1339,7 @@ Add quality checks for:
 Copy the quality helpers to the project:
 
 ```bash
-cp ~/.config/opencode/templates/ui-test-ux-quality-helpers.ts apps/web/e2e/helpers/
+cp $OPENCODE_CONFIG/templates/ui-test-ux-quality-helpers.ts apps/web/e2e/helpers/
 ```
 
 Then use them in tests:

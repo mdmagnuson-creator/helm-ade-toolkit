@@ -197,7 +197,7 @@ Requirements analysis complete! Now let me recommend some tech stacks...
 ```
 
 The stack-advisor will:
-1. Load the stack database from `~/.config/opencode/data/stacks.yaml`
+1. Load the stack database from `$OPENCODE_CONFIG/data/stacks.yaml`
 2. Score archetypes against requirements
 3. Present top 3 recommendations with trade-offs
 4. Allow user to select or customize
@@ -258,7 +258,7 @@ The project-scaffold will:
 
 Generate project-specific agent definitions from templates based on the selected stack. These agents contain project-tailored guidance that the global routers (critic, tester) will use instead of generic agents.
 
-**Templates Directory:** `~/.config/opencode/agent-templates/`
+**Templates Directory:** `$OPENCODE_CONFIG/agent-templates/`
 
 #### Template Selection Logic
 
@@ -339,7 +339,7 @@ Use Supabase client for database operations.
    ```
 
 2. **For each applicable template:**
-   - Read template from `~/.config/opencode/agent-templates/<category>/<template>.md`
+   - Read template from `$OPENCODE_CONFIG/agent-templates/<category>/<template>.md`
    - Replace `{{VARIABLE}}` placeholders with context values
    - Process `{{#if CONDITION}}...{{else}}...{{/if}}` blocks
    - Write rendered agent to `docs/agents/<output-name>.md`
@@ -1115,8 +1115,8 @@ Generate both documentation templates by default:
 Do not prompt for this in quick intake mode.
 
 Templates are located at:
-- `~/.config/opencode/templates/ARCHITECTURE.md`
-- `~/.config/opencode/templates/CONVENTIONS.md`
+- `$OPENCODE_CONFIG/templates/ARCHITECTURE.md`
+- `$OPENCODE_CONFIG/templates/CONVENTIONS.md`
 
 When generating, replace placeholders with detected values:
 
@@ -1247,7 +1247,7 @@ Select agents to generate (enter letters, e.g., A,B,D):
 
 2. **For each selected template:**
 
-   a. Read template from `~/.config/opencode/agent-templates/<category>/<name>.md`
+   a. Read template from `$OPENCODE_CONFIG/agent-templates/<category>/<name>.md`
    
    b. Build context object:
    ```javascript
@@ -1492,7 +1492,7 @@ Compile all detected and confirmed information into the manifest:
 
 ### 10d: Generate `docs/ARCHITECTURE.md`
 
-Use the template from `~/.config/opencode/templates/ARCHITECTURE.md`.
+Use the template from `$OPENCODE_CONFIG/templates/ARCHITECTURE.md`.
 
 Replace placeholders with detected values. For a Next.js + Supabase project:
 
@@ -1533,7 +1533,7 @@ example-scheduler/
 
 ### 10e: Generate `docs/CONVENTIONS.md`
 
-Use the template from `~/.config/opencode/templates/CONVENTIONS.md`.
+Use the template from `$OPENCODE_CONFIG/templates/CONVENTIONS.md`.
 
 Replace placeholders with detected values. For a TypeScript + Tailwind project:
 
@@ -1707,7 +1707,7 @@ After generating the project manifest, auto-invoke meta-skill generators based o
 
 ### Skill Trigger Mapping
 
-Load the capability-to-skill mapping from `~/.config/opencode/data/meta-skill-triggers.json`:
+Load the capability-to-skill mapping from `$OPENCODE_CONFIG/data/meta-skill-triggers.json`:
 
 ```json
 {
@@ -2198,7 +2198,7 @@ After configuring related projects, add to the project's `docs/project.json`:
 
 ## Step 11: Update Global Registry
 
-Add the project to `~/.config/opencode/projects.json`:
+Add the project to `$OPENCODE_CONFIG/projects.json`:
 
 ```json
 {
@@ -2241,7 +2241,7 @@ Display completion summary based on flow used:
 ✅ Created: docs/CONVENTIONS.md (with infrastructure conventions)
 ✅ Created: docs/agents/ (project-specific agents)
 ✅ Created: AGENTS.md
-✅ Updated: ~/.config/opencode/projects.json
+✅ Updated: $OPENCODE_CONFIG/projects.json
 ✅ Vectorization: Enabled (8,453 chunks indexed)
 
 Project "<Name>" is now ready!

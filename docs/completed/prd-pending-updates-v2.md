@@ -81,7 +81,7 @@ This PRD addresses three gaps:
 - [ ] @toolkit creates updates in `<project>/docs/pending-updates/*.md`
 - [ ] Pending updates are NOT gitignored (committed to project repo)
 - [ ] Builder/Planner reads from `docs/pending-updates/` as primary source
-- [ ] Backward compatibility: also check `~/.config/opencode/project-updates/[project-id]/` as fallback
+- [ ] Backward compatibility: also check `$OPENCODE_CONFIG/project-updates/[project-id]/` as fallback
 - [ ] When update is applied: delete the `.md` file and record in `applied-updates.json`
 - [ ] Update file format includes `updateType: schema` in frontmatter
 
@@ -160,7 +160,7 @@ This PRD addresses three gaps:
 - [ ] On startup, check `<project>/docs/pending-updates/*.md` for pending updates
 - [ ] Read `<project>/docs/applied-updates.json` to get list of applied IDs
 - [ ] Filter out any pending updates whose ID matches an applied ID
-- [ ] Also check legacy location `~/.config/opencode/project-updates/[project-id]/` 
+- [ ] Also check legacy location `$OPENCODE_CONFIG/project-updates/[project-id]/` 
 - [ ] Merge results and show combined pending count in dashboard
 - [ ] Update `builder.md` and `planner.md` with new file paths
 - [ ] When applying update from legacy location, still record in `docs/applied-updates.json`
@@ -207,7 +207,7 @@ This PRD addresses three gaps:
 **Acceptance Criteria:**
 
 - [ ] Create `scripts/migrate-project-updates.sh`
-- [ ] For each file in `~/.config/opencode/project-updates/[project-id]/`:
+- [ ] For each file in `$OPENCODE_CONFIG/project-updates/[project-id]/`:
   - Copy to `<project>/docs/pending-updates/`
   - Add `updateType: schema` to frontmatter if missing
   - Commit the file in the project repo

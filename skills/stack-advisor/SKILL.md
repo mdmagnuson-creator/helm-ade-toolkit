@@ -19,7 +19,7 @@ Expects a `RequirementsManifest` JSON object (from spec-analyzer skill) or the p
 
 ### Step 1: Load Stack Database
 
-Read the stack database from: `~/.config/opencode/data/stacks.yaml`
+Read the stack database from: `$OPENCODE_CONFIG/data/stacks.yaml`
 
 This contains:
 - **Frontends** — Next.js, Remix, Nuxt, SvelteKit, etc.
@@ -651,7 +651,7 @@ To give good recommendations, I need to know:
 
 To add a new stack archetype:
 
-1. Add entry to `~/.config/opencode/data/stacks.yaml` under `archetypes:`
+1. Add entry to `$OPENCODE_CONFIG/data/stacks.yaml` under `archetypes:`
 2. Include all required fields:
    - `name`, `description`
    - `frontend`, `backend`, `database`, `auth`, `hosting`

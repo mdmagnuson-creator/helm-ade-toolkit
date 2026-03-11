@@ -147,7 +147,7 @@ Before starting a local server, check if this project can run locally:
 
 ```bash
 # Check if devPort is null in projects.json
-DEV_PORT=$(cat ~/.config/opencode/projects.json | jq -r '.projects[] | select(.path == "'"$projectPath"'") | .devPort')
+DEV_PORT=$(cat $OPENCODE_CONFIG/projects.json | jq -r '.projects[] | select(.path == "'"$projectPath"'") | .devPort')
 
 if [ "$DEV_PORT" = "null" ]; then
   # devPort is null — check if there's a remote URL we can test against
@@ -282,7 +282,7 @@ Read configuration from both sources:
 
 ```bash
 # Get dev port from projects.json (fallback for single-port projects)
-cat ~/.config/opencode/projects.json | jq '.projects[] | select(.path == "'"$projectPath"'") | {id, devPort}'
+cat $OPENCODE_CONFIG/projects.json | jq '.projects[] | select(.path == "'"$projectPath"'") | {id, devPort}'
 
 # Get dev command and server config from project.json
 cat "$projectPath/docs/project.json" | jq '{commands: .commands, devServer: .devServer, environments: .environments}'

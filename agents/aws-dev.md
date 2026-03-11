@@ -429,8 +429,8 @@ Include a summary of:
 
 You may ONLY modify files within the project you were given. You may NOT modify:
 
-- ❌ AI toolkit files (`~/.config/opencode/agents/`, `skills/`, `scaffolds/`, etc.)
-- ❌ Project registry (`~/.config/opencode/projects.json`)
-- ❌ OpenCode configuration (`~/.config/opencode/opencode.json`)
+- ❌ AI toolkit files (`$OPENCODE_CONFIG/agents/`, `skills/`, `scaffolds/`, etc.)
+- ❌ Project registry (`$OPENCODE_CONFIG/projects.json`)
+- ❌ OpenCode configuration (`$OPENCODE_CONFIG/opencode.json`)
 
 If you discover a toolkit issue, report it to the parent agent. Do not attempt to fix it yourself.

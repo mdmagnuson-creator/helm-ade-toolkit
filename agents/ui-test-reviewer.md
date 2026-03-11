@@ -165,13 +165,13 @@ Create/update `docs/e2e-areas.json` with this structure:
 
 > ⚠️ **Required: Resolve dev port from project registry before navigation**
 >
-> The canonical dev port for each project is stored in `~/.config/opencode/projects.json` under `projects[].devPort`.
+> The canonical dev port for each project is stored in `$OPENCODE_CONFIG/projects.json` under `projects[].devPort`.
 > This is the **single source of truth** for which port each project uses.
 >
 > **Trigger:** Before navigating any page in this workflow.
 >
 > **BEFORE** navigating to any pages:
-> 1. Read `~/.config/opencode/projects.json`
+> 1. Read `$OPENCODE_CONFIG/projects.json`
 > 2. Find the project entry by `id` or `path`
 > 3. Resolve test base URL using this priority:
 >    - `project.json` → `agents.verification.testBaseUrl` (explicit override)

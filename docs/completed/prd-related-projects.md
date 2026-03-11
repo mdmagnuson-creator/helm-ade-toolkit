@@ -211,7 +211,7 @@ get_related_project() {
   # Resolve to path via projects.json
   jq -r --arg id "$project_id" \
     '.projects[] | select(.id == $id) | .path' \
-    ~/.config/opencode/projects.json
+    $OPENCODE_CONFIG/projects.json
 }
 
 # Example usage:
@@ -249,10 +249,10 @@ DOC_SITE_PATH=$(jq -r '.relatedProjects[] | select(.relationship == "documentati
 
 if [ -n "$DOC_SITE_PATH" ] && [ "$DOC_SITE_PATH" != "null" ]; then
   # Resolve project ID to path
-  WEBSITE_PATH=$(jq -r --arg id "$DOC_SITE_PATH" '.projects[] | select(.id == $id) | .path' ~/.config/opencode/projects.json)
+  WEBSITE_PATH=$(jq -r --arg id "$DOC_SITE_PATH" '.projects[] | select(.id == $id) | .path' $OPENCODE_CONFIG/projects.json)
 else
   # Fallback: search for toolkit-website in project id (legacy behavior)
-  WEBSITE_PATH=$(jq -r '.projects[] | select(.id | contains("toolkit-website")) | .path' ~/.config/opencode/projects.json | head -1)
+  WEBSITE_PATH=$(jq -r '.projects[] | select(.id | contains("toolkit-website")) | .path' $OPENCODE_CONFIG/projects.json | head -1)
   
   if [ -n "$WEBSITE_PATH" ] && [ "$WEBSITE_PATH" != "null" ]; then
     echo "⚠️ Using fallback: found $WEBSITE_PATH by name match."
@@ -450,7 +450,7 @@ ANY_DOCS=$(get_related_project "documentation-site")
 ## Technical Considerations
 
 - **Schema location:** `schemas/project.schema.json`
-- **Registry location:** `~/.config/opencode/projects.json` (for path resolution only)
+- **Registry location:** `$OPENCODE_CONFIG/projects.json` (for path resolution only)
 - **Bootstrap skill:** `skills/project-bootstrap/SKILL.md`
 - **Toolkit agent:** `agents/toolkit.md`
 - Relationships stored as project IDs, resolved to paths via registry

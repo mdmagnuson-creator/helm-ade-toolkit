@@ -180,7 +180,7 @@ Before presenting the PRD for approval, **automatically detect** the flag values
 
 3. **AI Tools** - Check existing tool definitions:
    ```bash
-   ls ~/.config/opencode/tools/*.json 2>/dev/null
+   ls $OPENCODE_CONFIG/tools/*.json 2>/dev/null
    # Or check for tool executor files using apps.web.structure.lib
    grep -r "toolName" ${webAppPath}/${libDir}/ai/ 2>/dev/null
    ```

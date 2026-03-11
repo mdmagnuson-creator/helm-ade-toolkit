@@ -4,7 +4,7 @@ Onboard new or modified agents to ensure they are project-context aware and foll
 
 ## Purpose
 
-When users create or modify agents in `~/.config/opencode/agents/`, this skill ensures the agent:
+When users create or modify agents in `$OPENCODE_CONFIG/agents/`, this skill ensures the agent:
 1. Loads project context on startup (`docs/project.json`, `docs/CONVENTIONS.md`)
 2. Respects project-specific agent overrides in `<project>/docs/agents/`
 3. Follows the established conventions for multi-project support
@@ -21,7 +21,7 @@ When users create or modify agents in `~/.config/opencode/agents/`, this skill e
 
 | Input | Required | Description |
 |-------|----------|-------------|
-| `agent_path` | Yes | Path to the agent file (e.g., `~/.config/opencode/agents/my-agent.md`) |
+| `agent_path` | Yes | Path to the agent file (e.g., `$OPENCODE_CONFIG/agents/my-agent.md`) |
 | `create_template` | No | Whether to also create an agent template (default: false) |
 | `force` | No | Overwrite existing project context section (default: false) |
 
@@ -46,7 +46,7 @@ Check if the agent already has project context awareness:
 **Look for these indicators of project awareness:**
 - References to `docs/project.json`
 - References to `docs/CONVENTIONS.md`
-- References to `~/.config/opencode/projects.json`
+- References to `$OPENCODE_CONFIG/projects.json`
 - A "Project Context" or "Startup" section
 - Loading project-specific configurations
 
@@ -79,7 +79,7 @@ Based on agent type, generate the appropriate section:
 
 1. **Read the project registry:**
    ```bash
-   cat ~/.config/opencode/projects.json
+   cat $OPENCODE_CONFIG/projects.json
    ```
 
 2. **If `activeProject` is set, load project context:**
@@ -102,12 +102,12 @@ Before dispatching to any specialist agent:
 
 1. **Load project context:**
    ```bash
-   cat ~/.config/opencode/projects.json
+   cat $OPENCODE_CONFIG/projects.json
    ```
 
 2. **Check for project-specific agents:**
    - First check `<project>/docs/agents/` for project-specific versions
-   - Fall back to global agents in `~/.config/opencode/agents/`
+   - Fall back to global agents in `$OPENCODE_CONFIG/agents/`
 
 3. **Inject project context** into the dispatched agent's prompt:
    - Include relevant sections from `docs/project.json`
@@ -123,7 +123,7 @@ Before starting work, load the project context:
 
 1. **Read project configuration:**
    ```bash
-   cat ~/.config/opencode/projects.json
+   cat $OPENCODE_CONFIG/projects.json
    ```
 
 2. **If `activeProject` is set:**
@@ -155,7 +155,7 @@ After modification, verify:
 
 If `create_template` is true and the agent is framework-agnostic:
 
-1. Copy the agent to `~/.config/opencode/agent-templates/<agent-name>.md.hbs`
+1. Copy the agent to `$OPENCODE_CONFIG/agent-templates/<agent-name>.md.hbs`
 2. Replace hardcoded values with template variables:
    - Framework references → `{{PROJECT.stack.frontend.framework}}`
    - Language references → `{{PROJECT.stack.language}}`
@@ -194,7 +194,7 @@ All agents should include this minimal block (customize based on agent type):
 
 This agent is project-context aware. On startup:
 
-1. Load `~/.config/opencode/projects.json` to find the active project
+1. Load `$OPENCODE_CONFIG/projects.json` to find the active project
 2. Load `<project>/docs/project.json` for stack configuration  
 3. Load `<project>/docs/CONVENTIONS.md` for coding standards
 4. Check `<project>/docs/agents/` for project-specific overrides
@@ -207,7 +207,7 @@ Apply all project conventions to your work.
 ### Example 1: Onboard a New Specialist Agent
 
 ```
-/agent-onboard ~/.config/opencode/agents/vue-dev.md
+/agent-onboard $OPENCODE_CONFIG/agents/vue-dev.md
 ```
 
 **Before:**
@@ -234,7 +234,7 @@ Before starting work, load the project context:
 
 1. **Read project configuration:**
    ```bash
-   cat ~/.config/opencode/projects.json
+   cat $OPENCODE_CONFIG/projects.json
    ```
 
 2. **If `activeProject` is set:**
@@ -252,10 +252,10 @@ Before starting work, load the project context:
 ### Example 2: Onboard and Create Template
 
 ```
-/agent-onboard ~/.config/opencode/agents/api-dev.md --create-template
+/agent-onboard $OPENCODE_CONFIG/agents/api-dev.md --create-template
 ```
 
-Creates both the updated agent AND `~/.config/opencode/agent-templates/api-dev.md.hbs`.
+Creates both the updated agent AND `$OPENCODE_CONFIG/agent-templates/api-dev.md.hbs`.
 
 ## Error Handling
 

@@ -72,8 +72,8 @@ Ensure sub-agents also follow this rule — pass it in task context when delegat
 
 ## What You Never Do
 
-- ❌ **Modify AI toolkit files** (`~/.config/opencode/agents/`, `skills/`, `scaffolds/`, etc.) — request via `~/.config/opencode/pending-updates/`
-- ❌ **Modify `projects.json`** (`~/.config/opencode/projects.json`) — tell the user to use @planner instead
-- ❌ **Modify `opencode.json`** (`~/.config/opencode/opencode.json`) — request via `~/.config/opencode/pending-updates/`
+- ❌ **Modify AI toolkit files** (`$OPENCODE_CONFIG/agents/`, `skills/`, `scaffolds/`, etc.) — request via `$OPENCODE_CONFIG/pending-updates/`
+- ❌ **Modify `projects.json`** (`$OPENCODE_CONFIG/projects.json`) — tell the user to use @planner instead
+- ❌ **Modify `opencode.json`** (`$OPENCODE_CONFIG/opencode.json`) — request via `$OPENCODE_CONFIG/pending-updates/`
 
-If you discover a needed toolkit change, write a request file to `~/.config/opencode/pending-updates/YYYY-MM-DD-overlord-description.md` and tell the user to run @toolkit to review it.
+If you discover a needed toolkit change, write a request file to `$OPENCODE_CONFIG/pending-updates/YYYY-MM-DD-overlord-description.md` and tell the user to run @toolkit to review it.

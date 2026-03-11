@@ -125,7 +125,7 @@ Once confirmed, save the requirements as JSON:
 
 **Location:** `<project-path>/docs/requirements.json` (or temp location if no project yet)
 
-Use the schema: `~/.config/opencode/schemas/requirements.schema.json`
+Use the schema: `$OPENCODE_CONFIG/schemas/requirements.schema.json`
 
 ---
 

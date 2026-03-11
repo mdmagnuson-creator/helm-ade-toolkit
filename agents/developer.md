@@ -303,7 +303,7 @@ After committing, check if you added new capabilities.
 
 **After adding a new capability**, check if a meta-skill generator exists for it.
 
-1. **Read `~/.config/opencode/data/meta-skill-triggers.json`**
+1. **Read `$OPENCODE_CONFIG/data/meta-skill-triggers.json`**
 2. **Check `capabilityTriggers` and `integrationTriggers`** for matching entry
 3. **Check if skill already generated** in `docs/project.json` → `skills.generated[]`
 4. **If not generated, invoke the meta-skill generator:**
@@ -351,7 +351,7 @@ After generating a project skill, queue a promotion request so toolkit maintaine
 
 1. **Check if promotion already queued:**
    ```bash
-   ls ~/.config/opencode/pending-updates/*promote*[skill-name]*.md 2>/dev/null
+   ls $OPENCODE_CONFIG/pending-updates/*promote*[skill-name]*.md 2>/dev/null
    ```
    If file exists, skip this phase.
 
@@ -363,7 +363,7 @@ After generating a project skill, queue a promotion request so toolkit maintaine
    PROJECT_PATH="$(pwd)"
    DATE=$(date +%Y-%m-%d)
    
-   cat > ~/.config/opencode/pending-updates/${DATE}-promote-${SKILL_NAME}.md << EOF
+   cat > $OPENCODE_CONFIG/pending-updates/${DATE}-promote-${SKILL_NAME}.md << EOF
    ---
    createdBy: developer
    date: ${DATE}

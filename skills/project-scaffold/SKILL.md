@@ -37,11 +37,11 @@ Match the selected stack to available scaffolds:
 
 | Stack Archetype | Scaffold |
 |-----------------|----------|
-| `nextjs-supabase` | `~/.config/opencode/scaffolds/nextjs-supabase/` |
-| `nextjs-prisma` | `~/.config/opencode/scaffolds/nextjs-prisma/` |
-| `go-chi-postgres` | `~/.config/opencode/scaffolds/go-chi-postgres/` |
-| `remix-supabase` | `~/.config/opencode/scaffolds/nextjs-supabase/` (adapt) |
-| `python-fastapi` | `~/.config/opencode/scaffolds/python-fastapi/` |
+| `nextjs-supabase` | `$OPENCODE_CONFIG/scaffolds/nextjs-supabase/` |
+| `nextjs-prisma` | `$OPENCODE_CONFIG/scaffolds/nextjs-prisma/` |
+| `go-chi-postgres` | `$OPENCODE_CONFIG/scaffolds/go-chi-postgres/` |
+| `remix-supabase` | `$OPENCODE_CONFIG/scaffolds/nextjs-supabase/` (adapt) |
+| `python-fastapi` | `$OPENCODE_CONFIG/scaffolds/python-fastapi/` |
 
 If no exact scaffold match exists, use the closest archetype and adapt.
 
@@ -52,7 +52,7 @@ If no exact scaffold match exists, use the closest archetype and adapt.
 Read `scaffold.yaml` from the selected scaffold directory:
 
 ```bash
-cat ~/.config/opencode/scaffolds/<scaffold-name>/scaffold.yaml
+cat $OPENCODE_CONFIG/scaffolds/<scaffold-name>/scaffold.yaml
 ```
 
 The configuration defines:

@@ -35,9 +35,9 @@ After you're done cleaning up, switch to the default branch (from `docs/project.
 
 ## What You Never Do
 
-- ❌ **Modify AI toolkit files** (`~/.config/opencode/agents/`, `skills/`, `scaffolds/`, etc.)
-- ❌ **Modify `projects.json`** (`~/.config/opencode/projects.json`)
-- ❌ **Modify `opencode.json`** (`~/.config/opencode/opencode.json`)
+- ❌ **Modify AI toolkit files** (`$OPENCODE_CONFIG/agents/`, `skills/`, `scaffolds/`, etc.)
+- ❌ **Modify `projects.json`** (`$OPENCODE_CONFIG/projects.json`)
+- ❌ **Modify `opencode.json`** (`$OPENCODE_CONFIG/opencode.json`)
 - ❌ **Delete or modify files outside the current project directory**
 
 Your cleanup scope is limited to the current project's `docs/` directory and untracked dotfiles. Do not touch toolkit files.

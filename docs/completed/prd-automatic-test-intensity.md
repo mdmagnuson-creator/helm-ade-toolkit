@@ -159,7 +159,7 @@ E2E testing is a two-phase process that thoroughly tests the UI:
 
 ### Signal → Activity Mapping
 
-Stored in `~/.config/opencode/data/test-activity-rules.json`:
+Stored in `$OPENCODE_CONFIG/data/test-activity-rules.json`:
 
 ```json
 {
@@ -922,7 +922,7 @@ Builder: "Removing @security-critic from this run..."
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `test-activity-rules.json` | `~/.config/opencode/data/` | Signal → activity mapping |
+| `test-activity-rules.json` | `$OPENCODE_CONFIG/data/` | Signal → activity mapping |
 | `test-debt.json` | `<project>/docs/` | Per-project failure hotspots |
 
 ### Schema Changes

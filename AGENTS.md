@@ -1,5 +1,37 @@
 # Global Agent Guardrails
 
+## Config Path Convention
+
+> **The opencode config directory is NOT always `$OPENCODE_CONFIG/`.**
+>
+> When running inside Helm, `XDG_CONFIG_HOME` is set and the config directory
+> is `$XDG_CONFIG_HOME/opencode/` (typically `~/Library/Application Support/Helm/opencode-config/opencode/`).
+>
+> **In shell commands**, always resolve the config root dynamically:
+> ```bash
+> OPENCODE_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+> ```
+>
+> **In prose and documentation**, use `$OPENCODE_CONFIG` to refer to the config directory.
+> Never hardcode `$OPENCODE_CONFIG` — it will be wrong inside Helm.
+
+Throughout this file and all agent/skill instructions, `$OPENCODE_CONFIG` refers to the
+opencode configuration directory. Key paths:
+
+| Path | Purpose |
+|------|---------|
+| `$OPENCODE_CONFIG/agents/` | Agent definitions (e.g., `*.md` files) |
+| `$OPENCODE_CONFIG/skills/` | Skill definitions |
+| `$OPENCODE_CONFIG/scripts/` | Scripts (e.g., `check-dev-server.sh`) |
+| `$OPENCODE_CONFIG/data/` | Data files (`update-registry.json`, `skill-mapping.json`, etc.) |
+| `$OPENCODE_CONFIG/projects.json` | Project registry |
+| `$OPENCODE_CONFIG/pending-updates/` | Toolkit update requests |
+| `$OPENCODE_CONFIG/project-updates/` | Legacy project update location |
+| `$OPENCODE_CONFIG/scaffolds/` | Project scaffolds |
+| `$OPENCODE_CONFIG/schemas/` | JSON schemas |
+| `$OPENCODE_CONFIG/agent-templates/` | Agent templates |
+| `$OPENCODE_CONFIG/templates/` | File templates |
+
 ## Protected System Resources
 
 > ⛔ **CRITICAL: Never access protected macOS resources**
@@ -353,9 +385,9 @@ Report the final state:
 
 If you discover a needed toolkit change (agent bug, missing capability, etc.), **do not modify toolkit files directly**. Instead:
 
-1. Write a request file to `~/.config/opencode/pending-updates/`:
+1. Write a request file to `$OPENCODE_CONFIG/pending-updates/`:
    ```
-   ~/.config/opencode/pending-updates/YYYY-MM-DD-{agent-name}-description.md
+   $OPENCODE_CONFIG/pending-updates/YYYY-MM-DD-{agent-name}-description.md
    ```
 
 2. Use this format:

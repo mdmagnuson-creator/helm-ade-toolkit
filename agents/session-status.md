@@ -34,7 +34,7 @@ Path: /Users/.../example-scheduler
 - Go directly to Step 1 (Gather Data)
 
 **If NO project context is provided** (e.g., user invoked @session-status directly):
-- Read `~/.config/opencode/projects.json`
+- Read `$OPENCODE_CONFIG/projects.json`
 - Display project selection table
 - Wait for user to select a project
 
@@ -89,14 +89,14 @@ After bootstrap completes, set the new project as active and default directly in
 
 5. **Check for pending project updates:**
    ```bash
-   ls ~/.config/opencode/project-updates/[project-id]/*.md 2>/dev/null
+   ls $OPENCODE_CONFIG/project-updates/[project-id]/*.md 2>/dev/null
    ```
    - If updates exist, read each file to get the title and priority
    - Include in the dashboard output (see Step 4)
 
 6. **Read global merge queue:**
    ```bash
-   cat ~/.config/opencode/merge-queue.json
+   cat $OPENCODE_CONFIG/merge-queue.json
    ```
    - Filter entries for this project by `projectId`
    - Count queued, processing, failed, blocked entries
@@ -407,7 +407,7 @@ Return the formatted dashboard as your response. Do not include any other commen
 After showing the dashboard, handle these user commands:
 
 **"fix gaps":**
-- For each toolkit gap, write a request file to `~/.config/opencode/pending-updates/YYYY-MM-DD-session-status-[gap-name].md`
+- For each toolkit gap, write a request file to `$OPENCODE_CONFIG/pending-updates/YYYY-MM-DD-session-status-[gap-name].md`
 - Notify user: "Created X toolkit update requests. Run @toolkit to review."
 
 **"generate skills" or "generate s1,s2":**

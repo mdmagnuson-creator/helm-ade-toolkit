@@ -275,7 +275,7 @@ Options:
 
 1. **Create pending-update file:**
    ```
-   ~/.config/opencode/pending-updates/YYYY-MM-DD-new-skill-{name}.md
+   $OPENCODE_CONFIG/pending-updates/YYYY-MM-DD-new-skill-{name}.md
    ```
 
 2. **Request file format:**
@@ -325,7 +325,7 @@ Options:
          "pendingSkillRequest": {
            "skillName": "electron-testing",
            "requestedAt": "2026-03-03T10:45:00Z",
-           "requestFile": "~/.config/opencode/pending-updates/2026-03-03-new-skill-electron-testing.md"
+           "requestFile": "$OPENCODE_CONFIG/pending-updates/2026-03-03-new-skill-electron-testing.md"
          }
        }
      }
@@ -336,7 +336,7 @@ Options:
    ```
    ✅ Skill creation request queued.
    
-   File: ~/.config/opencode/pending-updates/2026-03-03-new-skill-electron-testing.md
+   File: $OPENCODE_CONFIG/pending-updates/2026-03-03-new-skill-electron-testing.md
    
    Next steps:
    1. Switch to @toolkit to create the skill
@@ -353,7 +353,7 @@ When user types "retry" after requesting a skill:
 
 1. Check if the requested skill now exists:
    ```bash
-   ls ~/.config/opencode/skills/{skill-name}/SKILL.md 2>/dev/null
+   ls $OPENCODE_CONFIG/skills/{skill-name}/SKILL.md 2>/dev/null
    ```
 
 2. **If skill exists:**

@@ -30,7 +30,7 @@ The integration skill provisioning workflow is 90% implemented. This PRD covers 
 **Acceptance Criteria:**
 
 - [x] After Developer generates a skill via meta-skill generator (Phase 3B.1), queue promotion update
-- [x] Create `~/.config/opencode/pending-updates/YYYY-MM-DD-promote-[skill-name].md`
+- [x] Create `$OPENCODE_CONFIG/pending-updates/YYYY-MM-DD-promote-[skill-name].md`
 - [x] Update includes: skill name, meta-skill used, project path, generated skill path
 - [x] This is automatic — no user prompt required
 - [x] Skip if promotion update for same skill already exists (avoid duplicates)
@@ -49,13 +49,13 @@ After generating a project skill, queue a promotion request so toolkit can consi
 
 1. **Check if promotion already queued:**
    ```bash
-   ls ~/.config/opencode/pending-updates/*promote*[skill-name]*.md 2>/dev/null
+   ls $OPENCODE_CONFIG/pending-updates/*promote*[skill-name]*.md 2>/dev/null
    ```
    If file exists, skip.
 
 2. **Create promotion request:**
    ```bash
-   cat > ~/.config/opencode/pending-updates/$(date +%Y-%m-%d)-promote-[skill-name].md << 'EOF'
+   cat > $OPENCODE_CONFIG/pending-updates/$(date +%Y-%m-%d)-promote-[skill-name].md << 'EOF'
    ---
    createdBy: developer
    date: YYYY-MM-DD
@@ -94,7 +94,7 @@ After generating a project skill, queue a promotion request so toolkit can consi
 
 **Verification:**
 - Generate a skill in a test project
-- Confirm `~/.config/opencode/pending-updates/` contains promotion request
+- Confirm `$OPENCODE_CONFIG/pending-updates/` contains promotion request
 - Confirm @toolkit sees it at session start
 
 ---
@@ -196,7 +196,7 @@ After generating a project skill, queue a promotion request so toolkit can consi
 
 ## Technical Considerations
 
-- **Pending update location:** `~/.config/opencode/pending-updates/` (toolkit's inbox)
+- **Pending update location:** `$OPENCODE_CONFIG/pending-updates/` (toolkit's inbox)
 - **Skill trigger:** Add to `data/meta-skill-triggers.json` after creating generator
 - **Non-duplication:** Supabase database skill should reference auth skills via link, not copy content
 - **Priority:** Promotion updates are `low` priority — toolkit maintainer handles at convenience

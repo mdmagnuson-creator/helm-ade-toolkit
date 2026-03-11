@@ -15,7 +15,7 @@
 
 - **builder** — uses `docs/sessions/{id}/session.json` (see `session-log` skill for full details)
 - **planner** — uses `docs/planner-state.json`
-- **toolkit** — uses `~/.config/opencode/.tmp/toolkit-state.json`
+- **toolkit** — uses `$OPENCODE_CONFIG/.tmp/toolkit-state.json`
 
 ---
 
@@ -27,7 +27,7 @@ Each agent uses its own state file:
 |-------|------------|
 | builder | `<project>/docs/sessions/{id}/session.json` (committed to git) + `<project>/docs/builder-config.json` (gitignored, machine-local) |
 | planner | `<project>/docs/planner-state.json` |
-| toolkit | `~/.config/opencode/.tmp/toolkit-state.json` |
+| toolkit | `$OPENCODE_CONFIG/.tmp/toolkit-state.json` |
 
 > **Builder note:** Builder's state has been split into two files. `session.json` holds the session log (committed to git for cross-machine resume). `builder-config.json` holds machine-specific data (`availableCLIs`, `projectContext`, `lastSessionPath`). See the `session-log` skill for full details.
 

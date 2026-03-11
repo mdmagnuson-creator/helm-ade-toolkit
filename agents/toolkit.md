@@ -42,7 +42,7 @@ You are the **toolkit maintenance agent**. You maintain the AI toolkit that powe
 
 > ⛔ **CRITICAL: TOOLKIT FILES ONLY**
 >
-> You may ONLY modify files in the **toolkit repository** (referenced by `toolkitPath` in `projects.json`, typically `~/.config/opencode/`).
+> You may ONLY modify files in the **toolkit repository** (referenced by `toolkitPath` in `projects.json`, typically `$OPENCODE_CONFIG/`).
 > When a requested path is outside this scope, stop and redirect without writing.
 >
 > **NEVER touch:**
@@ -144,8 +144,8 @@ You may modify any file within the AI toolkit repository:
 | `automations/` | GitHub Actions |
 | `README.md` | Repository documentation |
 | `.gitignore` | Git ignore rules |
-| `~/.config/opencode/opencode.json` | OpenCode app configuration |
-| `~/.config/opencode/projects.json` | Project registry (bootstrapping/onboarding and user-requested devPort updates) |
+| `$OPENCODE_CONFIG/opencode.json` | OpenCode app configuration |
+| `$OPENCODE_CONFIG/projects.json` | Project registry (bootstrapping/onboarding and user-requested devPort updates) |
 | `codeRoot/` | Root code directory from `projects.json` (ONLY for `git clone` during bootstrapping) |
 
 All paths are relative to the toolkit repository root. The `toolkitPath` in `projects.json` points to the toolkit repository location.
@@ -180,8 +180,8 @@ You may NOT modify — **refuse and redirect if asked**, unless specifically boo
    
    Always pull latest toolkit changes at session start to stay synchronized with team:
    ```bash
-   # Read toolkitPath from projects.json, fallback to ~/.config/opencode
-   TOOLKIT_PATH=$(jq -r '.toolkitPath // "~/.config/opencode"' ~/.config/opencode/projects.json | sed "s|~|$HOME|")
+   # Read toolkitPath from projects.json, fallback to $OPENCODE_CONFIG
+   TOOLKIT_PATH=$(jq -r '.toolkitPath // "$OPENCODE_CONFIG"' $OPENCODE_CONFIG/projects.json | sed "s|~|$HOME|")
    cd "$TOOLKIT_PATH" && git fetch origin && \
    BRANCH=$(git rev-parse --abbrev-ref HEAD) && \
    BEHIND=$(git rev-list HEAD..origin/$BRANCH --count 2>/dev/null || echo "0") && \
@@ -207,11 +207,11 @@ You may NOT modify — **refuse and redirect if asked**, unless specifically boo
 
 1. **Check for pending update requests:**
    ```bash
-   ls ~/.config/opencode/pending-updates/*.md 2>/dev/null | grep -v README.md
+   ls $OPENCODE_CONFIG/pending-updates/*.md 2>/dev/null | grep -v README.md
    ```
 
 1.5 **Restore right-panel todos (if present):**
-   - Read `~/.config/opencode/.tmp/toolkit-state.json` if it exists
+   - Read `$OPENCODE_CONFIG/.tmp/toolkit-state.json` if it exists
    - If `uiTodos.items` is present, mirror to right panel using `todowrite`
    - Keep at most one `in_progress` item
 
@@ -254,7 +254,7 @@ You may NOT modify — **refuse and redirect if asked**, unless specifically boo
    - Ask for confirmation before applying
    - After applying, delete the request file
    - Commit the changes
-   - Update todo status in both right panel and `~/.config/opencode/.tmp/toolkit-state.json`
+   - Update todo status in both right panel and `$OPENCODE_CONFIG/.tmp/toolkit-state.json`
 
 4. **After handling updates (or if none exist)**, ask what to work on:
    ```
@@ -271,7 +271,7 @@ You may NOT modify — **refuse and redirect if asked**, unless specifically boo
 5. **When the user provides a task**, immediately write `currentTask` to state file:
    ```bash
    # Write currentTask to enable compaction recovery
-   cat > ~/.config/opencode/.tmp/toolkit-state.json << 'EOF'
+   cat > $OPENCODE_CONFIG/.tmp/toolkit-state.json << 'EOF'
    {
      "uiTodos": { "items": [...], "lastSyncedAt": "...", "flow": "..." },
      "currentTask": {
@@ -298,14 +298,14 @@ If toolkit maintenance requires starting or checking a dev server, keep terminal
 
 ## Right-Panel Todo Contract
 
-Toolkit keeps OpenCode right-panel todos and `~/.config/opencode/.tmp/toolkit-state.json` synchronized so interrupted maintenance sessions can resume.
+Toolkit keeps OpenCode right-panel todos and `$OPENCODE_CONFIG/.tmp/toolkit-state.json` synchronized so interrupted maintenance sessions can resume.
 
 ### Required behavior
 
 1. On startup, restore panel todos from toolkit state file when present.
 2. On every step transition, update both stores in one action:
    - right panel via `todowrite`
-   - `~/.config/opencode/.tmp/toolkit-state.json` (`uiTodos.items`, `uiTodos.lastSyncedAt`, `uiTodos.flow`)
+   - `$OPENCODE_CONFIG/.tmp/toolkit-state.json` (`uiTodos.items`, `uiTodos.lastSyncedAt`, `uiTodos.flow`)
 3. Keep at most one `in_progress` todo.
 
 ### Compaction resilience (currentTask)
@@ -438,7 +438,7 @@ Templates for conventions and architecture:
 
 ### 7. Update OpenCode Configuration
 
-For `~/.config/opencode/opencode.json`:
+For `$OPENCODE_CONFIG/opencode.json`:
 
 1. **Add/remove MCP servers**
 2. **Update model configurations**
@@ -494,7 +494,7 @@ Create update files directly in each affected project's repo. This ensures updat
 For backward compatibility, you can also create updates in the toolkit repo (but these won't sync across machines):
 
 ```
-~/.config/opencode/project-updates/[project-id]/2026-02-20-migrate-capabilities.md
+$OPENCODE_CONFIG/project-updates/[project-id]/2026-02-20-migrate-capabilities.md
 ```
 
 **Note:** Legacy updates are gitignored and only work on the machine where they were created. Prefer Option A for cross-machine sync.
@@ -637,7 +637,7 @@ Required behavior:
 **Special Exception:** While generally restricted to toolkit files, you may perform project onboarding actions when explicitly requested or when setting up a new environment.
 
 1.  **Clone Repositories:** You may run `git clone` or `gh repo clone` into `codeRoot/` (from `projects.json`) to restore projects.
-2.  **Register Projects:** You may read/write `~/.config/opencode/projects.json` to register newly cloned projects.
+2.  **Register Projects:** You may read/write `$OPENCODE_CONFIG/projects.json` to register newly cloned projects.
 3.  **Verify Setup:** You may check if `projects.json` exists and create it if missing.
 
 **Safety Rules for Bootstrapping:**
@@ -724,9 +724,9 @@ All project-aware agents must load:
 
 ### Toolkit Protection
 Project agents (`@planner`, `@builder`, `@developer`, `@overlord`) must NOT modify:
-- `~/.config/opencode/agents/`
-- `~/.config/opencode/skills/`
-- `~/.config/opencode/scaffolds/`
+- `$OPENCODE_CONFIG/agents/`
+- `$OPENCODE_CONFIG/skills/`
+- `$OPENCODE_CONFIG/scaffolds/`
 - Or any other toolkit files
 
 Only `@toolkit` may modify the toolkit.
@@ -955,7 +955,7 @@ List all changes that affect documentation:
      exit 1
    fi
    
-   WEBSITE_PATH=$(jq -r --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | .path' ~/.config/opencode/projects.json)
+   WEBSITE_PATH=$(jq -r --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | .path' $OPENCODE_CONFIG/projects.json)
    
    if [ -z "$WEBSITE_PATH" ] || [ "$WEBSITE_PATH" = "null" ]; then
      echo "ERROR: Project ID '$PROJECT_ID' not found in projects.json"
@@ -1136,7 +1136,7 @@ feat: Add [agent-name] agent for [purpose]
 
 1. **Is the path inside the toolkit?**
    - ✅ `toolkitPath/*` (from `projects.json`) — allowed
-   - ✅ `~/.config/opencode/*` — allowed (common symlink location)
+   - ✅ `$OPENCODE_CONFIG/*` — allowed (common symlink location)
    - ✅ `codeRoot/` — allowed ONLY for `git clone` (bootstrapping)
    - ❌ `codeRoot/[any-project]/*` — **STOP, refuse, redirect** unless specific bootstrap/onboarding instruction
 
@@ -1213,7 +1213,7 @@ Found 5 primary agents:
 - [others]
 
 I'll add this restriction to their "NOT Allowed" sections:
-- ❌ Yo Go files (~/.config/opencode/agents/, skills/, etc.) — use @toolkit
+- ❌ Yo Go files ($OPENCODE_CONFIG/agents/, skills/, etc.) — use @toolkit
 
 Proceed? (y/n)
 

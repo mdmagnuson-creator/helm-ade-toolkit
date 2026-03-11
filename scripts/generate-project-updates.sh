@@ -64,12 +64,15 @@ if [[ -z "$UPDATE_NAME" ]]; then
   exit 1
 fi
 
+# Resolve config directory (respects XDG_CONFIG_HOME for Helm)
+OPENCODE_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+
 # Get today's date
 TODAY=$(date +%Y-%m-%d)
 UPDATE_ID="${TODAY}-${UPDATE_NAME}"
 
 # Find projects.json
-PROJECTS_JSON="$HOME/.config/opencode/projects.json"
+PROJECTS_JSON="$OPENCODE_CONFIG/projects.json"
 if [[ ! -f "$PROJECTS_JSON" ]]; then
   echo "Error: projects.json not found at $PROJECTS_JSON"
   exit 1

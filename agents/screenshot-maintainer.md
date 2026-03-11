@@ -96,7 +96,7 @@ When invoked after a UI change:
 
 3. **Regenerate affected screenshots.** For each affected screenshot:
    - **Resolve test base URL:**
-     1. Read `~/.config/opencode/projects.json` and find the project entry
+     1. Read `$OPENCODE_CONFIG/projects.json` and find the project entry
      2. Read `<project>/docs/project.json` for URL configuration
      3. Resolve URL using this priority:
         - `project.json` → `agents.verification.testBaseUrl` (explicit override)
@@ -117,7 +117,7 @@ When invoked after a UI change:
 
 Port source of truth:
 
-- For project-based captures, read the port from `~/.config/opencode/projects.json` (`projects[].devPort`) before navigation.
+- For project-based captures, read the port from `$OPENCODE_CONFIG/projects.json` (`projects[].devPort`) before navigation.
 - Do not hardcode port numbers or assume `3000`.
 - Include the resolved base URL in your completion report so callers can verify the target.
 

@@ -22,7 +22,7 @@
 
 When delegating a task, determine the fallback chain:
 
-1. **Read `~/.config/opencode/data/fallback-chains.yaml`** for toolkit defaults
+1. **Read `$OPENCODE_CONFIG/data/fallback-chains.yaml`** for toolkit defaults
 2. **Check `project.json → agents.fallbackChains`** for project overrides
 3. **Merge chains** (project takes precedence) unless `override: true`
 4. **Determine task type** from files and description:

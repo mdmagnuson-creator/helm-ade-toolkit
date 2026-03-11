@@ -63,7 +63,7 @@ get_related_project() {
   # Resolve to path via projects.json
   jq -r --arg id "$project_id" \
     '.projects[] | select(.id == $id) | .path' \
-    ~/.config/opencode/projects.json
+    $OPENCODE_CONFIG/projects.json
 }
 ```
 
@@ -101,7 +101,7 @@ For simple one-off lookups without defining the function:
 ```bash
 # Direct lookup (documentation-site example)
 PROJECT_ID=$(jq -r '.relatedProjects[] | select(.relationship == "documentation-site") | .projectId' docs/project.json 2>/dev/null)
-WEBSITE_PATH=$(jq -r --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | .path' ~/.config/opencode/projects.json)
+WEBSITE_PATH=$(jq -r --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | .path' $OPENCODE_CONFIG/projects.json)
 ```
 
 ## Fallback Pattern
@@ -114,10 +114,10 @@ PROJECT_ID=$(jq -r '.relatedProjects[] | select(.relationship == "documentation-
 
 if [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "null" ]; then
   # Resolve via relatedProjects (preferred)
-  WEBSITE_PATH=$(jq -r --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | .path' ~/.config/opencode/projects.json)
+  WEBSITE_PATH=$(jq -r --arg id "$PROJECT_ID" '.projects[] | select(.id == $id) | .path' $OPENCODE_CONFIG/projects.json)
 else
   # Fallback: search by name pattern (legacy)
-  WEBSITE_PATH=$(jq -r '.projects[] | select(.id | contains("website")) | .path' ~/.config/opencode/projects.json | head -1)
+  WEBSITE_PATH=$(jq -r '.projects[] | select(.id | contains("website")) | .path' $OPENCODE_CONFIG/projects.json | head -1)
   
   if [ -n "$WEBSITE_PATH" ]; then
     echo "Warning: Using fallback name match. Consider configuring relatedProjects."

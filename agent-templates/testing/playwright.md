@@ -545,7 +545,7 @@ The user might have seen the event appear in the wrong location before correctin
 Copy `ui-test-ux-quality-helpers.ts` from the yo-go to your project:
 
 ```bash
-cp ~/.config/opencode/templates/ui-test-ux-quality-helpers.ts {{PROJECT.paths.e2e || 'e2e'}}/helpers/
+cp $OPENCODE_CONFIG/templates/ui-test-ux-quality-helpers.ts {{PROJECT.paths.e2e || 'e2e'}}/helpers/
 ```
 
 ### Pattern 1: Negative Assertions

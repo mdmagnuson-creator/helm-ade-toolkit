@@ -138,7 +138,7 @@ This creates confusion, false blockers, and unnecessary manual intervention.
 
 **Acceptance Criteria:**
 - [ ] Option [T] presented: "Queue skill creation for @toolkit"
-- [ ] Request file created in `~/.config/opencode/pending-updates/`
+- [ ] Request file created in `$OPENCODE_CONFIG/pending-updates/`
 - [ ] Request includes: detected pattern, suggested skill name, error context, screenshots
 - [ ] User can switch to @toolkit, verify and create skill
 - [ ] On retry, Builder checks if requested skill now exists and uses it
@@ -625,7 +625,7 @@ Environment prerequisite detected
 When user selects [T], Builder creates:
 
 ```
-~/.config/opencode/pending-updates/2026-03-03-new-skill-electron-testing.md
+$OPENCODE_CONFIG/pending-updates/2026-03-03-new-skill-electron-testing.md
 ```
 
 ```markdown
@@ -686,7 +686,7 @@ When user returns to Builder and types "retry":
     "pendingSkillRequest": {
       "skillName": "electron-testing",
       "requestedAt": "2026-03-03T10:45:00Z",
-      "requestFile": "~/.config/opencode/pending-updates/2026-03-03-new-skill-electron-testing.md"
+      "requestFile": "$OPENCODE_CONFIG/pending-updates/2026-03-03-new-skill-electron-testing.md"
     }
   }
 }

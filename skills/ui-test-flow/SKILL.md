@@ -175,7 +175,7 @@ if [ -z "$TEST_BASE_URL" ]; then
 fi
 
 if [ -z "$TEST_BASE_URL" ]; then
-  DEV_PORT=$(jq -r '.projects[] | select(.path == "'$(pwd)'") | .devPort' ~/.config/opencode/projects.json)
+  DEV_PORT=$(jq -r '.projects[] | select(.path == "'$(pwd)'") | .devPort' $OPENCODE_CONFIG/projects.json)
   if [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ]; then
     TEST_BASE_URL="http://localhost:${DEV_PORT}"
   fi
@@ -193,7 +193,7 @@ export TEST_BASE_URL
 
 ```bash
 if [[ "$TEST_BASE_URL" == http://localhost:* ]]; then
-  ~/.config/opencode/scripts/check-dev-server.sh --project-path "$(pwd)"
+  $OPENCODE_CONFIG/scripts/check-dev-server.sh --project-path "$(pwd)"
 else
   if ! curl -sf --max-time 10 "$TEST_BASE_URL" > /dev/null 2>&1; then
     echo "❌ Remote test URL not reachable: $TEST_BASE_URL"

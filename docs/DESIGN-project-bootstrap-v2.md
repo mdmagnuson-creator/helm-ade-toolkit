@@ -45,7 +45,7 @@ This design introduces three major enhancements to the AI toolkit:
 - Users must manually scaffold everything
 
 **For Agent Coverage:**
-- 44+ agents hardcoded in `~/.config/opencode/agents/`
+- 44+ agents hardcoded in `$OPENCODE_CONFIG/agents/`
 - Many framework-specific agents irrelevant to most projects (React agents useless for Go projects)
 - Missing coverage for popular frameworks (Vue, Svelte, FastAPI, Django, Rails)
 - No way to customize agents per-project
@@ -131,7 +131,7 @@ This design introduces three major enhancements to the AI toolkit:
 ### Component Interactions
 
 ```
-~/.config/opencode/
+$OPENCODE_CONFIG/
 ├── skills/
 │   ├── project-bootstrap/     # Orchestrates the flow
 │   ├── spec-analyzer/         # NEW: Extracts requirements from specs
@@ -163,7 +163,7 @@ Users can provide specs in multiple formats:
 
 ### 4.2 Spec Analyzer Skill
 
-**Location:** `~/.config/opencode/skills/spec-analyzer/SKILL.md`
+**Location:** `$OPENCODE_CONFIG/skills/spec-analyzer/SKILL.md`
 
 **Purpose:** Extract structured requirements from unstructured specs.
 
@@ -276,7 +276,7 @@ The spec analyzer uses these heuristics:
 
 The Stack Advisor recommends technology choices based on the RequirementsManifest.
 
-**Location:** `~/.config/opencode/skills/stack-advisor/SKILL.md`
+**Location:** `$OPENCODE_CONFIG/skills/stack-advisor/SKILL.md`
 
 ### 5.2 Decision Framework
 
@@ -572,7 +572,7 @@ Which would you like?
 
 Maintain a database of technology options:
 
-**Location:** `~/.config/opencode/data/stacks.yaml`
+**Location:** `$OPENCODE_CONFIG/data/stacks.yaml`
 
 ```yaml
 # Frontend Frameworks
@@ -759,8 +759,8 @@ auth:
 
 Replace hardcoded framework-specific agents with a template system:
 
-- **Core agents** remain in `~/.config/opencode/agents/` (framework-agnostic)
-- **Templates** live in `~/.config/opencode/agent-templates/` (framework-specific)
+- **Core agents** remain in `$OPENCODE_CONFIG/agents/` (framework-agnostic)
+- **Templates** live in `$OPENCODE_CONFIG/agent-templates/` (framework-specific)
 - **Project agents** generated in `<project>/docs/agents/` (customized for project)
 
 ### 6.2 Core Agents (Always Present)
@@ -768,7 +768,7 @@ Replace hardcoded framework-specific agents with a template system:
 These agents are framework-agnostic and remain global:
 
 ```
-~/.config/opencode/agents/
+$OPENCODE_CONFIG/agents/
 ├── coordinators/
 │   ├── developer.md              # Main implementation coordinator
 │   ├── overlord.md           # Multi-story coordinator
@@ -809,7 +809,7 @@ These agents are framework-agnostic and remain global:
 Organized by category and framework:
 
 ```
-~/.config/opencode/agent-templates/
+$OPENCODE_CONFIG/agent-templates/
 ├── frontend/
 │   ├── react.md              # React patterns (used by Next.js, CRA, Remix)
 │   ├── vue.md                # Vue patterns
@@ -1016,7 +1016,7 @@ Update routers to look in project's agents first:
    - If a matching critic exists, use it
    
 2. **Fall back to global critics:**
-   - Use core critics from ~/.config/opencode/agents/
+   - Use core critics from $OPENCODE_CONFIG/agents/
 
 3. **Routing by file type:**
    | File Pattern | Project Agent | Fallback |
@@ -1037,12 +1037,12 @@ Update routers to look in project's agents first:
 
 Generate project boilerplate based on selected stack.
 
-**Location:** `~/.config/opencode/skills/project-scaffold/SKILL.md`
+**Location:** `$OPENCODE_CONFIG/skills/project-scaffold/SKILL.md`
 
 ### 7.2 Scaffold Templates
 
 ```
-~/.config/opencode/scaffolds/
+$OPENCODE_CONFIG/scaffolds/
 ├── nextjs-supabase/
 │   ├── scaffold.yaml         # Scaffold configuration
 │   ├── files/                # Template files
@@ -1226,7 +1226,7 @@ ALTER TABLE {{snakeCase name}}s ENABLE ROW LEVEL SECURITY;
 ### 8.1 Global Toolkit Structure (Updated)
 
 ```
-~/.config/opencode/
+$OPENCODE_CONFIG/
 ├── agents/                    # Core agents only (reduced)
 │   ├── coordinators/
 │   ├── routers/
@@ -1528,7 +1528,7 @@ Every agent must include a **Project Context** section that loads project config
 
 | Criterion | Description |
 |-----------|-------------|
-| Project Registry Check | Load `~/.config/opencode/projects.json` to find active project |
+| Project Registry Check | Load `$OPENCODE_CONFIG/projects.json` to find active project |
 | Project Config Loading | Load `<project>/docs/project.json` for stack configuration |
 | Conventions Loading | Load `<project>/docs/CONVENTIONS.md` for coding standards |
 
@@ -1554,7 +1554,7 @@ All agents should include this section (customize based on agent type):
 
 1. **Read the project registry:**
    ```bash
-   cat ~/.config/opencode/projects.json
+   cat $OPENCODE_CONFIG/projects.json
    ```
 
 2. **If `activeProject` is set, load project context:**
@@ -1577,12 +1577,12 @@ Before dispatching to any specialist agent:
 
 1. **Load project context:**
    ```bash
-   cat ~/.config/opencode/projects.json
+   cat $OPENCODE_CONFIG/projects.json
    ```
 
 2. **Check for project-specific agents:**
    - First check `<project>/docs/agents/` for project-specific versions
-   - Fall back to global agents in `~/.config/opencode/agents/`
+   - Fall back to global agents in `$OPENCODE_CONFIG/agents/`
 
 3. **Inject project context** into the dispatched agent's prompt:
    - Include relevant sections from `docs/project.json`
@@ -1598,7 +1598,7 @@ Before starting work, load the project context:
 
 1. **Read project configuration:**
    ```bash
-   cat ~/.config/opencode/projects.json
+   cat $OPENCODE_CONFIG/projects.json
    ```
 
 2. **If `activeProject` is set:**
@@ -1613,7 +1613,7 @@ Before starting work, load the project context:
 When creating or modifying agents, use the `agent-onboard` skill to ensure compliance:
 
 ```
-/agent-onboard ~/.config/opencode/agents/my-new-agent.md
+/agent-onboard $OPENCODE_CONFIG/agents/my-new-agent.md
 ```
 
 This skill will:
@@ -1631,14 +1631,14 @@ Periodically audit all agents for compliance:
 ```
 
 This skill will:
-1. Scan all agents in `~/.config/opencode/agents/`
+1. Scan all agents in `$OPENCODE_CONFIG/agents/`
 2. Check each agent for project context compliance
 3. Generate a report with remediation recommendations
 4. Optionally auto-fix non-compliant agents with `--fix`
 
 ### 11.6 Agent Template Requirements
 
-All templates in `~/.config/opencode/agent-templates/` must include:
+All templates in `$OPENCODE_CONFIG/agent-templates/` must include:
 
 1. **Project Context section** with template variables
 2. **CONVENTIONS.md references** for customizable patterns
@@ -1653,7 +1653,7 @@ Example template structure:
 
 Before starting work, load the project context:
 
-1. **Read `~/.config/opencode/projects.json`** to find active project
+1. **Read `$OPENCODE_CONFIG/projects.json`** to find active project
 2. **Load `<project>/docs/project.json`** for stack configuration
 3. **Load `<project>/docs/CONVENTIONS.md`** for coding standards
 

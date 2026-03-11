@@ -98,13 +98,13 @@ Your job is to systematically test the target application following the testing 
 > **Trigger:** Before opening target URLs for exploration.
 >
 > **Get the correct port:**
-> 1. Read `~/.config/opencode/projects.json`
+> 1. Read `$OPENCODE_CONFIG/projects.json`
 > 2. Find the project entry by path
 > 3. Use the `devPort` value (e.g., 4001, 4002, 5001)
 >
 > ```bash
 > # Example: Get port for a project
-> jq '.projects[] | select(.path | contains("project-name")) | .devPort' ~/.config/opencode/projects.json
+> jq '.projects[] | select(.path | contains("project-name")) | .devPort' $OPENCODE_CONFIG/projects.json
 > ```
 >
 > **Evidence:** Include resolved `devPort` in your findings metadata or run log.

@@ -32,7 +32,7 @@ You solve this by processing the queue serially: rebase → test → merge, one 
 
 1. **Read the merge queue:**
    ```bash
-   cat ~/.config/opencode/merge-queue.json
+   cat $OPENCODE_CONFIG/merge-queue.json
    ```
 
 2. **Check queue status:**
@@ -340,7 +340,7 @@ From `project.json` → `agents.mergeQueue`:
 
 **Merge queue file corrupted:**
 - Read error → report to user
-- Suggest: `cat ~/.config/opencode/merge-queue.json` to inspect
+- Suggest: `cat $OPENCODE_CONFIG/merge-queue.json` to inspect
 - Suggest: backup and recreate if needed
 
 **Git operations fail:**

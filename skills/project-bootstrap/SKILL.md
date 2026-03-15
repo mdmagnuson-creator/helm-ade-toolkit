@@ -354,7 +354,6 @@ ls pages/ 2>/dev/null                 # Next.js Pages Router
 ls routes/ 2>/dev/null                # Remix/SvelteKit
 
 # Check for existing agent system
-ls docs/prd-registry.json 2>/dev/null
 ls docs/project.json 2>/dev/null
 
 # Check for database
@@ -1306,17 +1305,7 @@ Compile all detected and confirmed information into the manifest:
 
 **Note:** Only include sections that apply to the project. Omit `aws` if no AWS services detected, omit `security` fields that weren't answered, etc.
 
-### 10b: Generate `docs/prd-registry.json` (if agent system)
-
-```json
-{
-  "version": "1.0",
-  "prds": [],
-  "completed": []
-}
-```
-
-### 10c: Generate `docs/ARCHITECTURE.md`
+### 10b: Generate `docs/ARCHITECTURE.md`
 
 Use the template from `$OPENCODE_CONFIG/templates/ARCHITECTURE.md`.
 
@@ -1493,27 +1482,6 @@ Use the `prd` skill to format, or generate directly:
 {{else}}
 None identified during spec analysis.
 {{/if}}
-```
-
-### Update `docs/prd-registry.json`
-
-Add the generated PRD:
-
-```json
-{
-  "version": "1.0",
-  "prds": [
-    {
-      "id": "prd-mvp",
-      "name": "MVP",
-      "status": "draft",
-      "filePath": "docs/drafts/prd-mvp.md",
-      "createdAt": "<timestamp>",
-      "stories": [/* extracted story IDs */]
-    }
-  ],
-  "completed": []
-}
 ```
 
 ### Save Analysis Files
@@ -2030,7 +1998,6 @@ Display completion summary based on flow used:
 ═══════════════════════════════════════════════════════════════════════
 
 ✅ Created: docs/project.json (with stack, features, integrations)
-✅ Created: docs/prd-registry.json
 ✅ Created: docs/ARCHITECTURE.md
 ✅ Created: docs/CONVENTIONS.md (with infrastructure conventions)
 ✅ Created: docs/agents/ (project-specific agents)
@@ -2088,7 +2055,6 @@ Files generated:
   docs/requirements.json     Extracted requirements
   docs/stack-decision.json   Stack selection rationale
   docs/drafts/prd-mvp.md     Initial PRD with <N> user stories
-  docs/prd-registry.json     PRD registry
   docs/ARCHITECTURE.md       Architecture overview
   docs/CONVENTIONS.md        Coding conventions
   docs/agents/               Project-specific agents

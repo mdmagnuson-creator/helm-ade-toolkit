@@ -133,7 +133,7 @@ Task Specs follow the **same lifecycle as PRDs** but in a parallel folder struct
 | **Ready location** | `docs/tasks/` | `docs/prds/` |
 | **Completed location** | `docs/tasks/completed/` | `docs/completed/` |
 | **Abandoned location** | `docs/tasks/abandoned/` | `docs/abandoned/` |
-| **Registry** | `docs/task-registry.json` | `docs/prd-registry.json` |
+| **Registry** | `docs/task-registry.json` | Supabase (via helm-bridge) |
 | **Story prefix** | `TSK-001`, `TSK-002`, etc. | `US-001`, `US-002`, etc. |
 | **User involvement** | Confirm understanding | Multi-round refinement |
 
@@ -141,8 +141,8 @@ Task Specs follow the **same lifecycle as PRDs** but in a parallel folder struct
 
 | Agent | Owns | Never touches |
 |-------|------|---------------|
-| Builder | `docs/tasks/`, `docs/task-registry.json` | `docs/prds/`, `docs/drafts/`, `docs/prd-registry.json` |
-| Planner | `docs/prds/`, `docs/drafts/`, `docs/prd-registry.json` | `docs/tasks/`, `docs/task-registry.json` |
+| Builder | `docs/tasks/`, `docs/task-registry.json` | `docs/prds/`, `docs/drafts/`, PRD state in Supabase |
+| Planner | `docs/prds/`, `docs/drafts/`, PRD state in Supabase | `docs/tasks/`, `docs/task-registry.json` |
 
 **Trigger:** Before any write to `docs/` subdirectories.
 

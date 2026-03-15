@@ -53,7 +53,7 @@ docs/
 > 2. Write `changes.md` with implementation details
 > 3. Write `issues.md` if problems were encountered
 > 4. Update `session.json` (chunk summary, advance `currentChunk`, update heartbeat)
-> 5. Update other state files (`docs/prd.json`, `docs/prd-registry.json`)
+> 5. Update other state files (`docs/prd.json`)
 > 6. Run `git add -A && git commit`
 >
 > **Wrong order:** Commit first, then update session log → state drift

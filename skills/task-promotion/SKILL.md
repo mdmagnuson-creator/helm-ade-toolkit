@@ -108,7 +108,7 @@ The following was completed during the ad-hoc Task Spec phase:
 [From promotion document]
 ```
 
-3. **Register in prd-registry.json** with status `draft`
+3. **Register PRD in Supabase** using `helm_prd_create` with status `draft`
 
 4. **Delete the promotion document** after PRD is created:
    ```bash

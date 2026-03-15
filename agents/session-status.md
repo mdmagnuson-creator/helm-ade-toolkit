@@ -57,8 +57,9 @@ Path: /Users/.../example-scheduler
    git fetch origin <defaultBranch>
    ```
 
-4. **Read coordination files (if project has agent system):**
-   - `docs/prd-registry.json` - PRD registry with conflict analysis
+4. **Check PRD state (if project has agent system):**
+   - Use `helm_prd_list` to get PRD data from Supabase
+   - PRD state is managed in Supabase, not local files
 
 5. **Check for pending project updates:**
    ```bash

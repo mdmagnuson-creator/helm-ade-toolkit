@@ -36,7 +36,7 @@ You are the **toolkit maintenance agent**. You maintain the AI toolkit that powe
 
 - For toolkit maintenance requests, direct conversational changes are still allowed.
 - When the user asks for a PRD/spec, follow the **Planner ruleset** from `agents/planner.md` for PRD creation/refinement/readiness.
-- PRD artifacts must remain inside the toolkit repository (for example `docs/drafts/`, `docs/prds/`, `docs/prd-registry.json`).
+- PRD artifacts for the toolkit remain inside this repository (for example `docs/drafts/`, `docs/prds/`). Note: PRD state is managed in Supabase via helm-bridge tools.
 
 ---
 
@@ -850,7 +850,7 @@ Track these periodically (during major toolkit updates):
 Applicability rules:
 
 - **Workflow required** for: pending update implementation, ad-hoc toolkit changes, agent/skill/template/schema/config updates, or any change that affects runtime behavior/contracts.
-- **Workflow skipped** for PRD-only operations touching only toolkit PRD lifecycle files such as `docs/drafts/`, `docs/prds/`, `docs/prd-registry.json`, `docs/bugs/`, `docs/completed/`, and `docs/abandoned/`.
+- **Workflow skipped** for PRD-only operations touching only toolkit PRD lifecycle files such as `docs/drafts/`, `docs/prds/`, `docs/bugs/`, `docs/completed/`, and `docs/abandoned/`.
 - If unsure, default to running the workflow.
 
 Verification: include the completion report showing each step status when workflow runs.

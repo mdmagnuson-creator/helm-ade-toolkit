@@ -732,9 +732,9 @@
         "description": "Schema for tracking comprehensive E2E test audits with resilient execution and per-test commit tracking"
       },
       {
-        "name": "prd-registry.schema",
-        "file": "schemas/prd-registry.schema.json",
-        "description": "Schema for project-level PRD registry tracking PRD lifecycle and conflicts"
+        "name": "prd-supabase.schema",
+        "file": "schemas/prd-supabase.schema.json",
+        "description": "Reference schema documenting the Supabase prds and prd_stories table structures for agent reference"
       },
       {
         "name": "project.schema",
@@ -764,7 +764,7 @@
       {
         "name": "task-registry.schema",
         "file": "schemas/task-registry.schema.json",
-        "description": "Schema for project-level Task Spec registry tracking ad-hoc task lifecycle (parallel to prd-registry)"
+        "description": "Schema for project-level Task Spec registry tracking ad-hoc task lifecycle"
       },
       {
         "name": "toolkit-structure.schema",

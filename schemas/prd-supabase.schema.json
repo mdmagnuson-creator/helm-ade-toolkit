@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode.ai/schemas/prd-supabase.json",
+  "title": "PRD Supabase Tables Schema",
+  "description": "Reference schema documenting the Supabase `prds` and `prd_stories` table structures. PRD data is accessed via helm-bridge plugin tools (helm_prd_list, helm_prd_get, etc.), not direct database queries.",
+  "type": "object",
+
+  "definitions": {
+    "prdStatus": {
+      "type": "string",
+      "enum": ["draft", "ready", "in_progress", "completed", "abandoned"],
+      "description": "PRD lifecycle status. Enforced via CHECK constraint in Supabase."
+    },
+    "storyStatus": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "completed", "skipped"],
+      "description": "Story lifecycle status. Enforced via CHECK constraint in Supabase."
+    },
+    "acceptanceCriterion": {
+      "type": "object",
+      "description": "Single acceptance criterion within a story",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Criterion identifier (e.g., 'AC-001')"
+        },
+        "description": {
+          "type": "string",
+          "description": "What must be true for this criterion to pass"
+        },
+        "passed": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this criterion has been verified"
+        }
+      }
+    },
+    "prdsTable": {
+      "type": "object",
+      "description": "Supabase `prds` table — stores PRD metadata and content",
+      "required": ["id", "org_id", "repo_id", "prd_id", "title", "status", "total_stories"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Primary key (auto-generated UUID)"
+        },
+        "org_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Foreign key to orgs.id — the organization owning this PRD"
+        },
+        "repo_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Foreign key to repos.id — the repository this PRD belongs to"
+        },
+        "created_by_user_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Foreign key to users.id — the user who created this PRD"
+        },
+        "prd_id": {
+          "type": "string",
+          "description": "Unique text identifier for the PRD (e.g., 'prd-user-auth'). Used for human-readable references.",
+          "pattern": "^prd-[a-z0-9-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable title of the PRD"
+        },
+        "status": {
+          "$ref": "#/definitions/prdStatus"
+        },
+        "total_stories": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of user stories in this PRD"
+        },
+        "completed_stories": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Number of completed user stories"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the PRD was created (default: now())"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last update (auto-updated via moddatetime trigger)"
+        },
+        "started_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when work started on this PRD (status changed to in_progress)"
+        },
+        "completed_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when the PRD was completed or abandoned"
+        },
+        "draft_path": {
+          "type": ["string", "null"],
+          "description": "DEPRECATED: Legacy file path to draft PRD. Use content_markdown instead."
+        },
+        "ready_path": {
+          "type": ["string", "null"],
+          "description": "DEPRECATED: Legacy file path to ready PRD. Use content_markdown instead."
+        },
+        "json_path": {
+          "type": ["string", "null"],
+          "description": "DEPRECATED: Legacy file path to JSON PRD. Use content_markdown instead."
+        },
+        "content_markdown": {
+          "type": ["string", "null"],
+          "description": "Full PRD content in Markdown format. This is the source of truth for PRD content."
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "description": "Additional notes or context for this PRD"
+        },
+        "phases": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Number of implementation phases for this PRD"
+        },
+        "current_story": {
+          "type": ["string", "null"],
+          "description": "ID of the story currently being worked on (e.g., 'US-003')"
+        },
+        "estimated_weeks": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Estimated weeks to complete this PRD"
+        },
+        "stories_completed": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "DEPRECATED: Use completed_stories instead. Kept for backward compatibility."
+        }
+      }
+    },
+    "prdStoriesTable": {
+      "type": "object",
+      "description": "Supabase `prd_stories` table — stores individual user stories within a PRD",
+      "required": ["id", "prd_id", "story_id", "title", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Primary key (auto-generated UUID)"
+        },
+        "prd_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Foreign key to prds.id (CASCADE delete — stories are deleted when PRD is deleted)"
+        },
+        "session_id": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "Foreign key to sessions.id — the session currently working on this story (nullable)"
+        },
+        "story_id": {
+          "type": "string",
+          "description": "Story identifier within the PRD (e.g., 'US-001', 'US-002')",
+          "pattern": "^US-[0-9]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable title of the story"
+        },
+        "description": {
+          "type": ["string", "null"],
+          "description": "Detailed description of what this story accomplishes"
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "description": "JSONB array of acceptance criteria objects",
+          "items": {
+            "$ref": "#/definitions/acceptanceCriterion"
+          }
+        },
+        "story_points": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Estimated effort in story points"
+        },
+        "status": {
+          "$ref": "#/definitions/storyStatus"
+        },
+        "phase": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Which implementation phase this story belongs to"
+        },
+        "sort_order": {
+          "type": ["integer", "null"],
+          "description": "Order of this story within the PRD for execution sequencing"
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "description": "Implementation notes or context for this story"
+        },
+        "started_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when work started on this story"
+        },
+        "completed_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when this story was completed or skipped"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the story was created (default: now())"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last update (auto-updated via moddatetime trigger)"
+        }
+      }
+    }
+  },
+
+  "properties": {
+    "prds": {
+      "$ref": "#/definitions/prdsTable",
+      "description": "Reference to the prds table structure"
+    },
+    "prd_stories": {
+      "$ref": "#/definitions/prdStoriesTable",
+      "description": "Reference to the prd_stories table structure"
+    }
+  },
+
+  "x-supabase-notes": {
+    "description": "Implementation notes for the Supabase tables",
+    "constraints": {
+      "prds": [
+        "UNIQUE constraint on (org_id, repo_id, prd_id)",
+        "CHECK constraint on status: draft, ready, in_progress, completed, abandoned"
+      ],
+      "prd_stories": [
+        "UNIQUE constraint on (prd_id, story_id)",
+        "CHECK constraint on status: pending, in_progress, completed, skipped",
+        "CASCADE delete when parent PRD is deleted"
+      ]
+    },
+    "triggers": {
+      "moddatetime": "Both tables use moddatetime trigger to auto-update updated_at column"
+    },
+    "access": {
+      "method": "Use helm-bridge plugin tools (helm_prd_list, helm_prd_get, helm_prd_update, etc.)",
+      "note": "Agents should NOT query Supabase directly. Use the provided helm_prd_* tools."
+    }
+  }
+}

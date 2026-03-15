@@ -102,14 +102,13 @@ COMPLETED PRDs (recent)
 ## Dashboard Sections
 
 - **Vectorization** — Shows semantic search status: enabled/disabled, chunk count, index age
-- **Ready PRDs** — PRDs with `status: "ready"` from `prd-registry.json`
+- **Ready PRDs** — PRDs with `status: "ready"` from Supabase (via `helm_prd_list`)
 - **Completed PRDs** — Recent PRDs with `status: "completed"` (for context)
 - **Pending updates** — If `project-updates/[project-id]/` has files
 
-> 💡 **Dashboard only needs these prd-registry fields:** `id`, `name`, `status`, `estimatedStories`
+> 💡 **Dashboard PRD data comes from helm-bridge tools:**
 >
-> Use: `jq '[.prds[] | {id, name, status, estimatedStories}]' docs/prd-registry.json`
-> This reduces a 50KB file to ~2KB of dashboard-relevant data.
+> Use: `helm_prd_list` to get PRDs for the current repo. The response includes id, title, status, and story counts.
 
 ## Vectorization Status Logic
 

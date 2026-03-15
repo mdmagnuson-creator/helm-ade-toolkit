@@ -168,7 +168,7 @@ If no context block was provided:
 >
 > State updates that happen after the commit will be lost if the session ends.
 >
-> **Failure behavior:** If you find yourself about to run `git commit` without first updating `docs/prd.json` (`passes: true`), `session.json`, and `docs/prd-registry.json` — STOP and update those files before committing.
+> **Failure behavior:** If you find yourself about to run `git commit` without first updating `docs/prd.json` (`passes: true`) and `session.json` — STOP and update those files before committing.
 
 1. **Update PRD:** set `passes: true` for the completed story in `docs/prd.json`
 
@@ -177,17 +177,13 @@ If no context block was provided:
    - Update `chunk.json` with completion details
    - Right-panel todos are derived from `session.json` chunks (no separate update needed)
 
-3. **Update prd-registry.json:**
-   - Update `currentStory` field to reflect progress
-   - Update `storiesCompleted` count if tracked
+3. **Append progress** to `docs/progress.txt`
 
-4. **Append progress** to `docs/progress.txt`
-
-5. **Run test documentation sync (BEFORE commit):**
+4. **Run test documentation sync (BEFORE commit):**
 
    > ⛔ **CRITICAL: Sync test docs before committing to catch stale references.**
    
-   **Step 5a: Extract keywords from diff:**
+   **Step 4a: Extract keywords from diff:**
    ```bash
    git diff HEAD --name-only  # See what changed
    git diff HEAD              # Extract removed/renamed identifiers
@@ -195,16 +191,16 @@ If no context block was provided:
    
    Look for: removed/renamed function names, variable names, string literals, comments, class names.
    
-   **Step 5b: Expand keywords semantically:**
+   **Step 4b: Expand keywords semantically:**
    - `showQRCode` → `showQRCode`, `QR code`, `QR-code`, `qrcode`
    - `handlePayment` → `handlePayment`, `payment handler`
    
-   **Step 5c: Search test files:**
+   **Step 4c: Search test files:**
    ```bash
    grep -rn "<keywords>" tests/ e2e/ __tests__/ --include="*.ts" --include="*.tsx" | grep -v node_modules
    ```
    
-   **Step 5d: Handle matches:**
+   **Step 4d: Handle matches:**
    | Matches | Action |
    |---------|--------|
    | 0 | Proceed to commit |
@@ -212,13 +208,13 @@ If no context block was provided:
    | 6-15 | Show matches, confirm before updating |
    | 16+ | Narrow search scope, ask Builder for guidance |
    
-   **Step 5e: Update stale references:**
+   **Step 4e: Update stale references:**
    - Read each file with a match
    - Update comments/docstrings to reflect new behavior
    - Prioritize files already touched in this change
    - Never modify files outside `tests/`, `e2e/`, `__tests__/`
    
-   **Step 5f: Verify no stale references remain:**
+   **Step 4f: Verify no stale references remain:**
    ```bash
    grep -rn "<original-keywords>" tests/ e2e/ --include="*.ts" | grep -v node_modules | wc -l
    # Should return 0
@@ -226,7 +222,7 @@ If no context block was provided:
    
    If matches remain: fix them before proceeding to commit.
 
-6. **Commit ALL changes (including state files and updated test docs):**
+5. **Commit ALL changes (including state files and updated test docs):**
 
    > ⚓ **AGENTS.md: Git Auto-Commit Enforcement**
    
@@ -235,11 +231,11 @@ If no context block was provided:
    - If `onStoryComplete` (default) or `true`: Proceed with commit
    
    ```bash
-   git add -A  # includes prd.json, session.json, chunk.json, prd-registry.json
+   git add -A  # includes prd.json, session.json, chunk.json
    git commit -m "feat: [Story ID] - [Story Title]"
    ```
 
-7. **Validate push target (BEFORE pushing):**
+6. **Validate push target (BEFORE pushing):**
 
    > ⚓ **AGENTS.md: Git Workflow Enforcement**
    
@@ -257,7 +253,6 @@ If no context block was provided:
    **Verify state files are staged:**
    - `docs/prd.json` — story `passes: true`
    - `session.json` + `chunk.json` — updated session/chunk status
-   - `docs/prd-registry.json` — updated progress
 
 ### Phase 3B: Update Project Capabilities
 

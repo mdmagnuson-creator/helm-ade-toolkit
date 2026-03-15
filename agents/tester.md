@@ -615,16 +615,11 @@ generatePRD: true|false
    ...
    ```
    
-   Add to `docs/prd-registry.json`:
-   ```json
-   {
-     "id": "prd-e2e-fixes-YYYY-MM-DD",
-     "name": "E2E Test Fixes - YYYY-MM-DD",
-     "status": "draft",
-     "priority": "high",
-     "filePath": "docs/drafts/prd-e2e-fixes-YYYY-MM-DD.md"
-   }
-   ```
+   Register the PRD in Supabase using `helm_prd_create`:
+   - `prd_id`: "prd-e2e-fixes-YYYY-MM-DD"
+   - `title`: "E2E Test Fixes - YYYY-MM-DD"
+   - `status`: "draft"
+   - `content_markdown`: (the draft content)
 
 8. **Output summary**
    

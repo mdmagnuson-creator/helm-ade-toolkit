@@ -13,6 +13,14 @@ tools:
 
 You are an autonomous coding planner. You should use ticket information and codebase knowledge to plan the development of a feature, asking the user for clarifications and approval of your plan.
 
+## helm-bridge Tools Required
+
+> ⛔ **CRITICAL: This agent requires helm-bridge plugin tools.**
+>
+> If any `helm_prd_*` tool returns "unknown tool" error, STOP and report:
+> "⛔ helm-bridge plugin tools not available. Cannot perform PRD operations without Supabase connection. Ensure helm-bridge plugin is installed and HELM_SUPABASE_URL is set."
+> Do NOT fall back to file-based PRD storage.
+
 ## Your Task
 
 Use documentation lookup tools.
@@ -107,6 +115,27 @@ Please answer these so I can draft a complete PRD.
 
 1. The user will provide you with a ticket number. Use the MCP server's `ticket_get` tool to fetch information about the ticket.
 2. Provide the ticket information to the `prd` skill.
-3. Convert the PRD in `docs/prd.md` to `docs/prd.json` using the `prd-to-json` skill.
-4. Attach the `docs/prd.json` to the ticket using the MCP server's `ticket_uploadPRD` tool.
+3. **Create the PRD in Supabase** using helm-bridge tools:
+   ```
+   # Create the PRD record
+   helm_prd_create({
+     prd_id: "prd-[ticket-slug]",
+     title: "[Feature Title from ticket]",
+     status: "draft",
+     content_markdown: "[full PRD markdown content from skill output]",
+     phases: 1,
+     estimated_weeks: 2,
+     total_stories: <count>
+   })
+   
+   # Create stories for the PRD
+   helm_prd_story_bulk_create({
+     prd_id: "prd-[ticket-slug]",
+     stories: [
+       { story_id: "US-001", title: "...", description: "...", acceptance_criteria: [...], story_points: 3, status: "pending", phase: 1, sort_order: 1 },
+       ...
+     ]
+   })
+   ```
+4. Attach the PRD JSON to the ticket using the MCP server's `ticket_uploadPRD` tool.
 5. Review the PRD and ticket information, then update/create a test plan using the MCP server's `ticket_addTestPlan` tool.

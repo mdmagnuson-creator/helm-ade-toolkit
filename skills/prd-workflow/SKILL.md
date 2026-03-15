@@ -7,6 +7,20 @@ description: "PRD mode workflow for Builder. Use when building features from PRD
 
 > Load this skill when: building features from PRDs, implementing user stories, managing PRD state transitions.
 
+## Prerequisites
+
+> ⛔ **CRITICAL: This skill requires the `helm-bridge` plugin.**
+>
+> Before performing any PRD operations, verify the `helm_prd_*` tools are available.
+> If tools are not available, STOP and report:
+> ```
+> ⛔ helm-bridge plugin tools not available. Cannot perform PRD operations 
+> without Supabase connection. Ensure helm-bridge plugin is installed and 
+> HELM_SUPABASE_URL is set.
+> ```
+>
+> **Do NOT fall back to file I/O** — if the tools fail, stop.
+
 ## Git Auto-Commit Enforcement
 
 > ⛔ **CRITICAL: Check `git.autoCommit` setting before ANY commit operation**
@@ -38,7 +52,7 @@ description: "PRD mode workflow for Builder. Use when building features from PRD
 
 ## Overview
 
-PRD mode implements features defined in `docs/prds/prd-[name].json`. It operates in four phases:
+PRD mode implements features from PRDs stored in Supabase. It operates in four phases:
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
@@ -61,35 +75,40 @@ Use OpenCode right-panel todos as the live checklist, derived from `session.json
 
 ## Post-Story Status Update (MANDATORY)
 
-> ⛔ **After completing a story, you MUST update its status in the PRD JSON file.**
+> ⛔ **After completing a story, you MUST update its status via `helm_prd_story_update`.**
 >
-> **Failure behavior:** If you find yourself about to commit code for a completed story without first updating `docs/prd.json` with `status: "completed"`, `completedAt`, and `passes: true` — STOP and update the story status before committing.
+> **Failure behavior:** If you find yourself about to commit code for a completed story without first calling `helm_prd_story_update` with `status: "completed"` — STOP and update the story status before committing.
 
 After each story completes:
 
-1. **Update the story in `docs/prd.json`:**
-   ```json
-   {
-     "id": "US-001",
-     "status": "completed",
-     "completedAt": "2026-02-28T10:30:00Z",
-     "passes": true,
-     "notes": "Implemented with React component, added unit tests"
-   }
+1. **Update the story via `helm_prd_story_update`:**
+   ```
+   helm_prd_story_update({
+     prd_id: "prd-[name]",
+     story_id: "US-001",
+     status: "completed",
+     completed_at: "2026-02-28T10:30:00Z",
+     notes: "Implemented with React component, added unit tests"
+   })
    ```
 
-2. **Update the PRD-level status in `docs/prd-registry.json`:**
-   - If some stories complete: ensure `status: "in_progress"` 
-   - If all stories complete: set `status: "pr_open"` (or later states)
-   - Update `currentStory` to the next pending story (or null if done)
+2. **Update the PRD-level status via `helm_prd_update`:**
+   ```
+   helm_prd_update({
+     prd_id: "prd-[name]",
+     status: "in_progress",
+     current_story: "US-002",  // next pending story
+     completed_stories: 1
+   })
+   ```
 
-3. **Include these updates in the story commit** (or subsequent housekeeping commit)
+3. **Include local session state updates in the story commit** (session.json, chunk.json)
 
 **Why this matters:**
 - **Resumability:** Interrupted sessions know exactly which stories are done
 - **Visibility:** User can check PRD status and see accurate progress
 - **Handoff:** Another agent or human can pick up where Builder left off
-- **Audit trail:** `completedAt` timestamps provide implementation timeline
+- **Audit trail:** `completed_at` timestamps provide implementation timeline
 
 ## PRD Lifecycle States
 
@@ -143,17 +162,26 @@ Rules:
 
 When user selects a PRD to build:
 
-### Step 1: Check for Conflicts
+### Step 1: Get PRD Details and Check for Conflicts
 
-- Read `docs/prd-registry.json` for `conflictsWith` and `conflictRisk`
+Fetch the PRD and its stories:
+```
+helm_prd_get({ prd_id: "prd-[name]" })
+```
+
+Check for conflicts by listing active PRDs:
+```
+helm_prd_list({ status: "in_progress" })
+```
+
 - If HIGH conflict risk with an active session, warn and get confirmation
 - If MEDIUM conflict risk, note it but proceed if user confirms
 
 ### Step 2: Credential Readiness Check
 
-Before copying the PRD to the working location, inspect credential metadata in `docs/prds/prd-[name].json`:
+Before starting implementation, inspect credential metadata from the PRD:
 
-- Read top-level `credentialRequirements[]` (if present).
+- Check PRD `notes` or custom fields for `credentialRequirements` (if present).
 - For each entry with `requestTiming: "upfront"`, ask for credential readiness before starting story execution.
 - If user does not have a credential yet, mark it `deferred` and continue only with stories that do not depend on it.
 - Persist statuses in `session.json` under the session-level `credentials` field with `pending|provided|deferred`.
@@ -161,18 +189,19 @@ Before copying the PRD to the working location, inspect credential metadata in `
 
 If no credential requirements are listed, continue normally.
 
-### Step 3: Copy PRD to Working Location
+### Step 3: Update PRD Status to In Progress
 
-Copy `docs/prds/prd-[name].json` to `docs/prd.json`. This is where @developer reads the current work.
+Update the PRD to claim it:
+```
+helm_prd_update({
+  prd_id: "prd-[name]",
+  status: "in_progress",
+  started_at: "<ISO timestamp>",
+  current_story: "US-001"
+})
+```
 
-### Step 4: Update PRD Registry Status
-
-Update `docs/prd-registry.json`:
-- Set `status: "in_progress"`
-- Set `startedAt: <now>`
-- Store `currentStory` as work progresses
-
-### Step 5: Set Execution Branch
+### Step 4: Set Execution Branch
 
 If `trunk + branchless`:
 
@@ -180,13 +209,13 @@ If `trunk + branchless`:
 git checkout <default-branch>
 ```
 
-If not branchless trunk mode, create branch from PRD `branchName`:
+If not branchless trunk mode, create branch from PRD branch name (stored in PRD notes or derived from prd_id):
 
 ```bash
-git checkout -b <branchName> <default-branch>
+git checkout -b feature/<prd-name> <default-branch>
 ```
 
-### Step 8: Initialize Architecture Automation Baseline
+### Step 5: Initialize Architecture Automation Baseline
 
 Before story execution begins, ensure architecture automation assets exist and are current:
 
@@ -205,9 +234,15 @@ Default policy:
 
 Only prompt users for policy overrides, not routine generation/refresh.
 
-### Step 9: Story List Review (with Flow Chart Option)
+### Step 6: Story List Review (with Flow Chart Option)
 
-Before starting story execution, show the story list and offer the flow chart option:
+Before starting story execution, fetch stories and show the list:
+
+```
+helm_prd_get({ prd_id: "prd-[name]" })
+```
+
+Display the stories from the response and offer the flow chart option:
 
 ```
 ═══════════════════════════════════════════════════════════════════════
@@ -339,7 +374,7 @@ For each story in priority order:
 
 4. **Handle developer failures:**
    - If developer fails more than once on a story, analyze the PRD
-   - Update `docs/prd.json` with clarifications if needed
+   - Update the PRD in Supabase with clarifications if needed via `helm_prd_update` or `helm_prd_story_update`
    - If developer struggles with cleanup, run @wall-e
 
 ### Step 2: Automatic Testing After Story (US-003)
@@ -359,42 +394,57 @@ Use `test-flow` as the canonical source for all test behavior.
 
 ### Step 2.5: Update State & Commit After Each Story
 
-> ⛔ **CRITICAL: Update state files BEFORE committing so they are included in the commit.**
+> ⛔ **CRITICAL: Update Supabase state and local session files BEFORE committing.**
 >
 > State updates that happen after the commit will be lost if the session ends.
 >
-> **Failure behavior:** If you find yourself about to run `git commit` without first updating `docs/prd.json` (story status + `passes: true`), `session.json`, `chunk.json`, and `docs/prd-registry.json` — STOP and update those files before committing.
+> **Failure behavior:** If you find yourself about to run `git commit` without first calling `helm_prd_story_update` (story status) and `helm_prd_update` (PRD progress), plus updating `session.json` and `chunk.json` — STOP and update those first.
 
 After a story completes and post-story checks pass:
 
-**1. Update all state files FIRST:**
+**1. Update Supabase state FIRST:**
 
-- **`docs/prd.json`** — update the completed story:
-  - Set `status: "completed"`
-  - Set `completedAt: <ISO timestamp>`
-  - Set `passes: true`
-  - Add `notes` with brief completion summary (e.g., "Implemented with 3 components, added unit tests")
+- **Update the completed story:**
+  ```
+  helm_prd_story_update({
+    prd_id: "prd-[name]",
+    story_id: "US-001",
+    status: "completed",
+    completed_at: "<ISO timestamp>",
+    notes: "Implemented with 3 components, added unit tests"
+  })
+  ```
+
+- **Update PRD progress:**
+  ```
+  helm_prd_update({
+    prd_id: "prd-[name]",
+    current_story: "US-002",  // or null if done
+    completed_stories: <incremented count>
+  })
+  ```
+
+**2. Update local session state:**
+
 - **`session.json` + `chunk.json`:**
    - Update current chunk status to `completed` in `session.json`
    - Set `currentChunk` to next chunk (or null if done)
    - Chunk's `chunk.json` already records verification results
-   - Update story status in current chunk to `completed`
-- **`docs/prd-registry.json`** — update `currentStory` field and increment completed count
 
-**2. Then commit (including state files):**
+**3. Then commit (including local state files):**
 
 - Follow **Git Auto-Commit Enforcement** above (respect `git.autoCommit`)
 - Use a per-story commit message format:
   - `feat: [prd-summary] (US-00X)`
 
 ```bash
-# Verify state files are staged before committing
-git add -A  # includes prd.json, session.json, chunk.json, prd-registry.json
+# Verify local state files are staged before committing
+git add -A  # includes session.json, chunk.json
 git status  # confirm state files are in staged changes
 git commit -m "feat: [summary from PRD] (US-00X)"
 ```
 
-**Why this order matters:** If you commit before updating state, and the session ends (crash, rate limit, context compaction), the committed code and PRD state will be out of sync — git will show all stories implemented, but `passes: false` everywhere.
+**Why this order matters:** If you commit before updating state, and the session ends (crash, rate limit, context compaction), the committed code and PRD state will be out of sync — git will show stories implemented, but Supabase will show them as pending.
 
 ### Step 3: Repeat for All Stories
 
@@ -611,12 +661,18 @@ Your workflow is configured to create PRs to '{createPrTo}'.
 Create the PR:
 
 ```bash
-gh pr create --base {createPrTo} --title "feat: {description from prd.json}" --body "{PR body with story list}"
+gh pr create --base {createPrTo} --title "feat: {description from PRD}" --body "{PR body with story list}"
 ```
 
-**Update registry status to `pr_open`:**
-- Set `status: "pr_open"`
-- Store `prNumber` and `prUrl` from `gh pr create` output
+**Update PRD status to `pr_open`:**
+```
+helm_prd_update({
+  prd_id: "prd-[name]",
+  status: "pr_open"
+})
+```
+
+Store `prNumber` and `prUrl` in session state for reference.
 
 **Check if target branch requires human approval:**
 
@@ -649,11 +705,14 @@ Report the final state:
 
 ## Phase 4: Cleanup (runs on next Builder startup)
 
-When Builder starts, check for PRs that need cleanup:
+When Builder starts, check for PRDs that need cleanup:
 
 ### Step 1: Check PR Status
 
-Read `docs/prd-registry.json` for PRDs with status `pr_open`.
+List PRDs with `pr_open` status:
+```
+helm_prd_list({ status: "pr_open" })
+```
 
 For each:
 - Check if PR was merged: `gh pr view <PR-NUMBER> --json state`
@@ -682,59 +741,19 @@ If `state: "MERGED"`:
 
 2. **Generate human testing script** (see template below)
 
-3. **Archive the PRD (with rolling window):**
+3. **Mark PRD as completed in Supabase:**
+   ```
+   helm_prd_update({
+     prd_id: "prd-[name]",
+     status: "completed",
+     completed_at: "<ISO timestamp>"
+   })
+   ```
+
+4. **Archive PRD files locally (optional):**
    - Create folder: `docs/completed/[prd-id]/`
-   - Move PRD JSON and MD files to archive folder
    - Move the generated `human-testing-script.md` to archive folder
-   - **Update registry with rolling window enforcement:**
-   
-   ```
-   PRD completes
-       │
-       ▼
-   Count completed PRDs in registry
-       │
-       ├─── <5 completed ──► Add to completed[], done
-       │
-       └─── 5 completed ──► Archive oldest to archived[], add new to completed[]
-                            (maintains rolling window of 5)
-   ```
-   
-   **Rolling window steps:**
-   1. Read current `completed` array length
-   2. If `completed.length >= 5`:
-      - Find oldest entry (earliest `completedAt`)
-      - Move oldest entry to `archived` array
-      - Update `archiveStats` (totalArchived++, update dates)
-   3. Add new PRD entry to `completed` array:
-      - Set `status: "completed"`, `completedAt: <now>`
-      - If E2E was skipped, add `e2eSkipped: true` and `e2eSkipReason: "user-requested"`
-   
-   **Example jq command for rolling window:**
-   ```bash
-   # Move oldest from completed to archived when completing prd-123
-   jq --arg id "prd-123" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
-     # Find the entry to add
-     .prds |= map(if .id == $id then . + {status: "completed", completedAt: $now} else . end)
-     | .newEntry = (.prds[] | select(.id == $id))
-     | .prds |= map(select(.id != $id))
-     
-     # Handle rolling window
-     | if (.completed | length) >= 5 then
-         .oldest = (.completed | sort_by(.completedAt) | first)
-         | .archived = ((.archived // []) + [.oldest])
-         | .completed = (.completed | map(select(.id != .oldest.id)))
-         | .archiveStats.totalArchived = ((.archiveStats.totalArchived // 0) + 1)
-         | .archiveStats.newestArchivedAt = .oldest.completedAt
-         | if .archiveStats.oldestArchivedAt == null then .archiveStats.oldestArchivedAt = .oldest.completedAt else . end
-         | del(.oldest)
-       else . end
-     
-     # Add new entry
-     | .completed += [.newEntry]
-     | del(.newEntry)
-   ' docs/prd-registry.json > docs/prd-registry.json.tmp && mv docs/prd-registry.json.tmp docs/prd-registry.json
-   ```
+   - Store completion report locally
 
 5. **Clear E2E queue from chunk files:**
    - Clear `pendingTests.e2e` from each chunk's `chunk.json`
@@ -745,11 +764,11 @@ If `state: "MERGED"`:
    > it gets a fresh chunk with clean verification state — no cross-contamination is possible.
 
 6. **Run @prd-impact-analyzer:**
-   - Check if completed work unblocks other PRDs
+   - Check if completed work unblocks other PRDs (via `helm_prd_list`)
    - Check if conflict risks have changed
-   - Update registry accordingly
+   - Update affected PRDs accordingly
 
-6. **Report and offer to open:**
+7. **Report and offer to open:**
    ```
    ✅ Cleaned up merged PRD: [prd-name]
    
@@ -766,8 +785,13 @@ If `state: "MERGED"`:
 
 ### Step 4: Check for Stale Sessions
 
+List in-progress PRDs and check for stale sessions:
+```
+helm_prd_list({ status: "in_progress" })
+```
+
 - `in_progress` with no heartbeat for > 1 hour → warn: "PRD [name] may be abandoned (no heartbeat)"
-- `pr_open` for > 24 hours → suggest checking PR status
+- Check `pr_open` PRDs for > 24 hours → suggest checking PR status
 
 ### Step 5: Check Merge Queue Status
 
@@ -777,7 +801,7 @@ If queued entries exist for this project, show queue status and offer to process
 
 ## Handling Ad-hoc Requests During PRD Mode
 
-If user makes an ad-hoc request while a PRD is checked out:
+If user makes an ad-hoc request while a PRD is active:
 
 1. **Determine if it's PRD-related:**
    - If the request relates to the current PRD's scope → treat as part of PRD work
@@ -785,7 +809,7 @@ If user makes an ad-hoc request while a PRD is checked out:
 
 2. **For unrelated ad-hoc requests:**
    - Run the `workflows.adhoc` steps
-   - **⚠️ PRD PROTECTION: Do NOT modify `docs/prd.json` during ad-hoc work**
+   - **⚠️ PRD PROTECTION: Do NOT modify PRD state during ad-hoc work**
    - Commit separately from PRD work
    - Generate an ad-hoc report
    - Return to PRD work when done
@@ -913,24 +937,19 @@ Archived (15 total):
   📦 prd-search               Completed: 2026-01-30
   ... (12 more)
 
-View full archive: jq '.archived' docs/prd-registry.json
-View PRD details: cat docs/completed/[prd-id]/prd-[id].json
+View all completed: helm_prd_list({ status: "completed", limit: 100 })
+View PRD details: helm_prd_get({ prd_id: "[prd-id]" })
 ═══════════════════════════════════════════════════════════════════════
 ```
 
 **Implementation:**
 
-```bash
-# Show recent completed (from active registry)
-jq -r '.completed[] | "  ✅ \(.id | ljust(25)) Completed: \(.completedAt[:10])"' docs/prd-registry.json
+```
+# List recent completed PRDs
+helm_prd_list({ status: "completed", limit: 5 })
 
-# Show archived summary
-ARCHIVED_COUNT=$(jq '.archiveStats.totalArchived // (.archived | length) // 0' docs/prd-registry.json)
-echo "Archived ($ARCHIVED_COUNT total):"
-jq -r '.archived[:3][] | "  📦 \(.id | ljust(25)) Completed: \(.completedAt[:10])"' docs/prd-registry.json
-if [ "$ARCHIVED_COUNT" -gt 3 ]; then
-  echo "  ... ($((ARCHIVED_COUNT - 3)) more)"
-fi
+# Get details for a specific PRD
+helm_prd_get({ prd_id: "prd-[name]" })
 ```
 
-This keeps startup reads minimal (only `completed` array) while allowing full history access on demand.
+This keeps startup reads minimal while allowing full history access on demand.

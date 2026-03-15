@@ -14,7 +14,13 @@ tools:
 
 # PRD Impact Analyzer
 
-> ⛔ **CRITICAL: Check `git.autoCommit` before committing registry changes**
+> ⛔ **CRITICAL: This agent requires helm-bridge plugin tools.**
+>
+> If any `helm_prd_*` tool returns "unknown tool" error, STOP and report:
+> "⛔ helm-bridge plugin tools not available. Cannot perform PRD operations without Supabase connection. Ensure helm-bridge plugin is installed and HELM_SUPABASE_URL is set."
+> Do NOT fall back to reading `docs/prd-registry.json` — Supabase is the source of truth.
+
+> ⛔ **CRITICAL: Check `git.autoCommit` before committing changes**
 >
 > **Trigger:** Before running `git commit` in Step 7.
 >
@@ -23,11 +29,11 @@ tools:
 > - If `false`: **NEVER run `git commit`** — failure to comply violates project constraint
 >
 > **When autoCommit is disabled:**
-> 1. Stage files: `git add docs/prd-registry.json docs/prd-impact-report.md`
+> 1. Stage files: `git add docs/prd-impact-report.md`
 > 2. Report what would be committed and suggested message
 > 3. Let parent agent handle commit reporting to user
 
-Analyzes how a completed PRD affects other PRDs in the backlog. This ensures the PRD registry stays accurate and helps identify when:
+Analyzes how a completed PRD affects other PRDs in the backlog. This ensures the PRD data stays accurate and helps identify when:
 - Dependencies are now satisfied
 - Conflict risks have changed
 - Stories in other PRDs are now simpler or unnecessary
@@ -135,16 +141,24 @@ You will receive:
 
 1. **Read the completed PRD** to understand what was built:
    ```bash
-   # Find the archived PRD
+   # Find the archived PRD (local backup)
    find docs/completed -name "*[prdId]*" -type f
    ```
+   
+   Or use helm-bridge if the PRD was recently completed:
+   ```
+   helm_prd_get({ prd_id: "[prdId]" })
+   ```
 
-2. **Read the PRD registry**:
-   - `docs/prd-registry.json` - All PRDs with their status, dependencies, and conflict info
+2. **List all PRDs** using helm-bridge:
+   ```
+   # Get all PRDs with their status and metadata
+   helm_prd_list({ limit: 100 })
+   ```
 
-3. **List all draft and active PRDs**:
-   ```bash
-   ls docs/drafts/*.md docs/prds/*.json 2>/dev/null
+3. **For each PRD that needs detailed analysis**, get full details:
+   ```
+   helm_prd_get({ prd_id: "[prd-id]" })
    ```
 
 4. **Get the list of changed files** from the completed PRD:
@@ -218,14 +232,28 @@ prd-route-optimization had story:
 → Story is now simpler: "Can call existing /api/addresses/validate"
 ```
 
-### Step 5: Update Registry
+### Step 5: Update PRD Data
 
-Update `docs/prd-registry.json` with findings:
+Update PRD data in Supabase using helm-bridge tools:
 
-1. **Remove completed PRD from `conflictsWith`** arrays in other PRDs
-2. **Update dependency status** for PRDs that depended on completed PRD
-3. **Adjust `conflictRisk`** levels based on analysis
-4. **Update `touchesAreas`** if new shared areas discovered
+1. **Update dependency status** for PRDs that depended on completed PRD:
+   ```
+   helm_prd_update({
+     prd_id: "[affected-prd-id]",
+     notes: "Dependency on [completedPrd] now satisfied. [additional notes]"
+   })
+   ```
+
+2. **Update story notes** for affected stories:
+   ```
+   helm_prd_story_update({
+     prd_id: "[affected-prd-id]",
+     story_id: "US-XXX",
+     notes: "Can reuse [component] from [completedPrd]"
+   })
+   ```
+
+> **Note:** `docs/prd-registry.json` is deprecated. PRD state is now managed via `helm_prd_*` tools backed by Supabase.
 
 ### Step 6: Generate Impact Report
 
@@ -282,12 +310,14 @@ Create `docs/prd-impact-report.md` with a summary:
 
 ### Step 7: Commit Changes
 
-If changes were made to the registry:
+If changes were made (impact report created):
 
 ```bash
-git add docs/prd-registry.json docs/prd-impact-report.md
+git add docs/prd-impact-report.md
 git commit -m "docs: analyze impact of [prdId] completion"
 ```
+
+> **Note:** PRD updates are stored in Supabase via helm-bridge tools and don't need to be committed. Only the local impact report needs to be committed.
 
 ## Output
 
@@ -299,7 +329,7 @@ PRD Impact Analysis Complete
 Completed: [prdId] - [name]
 
 Changes made:
-- Updated prd-registry.json
+- Updated PRD data in Supabase via helm-bridge
 - Created docs/prd-impact-report.md
 
 Key findings:
@@ -312,7 +342,7 @@ Full report: docs/prd-impact-report.md
 
 ## Notes
 
-- Only update the registry if there are actual changes
+- Only update Supabase if there are actual changes to PRD metadata
 - Be conservative with "unnecessary" story flags - let humans make final decisions
 - Always create the impact report even if no changes, so there's an audit trail
 - Delete the previous impact report before creating a new one (only keep most recent)

@@ -113,16 +113,34 @@ When planning work starts, verify each write target is in this allowlist. If a r
 
 | Allowed Path | Purpose |
 |--------------|---------|
-| `docs/drafts/` | Draft PRD files |
-| `docs/prds/` | Ready PRD files (.md and .json) |
+| `docs/drafts/` | Draft PRD files (legacy — prefer helm-bridge tools) |
+| `docs/prds/` | Ready PRD files (legacy — prefer helm-bridge tools) |
 | `docs/bugs/` | Bug PRD files |
 | `docs/completed/` | Archived completed PRDs |
 | `docs/abandoned/` | Abandoned PRDs |
-| `docs/prd-registry.json` | PRD registry |
 | `docs/planner-state.json` | Planner todo/session resume state |
 | `docs/project.json` | Planning metadata and project considerations |
 | `.tmp/` | Project-local temporary planning artifacts |
 | `.gitignore` | Ensure `.tmp/` is ignored |
+
+**PRD state is managed via helm-bridge tools (Supabase is source of truth):**
+
+| Tool | Purpose |
+|------|---------|
+| `helm_prd_create` | Create a new PRD |
+| `helm_prd_update` | Update PRD metadata and status |
+| `helm_prd_set_content` | Set PRD markdown content |
+| `helm_prd_story_bulk_create` | Create stories for a PRD |
+| `helm_prd_story_update` | Update individual story |
+| `helm_prd_list` | List PRDs with filters |
+| `helm_prd_get` | Get PRD with stories |
+| `helm_prd_delete` | Delete a PRD |
+
+> ⛔ **CRITICAL: helm-bridge tools required.** If any `helm_prd_*` tool returns "unknown tool" error, STOP and report:
+> "⛔ helm-bridge plugin tools not available. Cannot perform PRD operations without Supabase connection. Ensure helm-bridge plugin is installed and HELM_SUPABASE_URL is set."
+> Do NOT fall back to file-based PRD storage.
+
+> **Note:** `docs/prd-registry.json` is deprecated. It may exist for legacy compatibility but Supabase (via helm-bridge tools) is the source of truth for all PRD state.
 
 **You may NOT write to:**
 - ❌ Source code (`src/`, `apps/`, `lib/`, etc.)
@@ -161,7 +179,7 @@ When planning flows require temporary artifacts, use project-local temp storage 
 2. **If `HELM_PROJECT_PATH` is set:**
    - Use `HELM_PROJECT_PATH` as the project root
    - Read `$HELM_PROJECT_PATH/docs/project.json` for project configuration
-   - Read `$HELM_PROJECT_PATH/docs/prd-registry.json` for PRD state
+   - Use `helm_prd_list()` to get PRD state (Supabase is source of truth)
    - **Skip** project selection table
    - **Skip** terminal title setting (Helm manages this)
    - Address the user's first message directly
@@ -174,15 +192,32 @@ When planning flows require temporary artifacts, use project-local temp storage 
 
 After environment is confirmed:
 
-1. **Read files in parallel:**
+1. **Read data in parallel:**
+   
+   **PRD data via helm-bridge tools:**
    ```
-   In parallel:
-   - cat <project>/docs/prd-registry.json
-   - cat <project>/docs/project.json  
-   - list <project>/docs/ first, then read <project>/docs/planner-state.json only if it exists
-   - ls <project>/docs/pending-updates/*.md 2>/dev/null
-   - cat <project>/docs/applied-updates.json 2>/dev/null
-   - ls <project>/docs/tasks/promotions/*.md 2>/dev/null  # Task Spec promotions from Builder
+   # List all PRDs for this project
+   helm_prd_list({ limit: 50 })
+   ```
+   
+   > ⛔ **CRITICAL: helm-bridge tools required.** If `helm_prd_list` returns "unknown tool" error, STOP and report:
+   > "⛔ helm-bridge plugin tools not available. Cannot perform PRD operations without Supabase connection. Ensure helm-bridge plugin is installed and HELM_SUPABASE_URL is set."
+   
+   **Local files:**
+   ```bash
+   # Project config
+   cat <project>/docs/project.json
+   
+   # Planner state (if exists) — list first, then read if present
+   ls <project>/docs/ | grep planner-state
+   [ -f <project>/docs/planner-state.json ] && cat <project>/docs/planner-state.json
+   
+   # Pending updates
+   ls <project>/docs/pending-updates/*.md 2>/dev/null
+   cat <project>/docs/applied-updates.json 2>/dev/null
+   
+   # Task Spec promotions from Builder
+   ls <project>/docs/tasks/promotions/*.md 2>/dev/null
    ```
 
    **Important:** Treat missing `docs/planner-state.json` and `docs/applied-updates.json` as normal first-run behavior. Do not surface file-missing errors for these optional files.
@@ -267,7 +302,8 @@ After environment is confirmed:
 
 When the user wants to work on a draft PRD:
 
-1. **Read the draft PRD** from `docs/drafts/prd-[name].md`
+1. **Get the draft PRD** using `helm_prd_get({ prd_id: "prd-[name]" })`
+   - Returns PRD metadata, content_markdown, and stories array
 2. **Analyze the existing codebase** to understand current state:
    - **If vectorization enabled** (`project.json` → `vectorization.enabled: true`):
      - Use `semantic_search` to find related code: `"how does [feature] work"`
@@ -278,7 +314,12 @@ When the user wants to work on a draft PRD:
    - Check what already exists vs what needs to be built
    - Identify potential conflicts or dependencies
 3. **Ask clarifying questions** using lettered options (A, B, C, D) for quick responses
-4. **Update the PRD** with refined scope, clearer stories, and specific acceptance criteria
+4. **Update the PRD** using helm-bridge tools:
+   ```
+   helm_prd_update({ prd_id: "prd-[name]", title: "...", notes: "..." })
+   helm_prd_set_content({ prd_id: "prd-[name]", content_markdown: "..." })
+   helm_prd_story_update({ prd_id: "prd-[name]", story_id: "US-001", ... })
+   ```
 5. **Add or update a Credential & Service Access Plan** when stories depend on external services, API keys, or account credentials
 6. **Write a planner-authored Definition of Done** section describing what complete implementation looks like
 7. **Run flag auto-detection** for documentation and tools requirements
@@ -288,14 +329,35 @@ When the user wants to work on a draft PRD:
 
 When the user describes a new feature:
 
-1. **Use the `prd` skill** to generate the PRD
+1. **Use the `prd` skill** to generate the PRD content
 2. **Ask clarifying questions** if the prompt is ambiguous
-3. **Save to `docs/drafts/prd-[name].md`** initially
-4. **Add to `docs/prd-registry.json`** with status "draft"
-5. **For new-project kickoff PRDs, include architecture recommendation options** (2-3 approaches with tradeoffs)
-6. **Include a Credential & Service Access Plan** when external integrations or secrets are required
-7. **Add a planner-authored Definition of Done** to the draft PRD
-8. **Check for platform skill recommendations:**
+3. **Create the PRD in Supabase** using helm-bridge tools:
+   ```
+   # Create the PRD record
+   helm_prd_create({
+     prd_id: "prd-[name]",
+     title: "[Feature Title]",
+     status: "draft",
+     content_markdown: "[full PRD markdown content]",
+     phases: 1,
+     estimated_weeks: 2,
+     total_stories: 3
+   })
+   
+   # Create stories for the PRD
+   helm_prd_story_bulk_create({
+     prd_id: "prd-[name]",
+     stories: [
+       { story_id: "US-001", title: "...", description: "...", acceptance_criteria: [...], story_points: 3, status: "pending", phase: 1, sort_order: 1 },
+       { story_id: "US-002", ... },
+       ...
+     ]
+   })
+   ```
+4. **For new-project kickoff PRDs, include architecture recommendation options** (2-3 approaches with tradeoffs)
+5. **Include a Credential & Service Access Plan** when external integrations or secrets are required
+6. **Add a planner-authored Definition of Done** to the draft PRD
+7. **Check for platform skill recommendations:**
    - Read `$OPENCODE_CONFIG/data/skill-mapping.json`
    - Scan `project.json` → `apps` for platforms that might need special testing:
      - If feature involves Electron app without `testing.framework: 'playwright-electron'` → include note in PRD:
@@ -306,20 +368,21 @@ When the user describes a new feature:
        ```
      - If feature involves mobile app without testing config → include similar recommendation
    - This helps Builder know which testing skills to load during implementation
-9. **Refine** as described above
+8. **Refine** as described above
 
 ### 3. Move PRD to Ready
 
 When a PRD is fully refined and approved:
 
-1. **Convert to JSON** using the `prd-to-json` skill
-2. **Move files** from `docs/drafts/` to `docs/prds/`:
-   - `docs/drafts/prd-[name].md` → `docs/prds/prd-[name].md`
-   - Create `docs/prds/prd-[name].json`
-3. **Update registry** in `docs/prd-registry.json`:
-   - Change `status` from `"draft"` to `"ready"`
-   - Update `filePath` to new location
-   - Add `jsonPath` field
+1. **Convert to JSON** using the `prd-to-json` skill (for local reference/backup if needed)
+2. **Update PRD status in Supabase** using helm-bridge:
+   ```
+   helm_prd_update({
+     prd_id: "prd-[name]",
+     status: "ready"
+   })
+   ```
+3. **Optionally save local backup** to `docs/prds/prd-[name].md` and `.json` for offline reference
 4. **Include project context in ready confirmation:**
    When confirming the PRD is ready, include context Builder will need:
    ```
@@ -425,51 +488,52 @@ See AGENTS.md for format. Your filename prefix: `YYYY-MM-DD-planner-`
 
 | Purpose | Location |
 |---------|----------|
-| Draft PRDs | `docs/drafts/prd-[name].md` |
-| Ready PRDs | `docs/prds/prd-[name].md` + `.json` |
-| PRD Registry | `docs/prd-registry.json` |
-| Bug PRD | `docs/bugs/prd-bugs.json` |
-| Completed PRDs | `docs/completed/YYYY-MM-DD/` |
+| Draft PRDs | Supabase via `helm_prd_get` (status: "draft") |
+| Ready PRDs | Supabase via `helm_prd_get` (status: "ready") |
+| Local PRD backup | `docs/prds/prd-[name].md` + `.json` (optional offline copy) |
+| Bug PRD | `docs/bugs/prd-bugs.json` (local, not yet migrated) |
+| Completed PRDs | `docs/completed/YYYY-MM-DD/` (archived locally) |
 | Abandoned PRDs | `docs/abandoned/` |
 | Project Config | `docs/project.json` |
+
+> **Note:** PRD state is managed via `helm_prd_*` tools backed by Supabase. Local files in `docs/drafts/` and `docs/prds/` are deprecated; they may exist for legacy compatibility but Supabase is the source of truth.
 
 ## Conversation Flow
 
 ```
-1. [Run @session-status to show dashboard]
+1. [Load PRD list via helm_prd_list() to show dashboard]
 
 2. "What would you like to work on?"
    - "Let's refine [prd-name]" → Start refinement flow
    - "Create a PRD for [feature]" → Start creation flow
    - "Review bugs" → Show bug PRD
-   - "Move [prd-name] to ready" → Finalize and move
+   - "Move [prd-name] to ready" → Finalize and update status
 
 3. [For refinement/creation]
    - Analyze codebase
    - Ask clarifying questions
-   - Update PRD
+   - Update PRD via helm_prd_update / helm_prd_set_content
    - Write planner-authored Definition of Done
    - Show flag review table
    - Continue unless user requests changes
 
 4. [For moving to ready]
-   - Convert to JSON
-   - Move files
-   - Update registry
+   - Convert to JSON (optional local backup)
+   - Update status via helm_prd_update({ status: "ready" })
    - Confirm ready for Builder
 ```
 
 ## Example Interaction
 
 ```
-Project Planner: [displays session status dashboard]
+Project Planner: [displays PRD dashboard from helm_prd_list()]
 
 Project Planner: What would you like to work on?
 
 User: Let's refine prd-notifications
 
 Project Planner: I'll analyze the current state of the codebase and the draft PRD...
-         [reads docs/drafts/prd-notifications.md]
+         [calls helm_prd_get({ prd_id: "prd-notifications" })]
          [searches codebase for existing notification code]
 
 Project Planner: I have a few questions to clarify the scope:
@@ -488,15 +552,15 @@ Project Planner: I have a few questions to clarify the scope:
 
 User: 1B, 2C
 
-Project Planner: [updates PRD with answers]
+Project Planner: [updates PRD via helm_prd_update and helm_prd_set_content]
          [presents flag review table]
 
-Project Planner: The PRD is ready. Would you like me to move it to docs/prds/ 
+Project Planner: The PRD is ready. Would you like me to move it to ready status
          so a Builder session can start working on it?
 
 User: Yes, move it
 
-Project Planner: [moves files, updates registry]
+Project Planner: [calls helm_prd_update({ prd_id: "prd-notifications", status: "ready" })]
          ✅ prd-notifications is now ready for implementation.
          A Builder session can claim it from the dashboard.
 ```

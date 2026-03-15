@@ -1,11 +1,27 @@
 ---
 name: prd-to-json
-description: "Convert PRDs to prd.json format for the Developer autonomous agent system. Use when you have an existing PRD and need to convert it to Developer's JSON format. Triggers on: convert this prd, turn this into developer format, create prd.json from this, developer json."
+description: "Convert PRDs to structured stories for the Developer autonomous agent system. Use when you have an existing PRD and need to convert it to Developer's format. Triggers on: convert this prd, turn this into developer format, create prd.json from this, developer json."
 ---
 
 # Developer PRD Converter
 
-Converts existing PRDs to the prd.json format that Developer uses for autonomous execution.
+Converts existing PRDs to structured stories that Developer uses for autonomous execution.
+
+---
+
+## Prerequisites
+
+> ⛔ **CRITICAL: This skill requires the `helm-bridge` plugin.**
+>
+> Before performing any PRD operations, verify the `helm_prd_*` tools are available.
+> If tools are not available, STOP and report:
+> ```
+> ⛔ helm-bridge plugin tools not available. Cannot perform PRD operations 
+> without Supabase connection. Ensure helm-bridge plugin is installed and 
+> HELM_SUPABASE_URL is set.
+> ```
+>
+> **Do NOT fall back to file I/O** — if the tools fail, stop.
 
 ---
 
@@ -15,7 +31,7 @@ Converts existing PRDs to the prd.json format that Developer uses for autonomous
 2. Take a PRD (markdown file or text)
 3. Auto-detect flags and add stack-specific acceptance criteria
 4. Present interactive flag review
-5. Convert to `docs/prds/prd-[name].json`
+5. Create PRD and stories via `helm_prd_create` + `helm_prd_story_bulk_create`
 
 ---
 
@@ -54,45 +70,28 @@ If no `project.json` exists, note this and use defaults:
 
 ## Output Format
 
+Stories are created via `helm_prd_story_bulk_create`. The tool expects this structure:
+
 ```json
 {
-  "project": "[From project.json or folder name]",
-  "branchName": "feature/[feature-name-kebab-case]",
-  "description": "[Feature description from PRD title/intro]",
-  "credentialRequirements": [
+  "prd_id": "[prd-id from PRD or folder name]",
+  "stories": [
     {
-      "service": "stripe",
-      "credentialType": "apiKey",
-      "requestTiming": "upfront",
-      "requiredForStories": ["US-003"],
-      "fallbackPlan": "Implement mocks until credentials are provided",
-      "status": "pending"
-    }
-  ],
-  "userStories": [
-    {
-      "id": "US-001",
+      "story_id": "US-001",
       "title": "[Story title]",
       "description": "As a [user], I want [feature] so that [benefit]",
-      "acceptanceCriteria": ["Criterion 1", "Criterion 2", "[Stack-specific criteria]"],
-      "priority": 1,
-      "passes": false,
-      "notes": "",
-      "supportArticleRequired": false,
-      "documentationType": null,
-      "relatedArticleSlugs": [],
-      "marketingRequired": false,
-      "marketingType": null,
-      "relatedMarketingPages": [],
-      "toolsRequired": false,
-      "toolsType": null,
-      "relatedToolNames": [],
-      "considerations": [],
-      "requiredCredentials": []
+      "acceptance_criteria": ["Criterion 1", "Criterion 2", "[Stack-specific criteria]"],
+      "story_points": 1,
+      "status": "pending",
+      "phase": 1,
+      "sort_order": 1,
+      "notes": ""
     }
   ]
 }
 ```
+
+Additional story metadata (documentation, tools, marketing, considerations, credentials) should be stored in the `notes` field as structured JSON or in custom fields if supported.
 
 ---
 
@@ -355,12 +354,52 @@ All flags confirmed. Final PRD summary:
   AI tools updates: 1 story
   Consideration mappings: permissions (1), support-docs (3)
 
-[A] Approve and write prd.json
+[A] Approve and create PRD via helm_prd_create + helm_prd_story_bulk_create
 [E] Edit individual story flags
 [C] Cancel
 
 > _
 ```
+
+---
+
+## Creating the PRD
+
+After approval, create the PRD and stories:
+
+1. **Create the PRD record:**
+   ```
+   helm_prd_create({
+     prd_id: "prd-[feature-name]",
+     title: "[PRD title]",
+     status: "ready",
+     content_markdown: "[original PRD markdown]",
+     phases: [number],
+     estimated_weeks: [estimate],
+     total_stories: [count]
+   })
+   ```
+
+2. **Create all stories in bulk:**
+   ```
+   helm_prd_story_bulk_create({
+     prd_id: "prd-[feature-name]",
+     stories: [
+       {
+         story_id: "US-001",
+         title: "...",
+         description: "...",
+         acceptance_criteria: [...],
+         story_points: 1,
+         status: "pending",
+         phase: 1,
+         sort_order: 1,
+         notes: "{\"supportArticleRequired\": true, \"documentationType\": \"new\", ...}"
+       },
+       // ... more stories
+     ]
+   })
+   ```
 
 ---
 
@@ -533,11 +572,11 @@ Each criterion must be something Developer can CHECK, not something vague.
 
 ## Conversion Rules
 
-1. **Each user story becomes one JSON entry**
+1. **Each user story becomes one story record** via `helm_prd_story_bulk_create`
 2. **IDs**: Sequential (US-001, US-002, etc.)
-3. **Priority**: Based on dependency order, then document order
-4. **All stories**: `passes: false` and empty `notes`
-5. **branchName**: Use format `feature/[feature-name-kebab-case]` (no ticket prefix)
+3. **Priority**: Mapped to `sort_order` based on dependency order, then document order
+4. **All stories**: Start with `status: "pending"`
+5. **branchName**: Store as PRD-level metadata in `notes` field
 6. **project**: Use `name` from `project.json` if available, otherwise folder name
 7. **Acceptance criteria**: Include stack-specific criteria from `project.json`
 
@@ -566,22 +605,22 @@ Each is one focused change that can be completed and verified independently.
 
 ## Archiving Previous Runs
 
-**Before writing a new prd.json, check if there is an existing one from a different feature:**
+**Before creating a new PRD, check if there is an existing one with the same ID:**
 
-1. Read the current `docs/prds/prd-[name].json` if it exists
-2. Check if `branchName` differs from the new feature's branch name
-3. If different AND progress exists:
-   - Create archive folder: `docs/archive/YYYY-MM-DD-feature-name/`
-   - Copy current PRD files to archive
+1. Check for existing PRD: `helm_prd_get({ prd_id: "prd-[name]" })`
+2. If PRD exists with different content or completed status:
+   - The existing PRD data is already in Supabase history
+   - Create the new PRD with a unique ID (e.g., `prd-[name]-v2`) if needed
+   - Or update the existing PRD if it's still in draft/ready status
 
 ---
 
 ## Checklist Before Saving
 
-Before writing prd.json, verify:
+Before creating PRD and stories, verify:
 
 - [ ] **Read `docs/project.json`** for stack context
-- [ ] **Previous run archived** (if prd.json exists with different branchName, archive it first)
+- [ ] **Previous PRD checked** (if prd_id exists, handle appropriately)
 - [ ] Each story is completable in one iteration (small enough)
 - [ ] Stories are ordered by dependency (schema to backend to UI)
 - [ ] **Stack-specific criteria added** based on project.json:
@@ -594,8 +633,10 @@ Before writing prd.json, verify:
 - [ ] Promotable features have `marketingRequired: true` (if `capabilities.marketing`)
 - [ ] Chat-accessible stories have `toolsRequired: true` (if `capabilities.ai`)
 - [ ] `planning.considerations` mapped to relevant stories (when present)
-- [ ] Credential dependencies captured in `credentialRequirements` with request timing
+- [ ] Credential dependencies captured with request timing
 - [ ] Stories map credential dependencies via `requiredCredentials`
 - [ ] Acceptance criteria are verifiable (not vague)
 - [ ] No story depends on a later story
 - [ ] **All uncertain (⚠) flags have been confirmed by user**
+- [ ] **PRD created via `helm_prd_create`**
+- [ ] **Stories created via `helm_prd_story_bulk_create`**

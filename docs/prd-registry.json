@@ -4,14 +4,16 @@
     {
       "id": "prd-stack-naming-standardization",
       "title": "Stack Naming Standardization",
-      "status": "ready",
+      "status": "in_progress",
       "filePath": "docs/prds/prd-stack-naming-standardization.md",
       "jsonPath": "docs/prds/prd-stack-naming-standardization.json",
       "createdAt": "2026-03-16T00:00:00Z",
       "updatedAt": "2026-03-16T00:00:00Z",
       "stories": 3,
       "phases": 1,
-      "notes": "Extracted from helm-ade-macos prd-project-settings-consolidation US-004. Standardize stack.languages → stack.language and stack.framework → stack.frameworks across all agent/skill files."
+      "notes": "Extracted from helm-ade-macos prd-project-settings-consolidation US-004. Standardize stack.languages → stack.language and stack.framework → stack.frameworks across all agent/skill files.",
+      "startedAt": "2026-03-16T00:00:00Z",
+      "currentStory": "US-002"
     }
   ]
 }

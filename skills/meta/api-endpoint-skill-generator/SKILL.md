@@ -31,7 +31,7 @@ cat docs/project.json
 
 Extract:
 - `stack.framework` — Next.js, Express, Gin, FastAPI, etc.
-- `stack.languages` — TypeScript, Go, Python, etc.
+- `stack.language` — TypeScript, Go, Python, etc.
 - `capabilities.api` — Should be true
 - `security.inputValidation` — zod, joi, etc.
 - `security.authMiddleware` — Path to auth middleware

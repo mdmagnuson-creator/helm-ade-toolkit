@@ -121,9 +121,9 @@ Read `docs/project.json` and check for missing toolkit support:
 
 | Project has... | Toolkit should have... | Gap if missing |
 |----------------|----------------------|----------------|
-| `stack.languages: [python]` | @python-dev or similar | "No Python specialist" |
-| `stack.languages: [java]` | @java-dev, @backend-critic-java | "No Java specialist" |
-| `stack.languages: [go]` | @go-dev, @go-tester, @backend-critic-go | "No Go specialist" |
+| `stack.language: "python"` | @python-dev or similar | "No Python specialist" |
+| `stack.language: "java"` | @java-dev, @backend-critic-java | "No Java specialist" |
+| `stack.language: "go"` | @go-dev, @go-tester, @backend-critic-go | "No Go specialist" |
 | `capabilities.ai: true` | @tools-writer | "AI tools support" |
 | `capabilities.realtime: true` | Realtime patterns | "Realtime patterns" |
 | Stack framework not in agent-templates | Project-specific agent | "No [framework] template" |

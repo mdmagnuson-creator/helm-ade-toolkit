@@ -7,6 +7,41 @@
       "appliedBy": "toolkit",
       "updateType": "agent",
       "summary": "Added environment-database context gap diagnosis to Builder"
+    },
+    {
+      "id": "2026-03-04-migrate-git-config",
+      "appliedAt": "2026-03-16T00:00:00Z",
+      "appliedBy": "builder",
+      "updateType": "migration",
+      "summary": "Skipped by user"
+    },
+    {
+      "id": "2026-03-05-deprecate-multi-session",
+      "appliedAt": "2026-03-16T00:00:00Z",
+      "appliedBy": "builder",
+      "updateType": "schema",
+      "summary": "Skipped by user"
+    },
+    {
+      "id": "2026-03-05-architecture-aware-verification",
+      "appliedAt": "2026-03-16T00:00:00Z",
+      "appliedBy": "builder",
+      "updateType": "schema",
+      "summary": "Skipped by user"
+    },
+    {
+      "id": "2026-03-07-configure-test-verify-settings",
+      "appliedAt": "2026-03-16T00:00:00Z",
+      "appliedBy": "builder",
+      "updateType": "schema",
+      "summary": "Skipped by user"
+    },
+    {
+      "id": "2026-03-08-migrate-to-post-change-actions",
+      "appliedAt": "2026-03-16T00:00:00Z",
+      "appliedBy": "builder",
+      "updateType": "schema",
+      "summary": "Skipped by user"
     }
   ]
 }

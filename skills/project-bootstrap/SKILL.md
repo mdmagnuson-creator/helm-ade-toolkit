@@ -155,9 +155,9 @@ Based on `docs/project.json` values, select applicable templates:
 
 | project.json Path | Template | Output File |
 |-------------------|----------|-------------|
-| `stack.languages` contains "typescript" | `critics/typescript.md` | `docs/agents/typescript-critic.md` |
-| `stack.languages` contains "go" | `critics/go.md` | `docs/agents/go-critic.md` |
-| `stack.languages` contains "python" | `critics/python.md` | `docs/agents/python-critic.md` |
+| `stack.language` is "typescript" | `critics/typescript.md` | `docs/agents/typescript-critic.md` |
+| `stack.language` is "go" | `critics/go.md` | `docs/agents/go-critic.md` |
+| `stack.language` is "python" | `critics/python.md` | `docs/agents/python-critic.md` |
 | `apps.*.framework` is "nextjs", "remix", or "react" | `frontend/react.md` | `docs/agents/react-dev.md` |
 | `apps.*.framework` is "vue" or "nuxt" | `frontend/vue.md` | `docs/agents/vue-dev.md` |
 | `apps.*.framework` is "svelte" or "sveltekit" | `frontend/svelte.md` | `docs/agents/svelte-dev.md` |

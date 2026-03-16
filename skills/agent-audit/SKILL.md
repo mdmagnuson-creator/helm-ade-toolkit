@@ -348,7 +348,7 @@ ls $HELM_PROJECT_PATH/docs/agents/ 2>/dev/null
 ```
 
 Extract:
-- `stack.languages[]` — programming languages
+- `stack.language` — primary programming language
 - `stack.framework` — primary framework
 - `testing.unit.framework` — unit testing tool
 - `testing.e2e.framework` — E2E testing tool

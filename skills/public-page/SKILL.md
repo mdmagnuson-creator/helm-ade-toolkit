@@ -48,7 +48,7 @@ If `docs/project.json` exists, extract key information:
 | Field | Use For |
 |-------|---------|
 | `stack.framework` | Determine file structure and routing conventions |
-| `stack.languages` | File extensions (.tsx, .jsx, .vue, .svelte, etc.) |
+| `stack.language` | File extensions (.tsx, .jsx, .vue, .svelte, etc.) |
 | `apps` | Where to place page files |
 | `styling` | CSS approach (Tailwind, CSS modules, etc.) |
 | `styling.darkMode.enabled` | Add dark mode verification |
@@ -123,7 +123,7 @@ Target: [specific feature, persona, or document type]
 
 Stack Context (from project.json):
 - Framework: [stack.framework]
-- Language: [stack.languages]
+- Language: [stack.language]
 - Styling: [styling.framework]
 - Dark mode: [styling.darkMode.enabled]
 - File location: [apps.*.structure.pages or routing convention]

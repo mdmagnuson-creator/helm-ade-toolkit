@@ -48,7 +48,7 @@ If `docs/project.json` exists, extract key information for criteria generation:
 | Field | Use For |
 |-------|---------|
 | `name` | Set `project` field in JSON |
-| `stack.languages` | Determine language-specific criteria |
+| `stack.language` | Determine language-specific criteria |
 | `styling.darkMode.enabled` | Add dark mode criteria for UI stories |
 | `linting.enabled` | Add lint criteria |
 | `capabilities.supportDocs` | Enable documentation flag detection |
@@ -103,9 +103,9 @@ Additional story metadata (documentation, tools, marketing, considerations, cred
 
 | Condition | Add This Criterion |
 |-----------|-------------------|
-| `stack.languages` includes "typescript" | `"Typecheck passes"` |
-| `stack.languages` includes "go" | `"go build succeeds"` |
-| `stack.languages` includes "python" + typed | `"mypy passes"` |
+| `stack.language` is "typescript" | `"Typecheck passes"` |
+| `stack.language` is "go" | `"go build succeeds"` |
+| `stack.language` is "python" + typed | `"mypy passes"` |
 | `linting.enabled: true` | `"Lint passes"` |
 | Story has UI AND `apps.*.type` includes "frontend" | `"Verify in browser"` |
 | Story has UI AND `styling.darkMode.enabled: true` | `"Works in both light and dark mode"` |

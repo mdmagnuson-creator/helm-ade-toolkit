@@ -50,7 +50,7 @@ If `docs/project.json` exists, extract key information:
 
 | Field | Use For |
 |-------|---------|
-| `stack.languages` | Determine if "Typecheck passes" applies |
+| `stack.language` | Determine if "Typecheck passes" applies |
 | `stack.framework` | Framework-specific acceptance criteria |
 | `apps` | Understanding where code lives |
 | `styling.darkMode.enabled` | Add dark mode verification for UI stories |
@@ -179,9 +179,9 @@ Each story should be small enough to implement in one focused session.
 
 | Condition | Add This Criterion |
 |-----------|-------------------|
-| `stack.languages` includes "typescript" | `Typecheck passes` |
-| `stack.languages` includes "go" | `go build succeeds` |
-| `stack.languages` includes "python" | `mypy passes` (if typed) |
+| `stack.language` is "typescript" | `Typecheck passes` |
+| `stack.language` is "go" | `go build succeeds` |
+| `stack.language` is "python" | `mypy passes` (if typed) |
 | `linting.enabled: true` | `Lint passes` |
 | Story has UI AND `apps.*.type` includes "frontend" | `Verify in browser` |
 | Story has UI AND `styling.darkMode.enabled: true` | `Works in both light and dark mode` |

@@ -1,0 +1,35 @@
+{
+  "sessionId": "builder-stack-naming",
+  "mode": "prd",
+  "prdId": "prd-stack-naming-standardization",
+  "branch": "main",
+  "status": "in_progress",
+  "startedAt": "2026-03-16T00:00:00Z",
+  "lastHeartbeat": "2026-03-16T00:00:00Z",
+  "analysisCompleted": true,
+  "probeStatus": "confirmed",
+  "currentChunk": "US-001",
+  "chunks": [
+    {
+      "id": "US-001",
+      "title": "Standardize stack.languages → stack.language",
+      "status": "pending"
+    },
+    {
+      "id": "US-002",
+      "title": "Standardize stack.framework → stack.frameworks",
+      "status": "pending"
+    },
+    {
+      "id": "US-003",
+      "title": "Verify no remaining inconsistencies",
+      "status": "pending"
+    }
+  ],
+  "currentAction": {
+    "description": "Starting PRD execution",
+    "contextAnchor": "prd-stack-naming-standardization",
+    "lastAction": "Initialized session",
+    "updatedAt": "2026-03-16T00:00:00Z"
+  }
+}

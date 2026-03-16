@@ -1,0 +1,82 @@
+{
+  "project": "helm-ade-toolkit",
+  "branchName": "feature/stack-naming-standardization",
+  "description": "Standardize stack field naming in agent and skill files to match canonical project.json schema",
+  "credentialRequirements": [],
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Standardize stack.languages → stack.language",
+      "description": "As a developer, I need all agent and skill files to use stack.language (singular string) instead of stack.languages (plural array) so the naming matches the canonical project.json schema.",
+      "acceptanceCriteria": [
+        "All references to stack.languages in agent .md and skill SKILL.md files updated to stack.language",
+        "Search covers all files in agents/ and skills/",
+        "No functional behavior change"
+      ],
+      "priority": 1,
+      "passes": true,
+      "status": "completed",
+      "completedAt": "2026-03-16T00:01:00Z",
+      "notes": "18 replacements across 7 files. Also found skills/meta/api-endpoint-skill-generator/SKILL.md beyond the known list.",
+      "supportArticleRequired": false,
+      "documentationType": null,
+      "relatedArticleSlugs": [],
+      "marketingRequired": false,
+      "marketingType": null,
+      "relatedMarketingPages": [],
+      "toolsRequired": false,
+      "toolsType": null,
+      "relatedToolNames": [],
+      "considerations": [],
+      "requiredCredentials": []
+    },
+    {
+      "id": "US-002",
+      "title": "Standardize stack.framework → stack.frameworks",
+      "description": "As a developer, I need all agent and skill files to use stack.frameworks (plural array) instead of stack.framework (singular string) so the naming matches the canonical project.json schema.",
+      "acceptanceCriteria": [
+        "All references to stack.framework (singular) in agent .md and skill SKILL.md files updated to stack.frameworks (plural array)",
+        "Search covers all files in agents/ and skills/",
+        "No functional behavior change"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Known affected files: skills/agent-audit/SKILL.md, skills/prd/SKILL.md, skills/public-page/SKILL.md",
+      "supportArticleRequired": false,
+      "documentationType": null,
+      "relatedArticleSlugs": [],
+      "marketingRequired": false,
+      "marketingType": null,
+      "relatedMarketingPages": [],
+      "toolsRequired": false,
+      "toolsType": null,
+      "relatedToolNames": [],
+      "considerations": [],
+      "requiredCredentials": []
+    },
+    {
+      "id": "US-003",
+      "title": "Verify no remaining inconsistencies",
+      "description": "As a developer, I need a final grep across the entire repo to confirm zero remaining stack.languages or stack.framework (singular) references.",
+      "acceptanceCriteria": [
+        "grep -r 'stack\\.languages' agents/ skills/ returns zero results",
+        "grep -r 'stack\\.framework[^s]' agents/ skills/ returns zero results (matching stack.framework but not stack.frameworks)",
+        "Canonical forms confirmed: stack.language (string), stack.frameworks (array)"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "supportArticleRequired": false,
+      "documentationType": null,
+      "relatedArticleSlugs": [],
+      "marketingRequired": false,
+      "marketingType": null,
+      "relatedMarketingPages": [],
+      "toolsRequired": false,
+      "toolsType": null,
+      "relatedToolNames": [],
+      "considerations": [],
+      "requiredCredentials": []
+    }
+  ]
+}

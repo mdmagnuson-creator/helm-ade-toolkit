@@ -1012,7 +1012,7 @@
         "type": "refactor",
         "scope": "skills",
         "description": "reduce analysis depth in adhoc-workflow Step 0.1 — rename to Behavior-Focused Analysis, replace deep exploration methods with lighter approach, defer implementation understanding to specialist agents",
-        "hash": "pending"
+        "hash": "e50ed4b"
       },
       {
         "type": "fix",

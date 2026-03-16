@@ -275,7 +275,7 @@ Capturing current state...
 
 The screenshot will be attached to the analysis dashboard (Step 0.2). Do NOT show the screenshot separately — it's part of the analysis presentation.
 
-### Step 0.1: Time-Boxed Analysis (10 seconds)
+### Step 0.1: Behavior-Focused Analysis (10 seconds)
 
 Run analysis with visible progress indicator:
 
@@ -286,28 +286,33 @@ Run analysis with visible progress indicator:
 
 "Add loading spinner to submit button"
 
-⏳ Scanning imports...
-⏳ Identifying affected files...
-⏳ Checking for downstream impacts...
+⏳ Identifying affected area...
+⏳ Checking for side effects...
 ⏳ Estimating scope...
 
 ═══════════════════════════════════════════════════════════════════════
 ```
 
+**Analysis goal:** Understand **what** the current behavior is and **where** the change happens — not **how** to implement it. The specialist agent (@swift-dev, @react-dev, etc.) determines the implementation. Deep codebase exploration is their job, not yours.
+
 **Analysis methods (run in parallel, 10-second timeout):**
 
-1. **AST/Import Analysis** — Find files importing affected components
-2. **Semantic Understanding** — Identify related functionality
-3. **Checklist Review** — Check for:
-   - Database schema changes needed
-   - API contract changes
-   - Breaking changes to exports
-   - Migration requirements
-   - Test impact
+1. **Locate the affected area** — Identify which files/components are involved (file names, not internals)
+2. **Side-effect check** — Quick scan for:
+   - Does this touch an API contract or shared type?
+   - Does this affect database schema?
+   - Are there other consumers of the affected component?
+3. **Scope estimate** — Small / Medium / Large based on file count and blast radius
+
+**What this step does NOT do:**
+- Does NOT read implementation details of affected files (the specialist does this)
+- Does NOT evaluate which APIs, patterns, or components to use
+- Does NOT trace call graphs or dependency chains in depth
+- Does NOT delegate deep exploration to @explore — save that for the specialist
+
+The Playwright probe (Step 0.1b) provides the primary evidence for current behavior. Code analysis here just identifies the *area* so the probe knows *where* to look.
 
 If analysis times out, show what was found with note: "⚠️ Analysis may be incomplete (timed out)"
-
-> **Dashboard presentation rule:** During analysis, you will naturally identify specific code mechanisms, APIs, and implementation details — this is how you understand the problem. However, when presenting findings in the Step 0.2 dashboard, translate mechanisms into outcomes. The UNDERSTANDING section describes what's wrong and what should change (behavior). The RECOMMENDED APPROACH and STORY PREVIEW describe desired results, not techniques. The specialist agent (@swift-dev, @react-dev, etc.) chooses the implementation approach.
 
 ### Step 0.1a: Task Type Classification (MANDATORY)
 

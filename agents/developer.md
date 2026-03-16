@@ -140,16 +140,29 @@ If no context block was provided:
    - Stack info from `docs/project.json`
    - Relevant conventions from `docs/CONVENTIONS.md`
    - **Semantic context** from step 2 (if available)
-4. **Route to specialists:**
-   - `.go` → @go-dev
-   - `.tsx`/`.jsx`/`.css` (frontend) → @react-dev
-   - `.java` → @java-dev
-   - `.py` → @python-dev
-   - `.tf` → @terraform-dev
-   - CloudFormation → @aws-dev
-   - Dockerfile → @docker-dev
-   - Playwright tests → @ui-tester-playwright
-   - Config files, markdown, simple glue code → handle yourself
+4. **Route to specialist agents dynamically:**
+
+   Check the Task tool's available agent list for `*-dev` agents whose description
+   matches the files and technologies involved in this task.
+
+   **Routing algorithm:**
+   1. Identify the primary language/framework of each file being modified
+   2. Scan the available `*-dev` agents for description keywords matching that language/framework
+   3. If a matching specialist exists, delegate to it via the Task tool
+   4. If multiple file types are involved, run the appropriate specialists in parallel
+   5. If no specialist matches, handle the implementation yourself
+
+   **Matching examples** (for illustration — actual routing uses agent descriptions, not this table):
+   - Swift/SwiftUI files → look for agent with "Swift" in description
+   - Go files → look for agent with "Go" in description
+   - React/TSX/JSX/CSS → look for agent with "React" in description
+   - Playwright test files → look for agent with "Playwright" in description
+   - Infrastructure files → look for agent with matching infra tool in description
+
+   **Always pass to specialists:**
+   - Project context from `docs/project.json` and `docs/CONVENTIONS.md`
+   - Semantic context from vectorization (if available)
+   - The specific task description and acceptance criteria
 
 4. **Run specialists in parallel** when working on independent areas
 5. **After specialists complete**, verify integration

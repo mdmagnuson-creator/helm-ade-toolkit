@@ -920,7 +920,8 @@ Proposed:
 
 ✅ RECOMMENDED APPROACH
 ───────────────────────────────────────────────────────────────────────
-Use Spinner component (consistent with design system, accessible)
+Show loading feedback during form submission; prevent double-submit;
+use existing design system patterns where available
 
 🔀 ALTERNATIVES                                              [D] Details
 ───────────────────────────────────────────────────────────────────────
@@ -929,10 +930,9 @@ Use Spinner component (consistent with design system, accessible)
 
 📝 STORY PREVIEW
 ───────────────────────────────────────────────────────────────────────
-TSK-001: Add loading state to SubmitButton
-TSK-002: Show Spinner when loading  
-TSK-003: Disable button during submission
-TSK-004: Add unit tests
+TSK-001: Button shows loading feedback during form submission
+TSK-002: Button is non-interactive while submission is in progress
+TSK-003: Loading behavior has unit test coverage
 
 🔧 VERIFICATION PLAN
 ───────────────────────────────────────────────────────────────────────
@@ -976,7 +976,12 @@ TSK-004: Add unit tests
 - **Scope:** Small (<5 files, no breaking changes) / Medium (5-15 files, minor impacts) / Large (15+ files, breaking changes)
 - **Consequences:** Collapsed if none; expanded if any exist
 - **Implementation Decisions:** Shown between PROBE RESULTS and SCOPE when decisions were resolved in Step 0.1c. Omitted entirely when no decisions were detected (Step 0.1c was skipped). Each decision shows the question summary, the user's choice, and brief rationale. If user chose "you decide", show Builder's choice with "(Builder's recommendation)" label.
-- **Recommended Approach:** Always shown as its own `✅ RECOMMENDED APPROACH` section; never listed inside Alternatives
+- **Recommended Approach:** Always shown as its own `✅ RECOMMENDED APPROACH` section; never listed inside Alternatives. Describes the **desired outcome and constraints** — not the implementation mechanism. The specialist agent (@swift-dev, @react-dev, etc.) chooses the technique. Examples:
+  - ✅ "Show loading feedback during form submission; prevent double-submit; use existing design system components"
+  - ✅ "Messages fill available width with consistent padding; no horizontal overflow or layout instability"
+  - ❌ "Use GeometryReader to measure parent width and pass to child views"
+  - ❌ "Use Spinner component with isLoading prop gating visibility"
+- **Story Preview:** Task descriptions describe **what the user should experience or what the code should achieve** — not which API, component, or pattern to use. The implementing agent determines the mechanism.
 - **Alternatives:** Shown as `🔀 ALTERNATIVES` section with non-recommended options only; collapsed if no alternatives exist
 
 **Dashboard options by confidence level:**
@@ -1283,13 +1288,14 @@ during form submission, disabled state to prevent double-submit.
 **Scope:** Small (2 files, no breaking changes)
 **Confidence:** High
 
-**Approach:** Use existing Spinner component, disable button during submission.
+**Approach:** Show loading feedback during form submission, prevent double-submit,
+use existing design system patterns where available.
 
 **Alternatives Considered:**
 - CSS-only animation — simpler but inconsistent with design system
 - Full-page overlay — overkill for single button
 
-**Recommendation:** Use Spinner component (consistent, accessible, already styled)
+**Recommendation:** Loading feedback with double-submit prevention, consistent with design system
 
 **Consequences:** None identified
 
@@ -1309,45 +1315,34 @@ during form submission, disabled state to prevent double-submit.
 
 ## Stories
 
-### TSK-001: Add loading state to SubmitButton component
+### TSK-001: Button shows loading feedback during form submission
 
-**Description:** Add isLoading prop to track submission state.
+**Description:** User sees visual loading indication when form is submitting.
 
 **Acceptance Criteria:**
 
-- [ ] Add `isLoading` prop to SubmitButton
-- [ ] Pass loading state from parent form
+- [ ] Button displays loading state during submission
+- [ ] Loading indicator uses existing design system patterns
 - [ ] Typecheck passes
 
-### TSK-002: Show Spinner when loading
+### TSK-002: Button is non-interactive while submission is in progress
 
-**Description:** Display spinner icon during submission.
-
-**Acceptance Criteria:**
-
-- [ ] Import Spinner component
-- [ ] Render Spinner when `isLoading` is true
-- [ ] Hide button text while loading
-- [ ] Verify in browser
-
-### TSK-003: Disable button during submission
-
-**Description:** Prevent double-submit during loading.
+**Description:** Prevent double-submit during active submission.
 
 **Acceptance Criteria:**
 
-- [ ] Add `disabled={isLoading}` to button
-- [ ] Style disabled state appropriately
+- [ ] Button cannot be clicked while submission is in progress
+- [ ] Visual styling reflects non-interactive state
 - [ ] Works in both light and dark mode
 
-### TSK-004: Add unit tests
+### TSK-003: Loading behavior has unit test coverage
 
-**Description:** Test loading behavior.
+**Description:** Test loading and non-interactive behavior.
 
 **Acceptance Criteria:**
 
-- [ ] Test loading state renders spinner
-- [ ] Test button is disabled during loading
+- [ ] Test loading state is visible during submission
+- [ ] Test button is non-interactive during loading
 - [ ] Unit tests pass
 ```
 

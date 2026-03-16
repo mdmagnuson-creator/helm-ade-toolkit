@@ -93,17 +93,20 @@ Review the following files: [file list]
 - `<project>/docs/agents/swift-critic.md` → use instead of global @swift-critic for Swift files
 - If a project-specific critic exists, **use the Task tool** with `subagent_type: "general"` and include the full prompt from that file PLUS the context block
 
-**Fall back to global critics** when no project-specific critic exists:
-- `.swift` files → run @swift-critic
-- `.go` files → run @backend-critic-go
-- `.ts` files that are backend (routes, controllers, services, handlers, middleware, not components/hooks/pages) → run @backend-critic-ts
-- `.java` files → run @backend-critic-java
-- `.tsx`, `.jsx`, `.css`, `.scss`, `.vue`, `.svelte` files, or `.ts` files that are clearly frontend (components, hooks, pages, styles) → run @frontend-critic
-- `.tsx`, `.jsx`, `.vue`, `.svelte`, `.html` files containing Tailwind classes (look for `className=` with Tailwind utilities) → run @tailwind-critic
-- `.yml`/`.yaml` files that contain `AWSTemplateFormatVersion` → run @cloudformation-critic
-- `.yml`/`.yaml` files in `ansible/`, `roles/`, or `playbooks/` directories, or files with Ansible task/play structure (e.g., `hosts:`, `tasks:`, `roles:`) → run @ansible-critic
-- If the diff has a mix of languages, run multiple critics in parallel.
-- If none of the language critics apply (e.g. only config files, markdown, shell scripts, Dockerfiles, Terraform, etc.), skip the language critics.
+**Fall back to global critics** when no project-specific critic exists.
+
+Scan the available `*-critic` agents (excluding cross-cutting and security critics listed below)
+for description keywords matching the languages and frameworks in the diff:
+
+1. Identify the language/framework of each changed file
+2. Match against available critic agent descriptions
+3. Run all matching critics in parallel
+4. If a file is clearly frontend (components, hooks, pages, styles, TSX/JSX/Vue/Svelte) → also run @frontend-critic
+5. If frontend files contain Tailwind classes (`className=` with Tailwind utilities) → also run @tailwind-critic
+6. If the diff has a mix of languages, run multiple critics in parallel
+7. If none of the language critics apply (e.g., only config files, markdown, shell scripts), skip language critics
+
+**Backend vs frontend distinction for TypeScript:** `.ts` files that are routes, controllers, services, handlers, or middleware → match backend critics. `.ts` files that are components, hooks, or pages → match frontend critics.
 
 #### Cross-Cutting Critics
 

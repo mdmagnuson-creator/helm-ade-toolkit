@@ -90,9 +90,11 @@ Review the following files: [file list]
 - `<project>/docs/agents/typescript-critic.md` → use instead of global @backend-critic-ts or @frontend-critic for TS/TSX
 - `<project>/docs/agents/go-critic.md` → use instead of global @backend-critic-go for Go files
 - `<project>/docs/agents/python-critic.md` → use instead of global critics for Python files
+- `<project>/docs/agents/swift-critic.md` → use instead of global @swift-critic for Swift files
 - If a project-specific critic exists, **use the Task tool** with `subagent_type: "general"` and include the full prompt from that file PLUS the context block
 
 **Fall back to global critics** when no project-specific critic exists:
+- `.swift` files → run @swift-critic
 - `.go` files → run @backend-critic-go
 - `.ts` files that are backend (routes, controllers, services, handlers, middleware, not components/hooks/pages) → run @backend-critic-ts
 - `.java` files → run @backend-critic-java
@@ -170,6 +172,9 @@ The toolkit has three security-related critics with different mindsets. Route ba
 **Important:** You (the orchestrator) are the ONLY agent that writes to `docs/review.md`. Specialist critics return their findings to you.
 
 ## Routing Heuristics
+
+To classify `.swift` files:
+- **All `.swift` files** → run @swift-critic. This critic handles both UI (SwiftUI views) and non-UI (services, models, stores) Swift code, covering layout correctness, view lifecycle, data flow, multiplatform issues, and performance.
 
 To classify `.ts` files as frontend vs backend:
 - **Frontend indicators:** file is under a `components/`, `pages/`, `hooks/`, `app/`, `src/ui/`, or `views/` directory; imports React, Vue, Svelte, or similar UI libraries; filename contains `.component.`, `.page.`, `.hook.`

@@ -1,10 +1,10 @@
 {
   "$schema": "https://opencode.ai/schemas/toolkit-structure.json",
   "version": "1.0.0",
-  "generatedAt": "2026-03-08T23:30:00Z",
+  "generatedAt": "2026-03-16T19:00:00Z",
   "repository": "https://github.com/mdmagnuson/helm-ade-toolkit",
   "agents": {
-    "total": 63,
+    "total": 64,
     "categories": {
       "primary": {
         "description": "User-invokable primary agents",
@@ -83,6 +83,11 @@
             "name": "react-dev",
             "file": "agents/react-dev.md",
             "description": "Implements React tasks specializing in UI consistency, Tailwind CSS, and TypeScript"
+          },
+          {
+            "name": "swift-dev",
+            "file": "agents/swift-dev.md",
+            "description": "Implements Swift/SwiftUI tasks specializing in multiplatform layout, view lifecycle, and data flow"
           },
           {
             "name": "terraform-dev",
@@ -253,6 +258,11 @@
             "name": "seo-critic",
             "file": "agents/seo-critic.md",
             "description": "Reviews public pages for SEO - meta tags, headings, structured data, page speed, and search engine best practices"
+          },
+          {
+            "name": "swift-critic",
+            "file": "agents/swift-critic.md",
+            "description": "Reviews Swift/SwiftUI code for layout correctness, view lifecycle, data flow, multiplatform issues, and performance"
           },
           {
             "name": "tailwind-critic",
@@ -998,6 +1008,18 @@
   "changelog": {
     "generatedFrom": "git log --since=30 days",
     "entries": [
+      {
+        "type": "feat",
+        "scope": "agents",
+        "description": "add swift-dev and swift-critic agents for SwiftUI implementation and review",
+        "hash": "pending"
+      },
+      {
+        "type": "feat",
+        "scope": "agents",
+        "description": "add Swift routing to critic.md — project-specific priority, .swift file routing, classification heuristic",
+        "hash": "pending"
+      },
       {
         "type": "feat",
         "scope": "agents",

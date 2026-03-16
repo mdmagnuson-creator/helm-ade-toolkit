@@ -47,7 +47,7 @@ If `docs/project.json` exists, extract key information:
 
 | Field | Use For |
 |-------|---------|
-| `stack.framework` | Determine file structure and routing conventions |
+| `stack.frameworks` | Determine file structure and routing conventions |
 | `stack.language` | File extensions (.tsx, .jsx, .vue, .svelte, etc.) |
 | `apps` | Where to place page files |
 | `styling` | CSS approach (Tailwind, CSS modules, etc.) |
@@ -122,7 +122,7 @@ Page type: [landing / feature / use-case / pricing / legal / error / changelog]
 Target: [specific feature, persona, or document type]
 
 Stack Context (from project.json):
-- Framework: [stack.framework]
+- Framework: [stack.frameworks]
 - Language: [stack.language]
 - Styling: [styling.framework]
 - Dark mode: [styling.darkMode.enabled]
@@ -242,7 +242,7 @@ git commit -m "feat: add [page type] page at /[path]"
 
 ## File Structure by Framework
 
-**Determine file structure from `project.json` `stack.framework`:**
+**Determine file structure from `project.json` `stack.frameworks`:**
 
 ### Next.js (App Router)
 

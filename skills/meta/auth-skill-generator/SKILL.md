@@ -30,7 +30,7 @@ cat docs/project.json
 ```
 
 Extract:
-- `stack.framework` — Next.js, Express, etc.
+- `stack.frameworks` — Next.js, Express, etc.
 - `database.client` — Supabase, Prisma, etc.
 - `integrations[]` — Look for auth providers (supabase, auth0, clerk, etc.)
 - `apps[]` — Frontend/backend structure

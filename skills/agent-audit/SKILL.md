@@ -349,7 +349,7 @@ ls $HELM_PROJECT_PATH/docs/agents/ 2>/dev/null
 
 Extract:
 - `stack.language` — primary programming language
-- `stack.framework` — primary framework
+- `stack.frameworks` — primary framework(s)
 - `testing.unit.framework` — unit testing tool
 - `testing.e2e.framework` — E2E testing tool
 - `styling.framework` — CSS framework

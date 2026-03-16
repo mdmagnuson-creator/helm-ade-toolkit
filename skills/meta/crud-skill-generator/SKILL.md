@@ -30,7 +30,7 @@ cat docs/project.json
 ```
 
 Extract:
-- `stack.framework` — Next.js, Express, Gin, etc.
+- `stack.frameworks` — Next.js, Express, Gin, etc.
 - `database.type` — postgres, mysql, mongodb, etc.
 - `database.client` — supabase, prisma, drizzle, pgx, etc.
 - `capabilities.multiTenant` — affects how entities are scoped

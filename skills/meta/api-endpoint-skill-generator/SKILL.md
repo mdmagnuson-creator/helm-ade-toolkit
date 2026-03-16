@@ -30,7 +30,7 @@ cat docs/project.json
 ```
 
 Extract:
-- `stack.framework` — Next.js, Express, Gin, FastAPI, etc.
+- `stack.frameworks` — Next.js, Express, Gin, FastAPI, etc.
 - `stack.language` — TypeScript, Go, Python, etc.
 - `capabilities.api` — Should be true
 - `security.inputValidation` — zod, joi, etc.

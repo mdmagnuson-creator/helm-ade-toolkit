@@ -40,8 +40,10 @@
         "No functional behavior change"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "Known affected files: skills/agent-audit/SKILL.md, skills/prd/SKILL.md, skills/public-page/SKILL.md",
+      "passes": true,
+      "status": "completed",
+      "completedAt": "2026-03-16T00:02:00Z",
+      "notes": "11 replacements across 8 files. Found 5 additional files in skills/meta/ beyond the known list.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],

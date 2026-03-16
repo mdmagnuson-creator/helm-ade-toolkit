@@ -51,7 +51,7 @@ If `docs/project.json` exists, extract key information:
 | Field | Use For |
 |-------|---------|
 | `stack.language` | Determine if "Typecheck passes" applies |
-| `stack.framework` | Framework-specific acceptance criteria |
+| `stack.frameworks` | Framework-specific acceptance criteria |
 | `apps` | Understanding where code lives |
 | `styling.darkMode.enabled` | Add dark mode verification for UI stories |
 | `testing.unit.framework` | Add "Unit tests pass" criteria when appropriate |
@@ -341,7 +341,7 @@ See design system: [docs/design-system.md](docs/design-system.md)
 - Performance requirements
 
 **Reference project.json for technical context:**
-- Framework: `stack.framework`
+- Framework: `stack.frameworks`
 - Database: `database.type` + `database.client`
 - Key directories: `apps.*.structure`
 

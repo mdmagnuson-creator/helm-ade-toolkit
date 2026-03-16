@@ -31,7 +31,7 @@ cat docs/project.json
 
 Look for:
 - `apps[].type` — includes "frontend" or "fullstack"
-- `stack.framework` — React, Vue, etc.
+- `stack.frameworks` — React, Vue, etc.
 
 ---
 

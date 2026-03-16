@@ -13,7 +13,7 @@
       "phases": 1,
       "notes": "Extracted from helm-ade-macos prd-project-settings-consolidation US-004. Standardize stack.languages → stack.language and stack.framework → stack.frameworks across all agent/skill files.",
       "startedAt": "2026-03-16T00:00:00Z",
-      "currentStory": "US-002"
+      "currentStory": "US-003"
     }
   ]
 }

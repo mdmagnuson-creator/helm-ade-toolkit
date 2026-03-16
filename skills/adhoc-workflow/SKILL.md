@@ -307,6 +307,8 @@ Run analysis with visible progress indicator:
 
 If analysis times out, show what was found with note: "⚠️ Analysis may be incomplete (timed out)"
 
+> **Dashboard presentation rule:** During analysis, you will naturally identify specific code mechanisms, APIs, and implementation details — this is how you understand the problem. However, when presenting findings in the Step 0.2 dashboard, translate mechanisms into outcomes. The UNDERSTANDING section describes what's wrong and what should change (behavior). The RECOMMENDED APPROACH and STORY PREVIEW describe desired results, not techniques. The specialist agent (@swift-dev, @react-dev, etc.) chooses the implementation approach.
+
 ### Step 0.1a: Task Type Classification (MANDATORY)
 
 > ⛔ **CRITICAL: Classify the task type BEFORE proceeding to probe or dashboard.**
@@ -892,10 +894,10 @@ Based on visual + code + Playwright probe analysis:
 - No loading indicator exists — button stays static during submission
 - Existing Spinner component available in design system
 
-Proposed:
-- Show spinner icon during form submission
-- Disable button while loading to prevent double-submit
-- Use existing Spinner component from design system
+Proposed behavior:
+- Button shows loading feedback during form submission
+- Button is non-interactive while submitting (prevents double-submit)
+- Loading indicator is consistent with existing design system
 
 🔍 PROBE RESULTS                                              3/3 ✅
 ───────────────────────────────────────────────────────────────────────
@@ -913,8 +915,8 @@ Proposed:
 
 📁 AFFECTED FILES
 ───────────────────────────────────────────────────────────────────────
-• src/components/SubmitButton.tsx (modify)
-• src/components/SubmitButton.test.tsx (add/modify tests)
+• src/components/SubmitButton.tsx (add loading state behavior)
+• src/components/SubmitButton.test.tsx (test loading behavior)
 
 ⚠️ CONSEQUENCES: None identified
 
@@ -976,6 +978,8 @@ TSK-003: Loading behavior has unit test coverage
 - **Scope:** Small (<5 files, no breaking changes) / Medium (5-15 files, minor impacts) / Large (15+ files, breaking changes)
 - **Consequences:** Collapsed if none; expanded if any exist
 - **Implementation Decisions:** Shown between PROBE RESULTS and SCOPE when decisions were resolved in Step 0.1c. Omitted entirely when no decisions were detected (Step 0.1c was skipped). Each decision shows the question summary, the user's choice, and brief rationale. If user chose "you decide", show Builder's choice with "(Builder's recommendation)" label.
+- **Understanding:** The "Proposed behavior" items describe desired behavior changes — what should happen differently. Do not prescribe specific APIs, components, or code patterns. The specialist agent determines the implementation.
+- **Affected Files:** File descriptions state the functional change ("add loading state behavior") — not the mechanism ("add isLoading prop", "remove GeometryReader").
 - **Recommended Approach:** Always shown as its own `✅ RECOMMENDED APPROACH` section; never listed inside Alternatives. Describes the **desired outcome and constraints** — not the implementation mechanism. The specialist agent (@swift-dev, @react-dev, etc.) chooses the technique. Examples:
   - ✅ "Show loading feedback during form submission; prevent double-submit; use existing design system components"
   - ✅ "Messages fill available width with consistent padding; no horizontal overflow or layout instability"

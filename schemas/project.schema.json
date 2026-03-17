@@ -250,7 +250,7 @@
             "properties": {
               "name": {
                 "type": "string",
-                "enum": ["typescript", "javascript", "go", "python", "java", "rust", "ruby", "php", "csharp"]
+                "enum": ["typescript", "javascript", "go", "python", "java", "rust", "ruby", "php", "csharp", "swift", "kotlin", "dart"]
               },
               "version": { "type": "string" },
               "primary": { "type": "boolean", "default": false }
@@ -286,7 +286,7 @@
           },
           "framework": {
             "type": "string",
-            "description": "Framework name (e.g., nextjs, remix, express, gin, fastapi, electron, tauri, react-native, flutter)"
+            "description": "Framework name (e.g., nextjs, remix, express, gin, fastapi, electron, tauri, react-native, flutter, swiftui, appkit, uikit)"
           },
           "frameworkVersion": { "type": "string" },
           "entryPoint": { "type": "string", "description": "Main entry directory or file" },

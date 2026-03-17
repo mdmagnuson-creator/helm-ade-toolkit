@@ -1,7 +1,7 @@
 {
   "$schema": "https://opencode.ai/schemas/toolkit-structure.json",
   "version": "1.0.0",
-  "generatedAt": "2026-03-16T18:00:00Z",
+  "generatedAt": "2026-03-17T20:00:00Z",
   "repository": "https://github.com/mdmagnuson/helm-ade-toolkit",
   "agents": {
     "total": 64,
@@ -87,7 +87,7 @@
           {
             "name": "swift-dev",
             "file": "agents/swift-dev.md",
-            "description": "Implements Swift/SwiftUI tasks specializing in multiplatform layout, view lifecycle, and data flow"
+            "description": "Implements Swift tasks specializing in multiplatform layout, view lifecycle, data flow, and XCUITest test writing for native macOS/iOS apps"
           },
           {
             "name": "terraform-dev",
@@ -142,7 +142,7 @@
           {
             "name": "tester",
             "file": "agents/tester.md",
-            "description": "Orchestrates test writing by routing to specialist testing agents"
+            "description": "Orchestrates test writing by routing to specialist testing agents including Swift/XCUITest"
           }
         ]
       },
@@ -262,7 +262,7 @@
           {
             "name": "swift-critic",
             "file": "agents/swift-critic.md",
-            "description": "Reviews Swift/SwiftUI code for layout correctness, view lifecycle, data flow, multiplatform issues, and performance"
+            "description": "Reviews Swift/SwiftUI code for layout correctness, view lifecycle, data flow, multiplatform issues, performance, and XCUITest quality"
           },
           {
             "name": "tailwind-critic",
@@ -354,7 +354,7 @@
     }
   },
   "skills": {
-    "total": 68,
+    "total": 69,
     "categories": {
       "workflow": {
         "description": "Workflow and lifecycle skills",
@@ -648,6 +648,11 @@
             "name": "ui-test-electron",
             "path": "skills/ui-test-electron/SKILL.md",
             "description": "Playwright E2E testing patterns for Electron desktop applications. Covers app launch, main/renderer process testing, IPC mocking, and native dialog handling. Triggers on: electron test, desktop app test, ui-test-electron."
+          },
+          {
+            "name": "ui-test-xcuitest",
+            "path": "skills/ui-test-xcuitest/SKILL.md",
+            "description": "XCUITest patterns for native macOS and iOS apps. Covers element queries for SwiftUI/AppKit/UIKit, accessibility identifiers, page objects, platform-specific patterns, and CI integration for GitHub Actions and Xcode Cloud. Triggers on: xcuitest, ui test swift, xcode test, native app test."
           },
           {
             "name": "ui-test-full-app-audit",
@@ -1008,6 +1013,12 @@
   "changelog": {
     "generatedFrom": "git log --since=30 days",
     "entries": [
+      {
+        "type": "feat",
+        "scope": "agents,skills,schemas",
+        "description": "add XCUITest support — new ui-test-xcuitest skill for native macOS/iOS testing, update swift-dev with XCUITest test writing capability, update swift-critic with XCUITest review criteria (Section 8), update tester with Swift/XCUITest routing, add swift/kotlin/dart to project schema language enum, fix skill-mapping.json xcuitest reference",
+        "hash": "pending"
+      },
       {
         "type": "refactor",
         "scope": "skills",

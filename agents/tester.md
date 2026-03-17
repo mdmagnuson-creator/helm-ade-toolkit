@@ -73,24 +73,36 @@ Use documentation lookup tools.
    d. **Check for project-specific testers** in `<project>/docs/agents/` directory
       - These override global testers for this project
    
-   e. **Check for platform-specific apps (Electron, mobile, etc.):**
-      - Read `$OPENCODE_CONFIG/data/skill-mapping.json` for routing decisions
-      - Scan `project.json` apps for platform-specific frameworks:
-        - `framework: 'electron'` or `type: 'desktop'` → route E2E to @ui-tester-playwright with `ui-test-electron` skill hint
-        - `framework: 'react-native'` or `type: 'mobile'` → route E2E to appropriate mobile testing (stub for future)
-        - `framework: 'flutter'` → route E2E to appropriate flutter testing (stub for future)
-      - **Detection fallback** if not declared in `project.json`:
-        ```bash
-        # Check for electron in any app's package.json
-        grep -r '"electron"' apps/*/package.json 2>/dev/null && echo "Electron detected"
-        ```
-      - When delegating E2E tests for Electron apps, include in prompt:
-        ```
-        Platform: Electron desktop app
-        App path: apps/desktop/
-        Load skill: ui-test-electron
-        Testing framework: playwright-electron
-        ```
+     e. **Check for platform-specific apps (Electron, native Apple, mobile, etc.):**
+        - Read `$OPENCODE_CONFIG/data/skill-mapping.json` for routing decisions
+        - Scan `project.json` apps for platform-specific frameworks:
+          - `framework: 'electron'` or `type: 'desktop'` → route E2E to @ui-tester-playwright with `ui-test-electron` skill hint
+          - `framework: 'swiftui'`, `'appkit'`, or `'uikit'` → route E2E to @swift-dev with `ui-test-xcuitest` skill hint
+          - `testing.framework: 'xcuitest'` → route E2E to @swift-dev with `ui-test-xcuitest` skill hint
+          - `framework: 'react-native'` or `type: 'mobile'` → route E2E to appropriate mobile testing (stub for future)
+          - `framework: 'flutter'` → route E2E to appropriate flutter testing (stub for future)
+        - **Detection fallback** if not declared in `project.json`:
+          ```bash
+          # Check for electron in any app's package.json
+          grep -r '"electron"' apps/*/package.json 2>/dev/null && echo "Electron detected"
+          # Check for Xcode project/workspace (native Apple app)
+          ls *.xcodeproj *.xcworkspace 2>/dev/null && echo "Xcode project detected"
+          ```
+        - When delegating E2E tests for Electron apps, include in prompt:
+          ```
+          Platform: Electron desktop app
+          App path: apps/desktop/
+          Load skill: ui-test-electron
+          Testing framework: playwright-electron
+          ```
+        - When delegating E2E tests for native Apple apps, include in prompt:
+          ```
+          Platform: Native Apple app ({framework})
+          App path: {apps[].path}
+          Load skill: ui-test-xcuitest
+          Testing framework: xcuitest
+          Platforms: {apps[].platforms}  # e.g. ["macos", "ios"]
+          ```
    
    f. **Prepare context injection for sub-agents.** When delegating to testing specialists, include:
       - Stack information (testing frameworks, test commands) from `project.json`
@@ -133,11 +145,12 @@ Use documentation lookup tools.
    - `<project>/docs/agents/playwright-tester.md` → use instead of global @ui-tester-playwright
    - If a project-specific tester exists, **use the Task tool** with `subagent_type: "general"` and include the full prompt from that file PLUS the project context you loaded in Step 0
    
-   **Fall back to global testers** when no project-specific tester exists:
-   - `.go` files → delegate to @go-tester
-   - `.tsx`/`.jsx`/`.css`/`.scss` files or frontend `.ts` files (components, hooks, pages, styles) → delegate to @react-tester
-   - Backend `.ts`/`.js` files (routes, controllers, services, handlers, middleware, Lambda) → delegate to @jest-tester
-   - Mixed changes → run multiple specialists in parallel
+    **Fall back to global testers** when no project-specific tester exists:
+    - `.go` files → delegate to @go-tester
+    - `.swift` files → delegate to @swift-dev (for unit tests and XCUITest)
+    - `.tsx`/`.jsx`/`.css`/`.scss` files or frontend `.ts` files (components, hooks, pages, styles) → delegate to @react-tester
+    - Backend `.ts`/`.js` files (routes, controllers, services, handlers, middleware, Lambda) → delegate to @jest-tester
+    - Mixed changes → run multiple specialists in parallel
 
 4. **Delegate to specialists**:
    - Write a clear task description for each specialist. Include:
@@ -684,6 +697,8 @@ Before routing E2E tests, check for platform-specific apps using `data/skill-map
 |----------|-----------|-----------|---------------|
 | `desktop` | `electron` | @ui-tester-playwright | `ui-test-electron` |
 | `desktop` | `tauri` | @ui-tester-playwright | `e2e-tauri` (future) |
+| `native-desktop` | `swiftui`, `appkit` | @swift-dev | `ui-test-xcuitest` |
+| `native-mobile` | `swiftui`, `uikit` | @swift-dev | `ui-test-xcuitest` |
 | `mobile` | `react-native`, `expo` | @e2e-mobile (future) | `e2e-mobile` |
 | `mobile` | `flutter` | @e2e-flutter (future) | `e2e-flutter` |
 | `frontend` | any web | @ui-tester-playwright | none |
@@ -724,6 +739,44 @@ The launchTarget determines test directory, launch pattern, and config file.
 > ⛔ **CRITICAL:** Always include the `Launch Target Configuration` block when delegating Electron E2E work.
 > Without this, the sub-agent defaults to dev-mode patterns which produce tests in the wrong directory with the wrong launcher.
 
+**XCUITest E2E delegation example:**
+
+When routing to @swift-dev for a native Apple app:
+
+```
+E2E tests needed for native Apple app
+
+## Platform Context
+- Platform: Native {framework} app (macOS/iOS/multiplatform)
+- App path: {apps[].path}
+- Load skill: ui-test-xcuitest
+- Testing framework: xcuitest
+- Platforms: {apps[].platforms}
+
+## Xcode Project Configuration
+- xcodeProject: {apps[].testing.xcodeProject}  # e.g. "MyApp.xcodeproj"
+- xcodeWorkspace: {apps[].testing.xcodeWorkspace}  # e.g. "MyApp.xcworkspace"
+- scheme: {apps[].testing.scheme}  # e.g. "MyAppUITests"
+- testTarget: {apps[].testing.testTarget}  # e.g. "MyAppUITests"
+- bundleIdentifier: {apps[].bundleIdentifier}
+- destinations: {apps[].testing.destinations}  # e.g. ["platform=macOS"]
+
+⚠️ MANDATORY: Read project.json → apps[].testing BEFORE writing any test file.
+The scheme and testTarget determine where tests go and how they launch.
+
+## What Was Implemented
+[Story description]
+
+## UI Areas to Test
+[List from e2e-areas.json or describe key flows]
+
+## Acceptance Criteria
+[From story]
+```
+
+> ⛔ **CRITICAL:** Always include the `Xcode Project Configuration` block when delegating XCUITest E2E work.
+> Without this, the sub-agent cannot determine the correct scheme, test target, or destination for test execution.
+
 ### Mutation Testing Requirements
 
 When analyzing stories for test coverage, identify if the story involves **data mutations**:
@@ -753,11 +806,17 @@ When analyzing stories for test coverage, identify if the story involves **data 
 ### Go Code → @go-tester
 - `.go` files (any Go code)
 
+### Swift Code → @swift-dev
+- `.swift` files (any Swift code)
+- For unit tests: @swift-dev writes XCTest-based tests
+- For UI/E2E tests: @swift-dev writes XCUITest tests (load `ui-test-xcuitest` skill)
+
 ### Mixed Changes
 When a story touches multiple file types, run the appropriate specialists in parallel:
 - Go API + React frontend → run @go-tester and @react-tester in parallel
 - Backend Lambda + Frontend component → run @jest-tester and @react-tester in parallel
 - Go service + Go Lambda + React UI → run @go-tester (handles all Go) and @react-tester in parallel
+- Swift app + Go backend → run @swift-dev and @go-tester in parallel
 
 ## Task Description Format
 
@@ -898,6 +957,7 @@ See AGENTS.md for format. Your filename prefix: `YYYY-MM-DD-tester-`
 | **Jest** | `npx jest` | `jest --watch` | `jest` (default is CI mode) |
 | **Playwright** | `npx playwright test` | N/A | Default is single-run |
 | **Go test** | `go test` | N/A | Default is single-run |
+| **XCUITest** | `xcodebuild test` | N/A | Default is single-run |
 
 ### When Running Tests
 
@@ -916,10 +976,22 @@ See AGENTS.md for format. Your filename prefix: `YYYY-MM-DD-tester-`
    ```
 
 4. **Set CI environment variable** as a safety net:
-   ```bash
-   CI=true npm test
-   ```
-   Most test runners detect `CI=true` and automatically disable watch mode.
+    ```bash
+    CI=true npm test
+    ```
+    Most test runners detect `CI=true` and automatically disable watch mode.
+
+5. **If XCUITest detected** (native Apple app), use `xcodebuild test`:
+    ```bash
+    # Read scheme and destination from project.json → apps[].testing
+    xcodebuild test \
+      -project {xcodeProject} \       # or -workspace {xcodeWorkspace}
+      -scheme {scheme} \
+      -destination '{destination}' \   # e.g. "platform=macOS" or "platform=iOS Simulator,name=iPhone 16"
+      -only-testing:{testTarget} \     # e.g. "MyAppUITests"
+      -resultBundlePath .tmp/test-results.xcresult
+    ```
+    **Note:** @swift-dev writes tests but does NOT run them. The tester agent or CI runs them.
 
 ### Verification
 

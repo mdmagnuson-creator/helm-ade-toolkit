@@ -65,6 +65,36 @@
         },
         "detectBy": ["framework", "package.json:@capacitor/core"],
         "platforms": ["ios", "android", "browser"]
+      },
+      {
+        "framework": "swiftui",
+        "appType": "native-desktop",
+        "skills": {
+          "e2e": "ui-test-xcuitest",
+          "development": null
+        },
+        "detectBy": ["framework", "apps.*.framework"],
+        "platforms": ["macos", "ios"]
+      },
+      {
+        "framework": "appkit",
+        "appType": "native-desktop",
+        "skills": {
+          "e2e": "ui-test-xcuitest",
+          "development": null
+        },
+        "detectBy": ["framework", "apps.*.framework"],
+        "platforms": ["macos"]
+      },
+      {
+        "framework": "uikit",
+        "appType": "native-mobile",
+        "skills": {
+          "e2e": "ui-test-xcuitest",
+          "development": null
+        },
+        "detectBy": ["framework", "apps.*.framework"],
+        "platforms": ["ios"]
       }
     ]
   },
@@ -99,8 +129,8 @@
       },
       {
         "testingFramework": "xcuitest",
-        "skill": "e2e-ios-native",
-        "detectBy": ["testing.e2e.framework"]
+        "skill": "ui-test-xcuitest",
+        "detectBy": ["testing.e2e.framework", "apps.*.testing.framework"]
       },
       {
         "testingFramework": "espresso",
@@ -146,6 +176,12 @@
         "route": "ui-tester-playwright",
         "loadSkill": null,
         "context": "Standard web E2E testing"
+      },
+      {
+        "condition": "apps.*.framework in ['swiftui', 'appkit', 'uikit'] || apps.*.testing.framework === 'xcuitest'",
+        "route": "swift-dev",
+        "loadSkill": "ui-test-xcuitest",
+        "context": "Pass app target name, bundle identifier, Xcode project/workspace path, and platforms array"
       }
     ]
   },
@@ -167,6 +203,11 @@
         "trigger": "desktop app without platforms array",
         "message": "Desktop app detected but no platforms specified. Add platforms array for proper build targeting.",
         "recommendation": "Set apps.{appName}.platforms = ['macos', 'windows', 'linux']"
+      },
+      {
+        "trigger": "swift/apple app detected without xcuitest testing framework",
+        "message": "Detected native Apple app ({framework}) at {appPath}. Consider using XCUITest for E2E testing.",
+        "recommendation": "Set apps.{appName}.testing.framework = 'xcuitest'"
       }
     ]
   }

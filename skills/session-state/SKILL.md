@@ -1,6 +1,11 @@
+---
+name: session-state
+description: "Shared session management for agents with state persistence. Use when managing session state, handling rate limits, or recovering from compaction. Triggers on: session state, resume, rate limited, compaction recovery."
+---
+
 # Session State Skill
 
-> Shared session management for agents with state persistence.
+> Shared session management for agents with state persistence via helm-bridge.
 >
 > This skill provides common patterns for right-panel todos, rate limit handling, and compaction recovery that are shared across builder, planner, and toolkit agents.
 
@@ -13,23 +18,36 @@
 
 ## Applicable Agents
 
-- **builder** — uses `docs/sessions/{id}/session.json` (see `session-log` skill for full details)
+- **builder** — uses helm-bridge for session state (backed by Supabase)
 - **planner** — uses `docs/planner-state.json`
 - **toolkit** — uses `$OPENCODE_CONFIG/.tmp/toolkit-state.json`
 
 ---
 
-## State File Location
+## State Management via helm-bridge
 
-Each agent uses its own state file:
+Builder and other Helm-integrated agents use helm-bridge tools for state management:
+
+| Tool | Purpose |
+|------|---------|
+| `helm_session_get_state(key)` | Read state from local memory cache |
+| `helm_session_set_state(key, value)` | Write state to local memory, queues Supabase sync |
+| `helm_session_sync()` | Flush state to Supabase (on transitions: story completion, fix loop, pause) |
+| `helm_session_load()` | Load state from Supabase on session resume |
+
+> **Note:** Helm manages sessions natively — there are no local session files or directories.
+
+---
+
+## State File Location (Non-Helm Agents)
+
+Agents not using helm-bridge use local state files:
 
 | Agent | State File |
 |-------|------------|
-| builder | `<project>/docs/sessions/{id}/session.json` (committed to git) + `<project>/docs/builder-config.json` (gitignored, machine-local) |
+| builder | **helm-bridge** (Supabase-backed, no local files) |
 | planner | `<project>/docs/planner-state.json` |
 | toolkit | `$OPENCODE_CONFIG/.tmp/toolkit-state.json` |
-
-> **Builder note:** Builder's state has been split into two files. `session.json` holds the session log (committed to git for cross-machine resume). `builder-config.json` holds machine-specific data (`availableCLIs`, `projectContext`, `lastSessionPath`). See the `session-log` skill for full details.
 
 ---
 
@@ -62,24 +80,24 @@ Planner and toolkit share this core structure:
 }
 ```
 
-> **Builder uses a different structure.** Builder's `session.json` uses `currentAction` (not `currentTask`) and derives todos from `chunks[]` (no separate `uiTodos`). See the `session-log` skill for Builder's state structure.
+> **Builder uses helm-bridge.** Builder reads/writes state via `helm_session_get_state()` and `helm_session_set_state()`. It uses `currentAction` (not `currentTask`) and derives todos from session chunks (no separate `uiTodos`).
 
 ---
 
 ## Right-Panel Todo Contract
 
-Keep OpenCode right-panel todos and state file synchronized for resumability.
+Keep OpenCode right-panel todos and state synchronized for resumability.
 
-> **Builder exception:** Builder derives todos from `session.json` → `chunks[]` instead of a separate `uiTodos` store. The contract below applies to planner and toolkit; Builder follows the `session-log` skill.
+> **Builder exception:** Builder derives todos from session state via helm-bridge instead of a separate `uiTodos` store. The contract below applies to planner and toolkit; Builder uses helm-bridge tools.
 
 ### Required Behavior
 
-1. **On startup:** Restore panel todos from state file (`uiTodos.items`) via `todowrite`
+1. **On startup:** Restore panel todos from state (`uiTodos.items`) via `todowrite`
 2. **On every state change:** Update both stores in one action:
    - Right panel via `todowrite`
    - State file (`uiTodos.items`, `uiTodos.lastSyncedAt`, `uiTodos.flow`)
 3. **One active rule:** Only one todo may be `in_progress` at a time
-4. **Before handoff:** Ensure state file matches panel so another session can resume
+4. **Before handoff:** Ensure state is synced so another session can resume
 
 ### Todo Fields
 
@@ -110,6 +128,7 @@ Rate limit detected when error contains:
 1. **Write state immediately:**
    - Update `currentTask.lastAction` and `contextAnchor`
    - Set `currentTask.rateLimitDetectedAt` (ISO timestamp)
+   - For builder: `helm_session_set_state("currentAction.rateLimitDetectedAt", new Date().toISOString())`
 
 2. **Show clear message and stop:**
 
@@ -136,7 +155,7 @@ Rate limit detected at: [currentTask.rateLimitDetectedAt]
 
 Track `currentTask` so work can resume after context compaction or rate limiting.
 
-> **Builder uses `currentAction`** (in `session.json`) instead of `currentTask`. Same purpose, different field name. See `session-log` skill.
+> **Builder uses `currentAction`** (via helm-bridge) instead of `currentTask`. Same purpose, different field name.
 
 ### Required Behavior
 
@@ -151,6 +170,7 @@ Track `currentTask` so work can resume after context compaction or rate limiting
 
 - **After rate limit:** If user responds with intent to continue, resume from `currentTask.lastAction`
 - **New session:** If `currentTask` exists, output: `Resuming: [currentTask.description]`
+- **Builder:** Use `helm_session_load()` to restore state from Supabase on session resume
 
 ### What Qualifies as Significant Step
 
@@ -166,8 +186,16 @@ Update `lastAction` and `contextAnchor` after:
 
 Each agent integrates this skill at startup:
 
-### 1. Read State File
+### 1. Load State
 
+**For builder (helm-bridge):**
+```typescript
+// Load state from Supabase
+await helm_session_load();
+const currentAction = helm_session_get_state("currentAction");
+```
+
+**For planner/toolkit (local files):**
 ```bash
 # Read state (may not exist)
 cat <state-file> 2>/dev/null || echo '{}'
@@ -175,13 +203,13 @@ cat <state-file> 2>/dev/null || echo '{}'
 
 ### 2. Restore Todos
 
-If `uiTodos.items` exists:
+If `uiTodos.items` exists (or session chunks for builder):
 - Mirror items to right panel via `todowrite`
 - Keep at most one `in_progress` item
 
 ### 3. Check for Compaction Recovery
 
-If `currentTask` exists and has a `description`:
+If `currentTask` (or `currentAction` for builder) exists and has a `description`:
 - Output: `Resuming: [currentTask.description]`
 - Skip welcome menus
 - Continue from `contextAnchor`
@@ -196,12 +224,12 @@ If no `currentTask`, proceed to normal welcome/menu flow.
 
 ### Builder Flows
 
-> Builder todos are derived from `session.json` → `chunks[]`. Each chunk = one todo.
+> Builder todos are derived from session state via helm-bridge. Each task = one todo.
 
 | Flow | Todo Granularity | Completion Condition |
 |------|------------------|----------------------|
-| `prd` | One per chunk (story) | Story implemented, checks pass |
-| `adhoc` | One per chunk (task) | Task completed by @developer |
+| `prd` | One per story | Story implemented, checks pass |
+| `adhoc` | One per task | Task completed by @developer |
 | `updates` | One per update file | Update applied or skipped |
 | `e2e` | One per E2E file | Test passed or skipped |
 

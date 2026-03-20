@@ -371,24 +371,26 @@ if verificationResult.status == "unverified":
 
 ## Recording Verification Results
 
-Update the current chunk's `chunk.json` → `verification`:
+Update the session state with verification results (via helm-bridge):
 
-```json
-{
-  "verification": {
-    "status": "verified",
-    "results": [
-      {
-        "activity": "ui-verification",
-        "status": "pass",
-        "testsGenerated": ["tests/ui-verify/payment-form.spec.ts"],
-        "screenshotsCaptured": ["ai-tmp/verification/screenshots/payment-form.png"],
-        "attempts": 1,
-        "completedAt": "2026-03-03T10:35:00Z"
-      }
-    ]
-  }
-}
+```typescript
+// Write verification results to session state
+helm_session_set_state("verification", {
+  status: "verified",
+  results: [
+    {
+      activity: "ui-verification",
+      status: "pass",
+      testsGenerated: ["tests/ui-verify/payment-form.spec.ts"],
+      screenshotsCaptured: ["ai-tmp/verification/screenshots/payment-form.png"],
+      attempts: 1,
+      completedAt: "2026-03-03T10:35:00Z"
+    }
+  ]
+});
+
+// Sync to Supabase on story completion
+helm_session_sync();
 ```
 
 ---

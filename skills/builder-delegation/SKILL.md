@@ -195,14 +195,14 @@ By embedding the canonical content directly, Developer has the exact text in its
 
 > ⛔ **MANDATORY CHECK BEFORE EVERY @developer DELEGATION**
 >
-> This check survives context compaction because it reads from the state file, not from conversation memory.
+> This check survives context compaction because it reads from session state (via helm-bridge), not from conversation memory.
 
 **Before delegating to @developer, ALWAYS run this check:**
 
-```bash
-# Read analysis gate status from session.json
-ANALYSIS_COMPLETED=$(jq -r '.currentAction.analysisCompleted // false' docs/sessions/current/session.json 2>/dev/null)
-echo "Analysis gate check: analysisCompleted=$ANALYSIS_COMPLETED"
+```typescript
+// Read analysis gate status from session state
+const analysisCompleted = helm_session_get_state("currentAction.analysisCompleted") ?? false;
+console.log(`Analysis gate check: analysisCompleted=${analysisCompleted}`);
 ```
 
 **Decision tree:**
@@ -211,14 +211,13 @@ echo "Analysis gate check: analysisCompleted=$ANALYSIS_COMPLETED"
 |---------------------|--------|
 | `true` | ✅ Proceed with delegation |
 | `false` or missing | ⛔ STOP — must show ANALYSIS COMPLETE dashboard and get [G] first |
-| File doesn't exist | ⛔ STOP — initialize session, then show analysis dashboard |
 
 **If check fails:**
 
 1. Do NOT proceed with delegation
 2. Output: `"⛔ Analysis gate not passed. Must show ANALYSIS COMPLETE dashboard and receive [G] before delegating."`
 3. Run Phase 0 from `adhoc-workflow` skill
-4. After receiving [G], update state: `currentAction.analysisCompleted: true` in `session.json`
+4. After receiving [G], update state: `helm_session_set_state("currentAction.analysisCompleted", true)`
 5. Re-run the check (should now pass)
 
 **Logging requirement:**

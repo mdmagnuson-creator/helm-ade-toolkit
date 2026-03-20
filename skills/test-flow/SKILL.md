@@ -470,11 +470,11 @@ When `taskType` is `ops-only`:
 
 ### Verification Contract Integration
 
-When the current chunk's `chunk.json` contains a `verification.contract`, use it to guide verification:
+When the current task's session state contains a `verification.contract`, use it to guide verification:
 
-> ⛔ **Staleness check (MANDATORY):** Before using the contract, verify it belongs to the current chunk.
-> Compare `verification.contract.generatedAt` against the chunk's `startedAt` time.
-> If the contract predates the current chunk (or `verification.contract` is `null`), treat it as **no contract** and fall through to the default activity resolution (Section 2).
+> ⛔ **Staleness check (MANDATORY):** Before using the contract, verify it belongs to the current task.
+> Compare `verification.contract.generatedAt` against the task's `startedAt` time.
+> If the contract predates the current task (or `verification.contract` is `null`), treat it as **no contract** and fall through to the default activity resolution (Section 2).
 > This prevents stale contracts from previous tasks causing verification skips.
 
 | Contract Criterion | Test Activity | Execution |
@@ -485,21 +485,23 @@ When the current chunk's `chunk.json` contains a `verification.contract`, use it
 | `activity: "e2e"` | E2E test generation + run | @ui-tester-playwright |
 | `activity: "critic"` | Code review | @critic |
 
-**Recording verification results** (in `chunk.json` → `verification`):
+**Recording verification results** (via helm-bridge state):
 
-```json
-{
-  "verification": {
-    "status": "pass",
-    "results": [
-      { "activity": "typecheck", "status": "pass" },
-      { "activity": "lint", "status": "pass" },
-      { "activity": "unit-test", "status": "pass", "attempts": 1 },
-      { "activity": "e2e", "status": "pass", "attempts": 1 }
-    ],
-    "completedAt": "2026-02-28T10:15:00Z"
-  }
-}
+```typescript
+// Write verification results to session state
+helm_session_set_state("verification", {
+  status: "pass",
+  results: [
+    { activity: "typecheck", status: "pass" },
+    { activity: "lint", status: "pass" },
+    { activity: "unit-test", status: "pass", attempts: 1 },
+    { activity: "e2e", status: "pass", attempts: 1 }
+  ],
+  completedAt: "2026-02-28T10:15:00Z"
+});
+
+// Sync to Supabase on story completion
+helm_session_sync();
 ```
 
 **Contract types:**

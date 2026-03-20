@@ -64,23 +64,21 @@ Verification test PASSES
 
 ### State Tracking
 
-Track stability verification state in `chunk.json` → `verification.loop`:
+Track stability verification state via helm-bridge:
 
-```json
-{
-  "verification": {
-    "loop": {
-      "stabilityCheck": {
-        "testPath": "tests/ui-verify/profile-dropdown.spec.ts",
-        "feature": "Add Settings option to profile dropdown",
-        "requiredPasses": 3,
-        "currentPasses": 2,
-        "lastPassAt": "2026-03-03T10:45:00Z",
-        "resetReason": null
-      }
-    }
-  }
-}
+```typescript
+// Write stability check state
+helm_session_set_state("verification.loop.stabilityCheck", {
+  testPath: "tests/ui-verify/profile-dropdown.spec.ts",
+  feature: "Add Settings option to profile dropdown",
+  requiredPasses: 3,
+  currentPasses: 2,
+  lastPassAt: "2026-03-03T10:45:00Z",
+  resetReason: null
+});
+
+// Read current state
+const stabilityCheck = helm_session_get_state("verification.loop.stabilityCheck");
 ```
 
 ### Stability Progress Display
@@ -245,37 +243,37 @@ Verification test FAILS
 
 ### State Tracking
 
-State is tracked in `chunk.json` → `verification.loop`:
+State is tracked via helm-bridge session state:
 
-```json
-{
-  "verification": {
-    "loop": {
-      "originalFeature": "tests/ui-verify/profile-dropdown-settings.spec.ts",
-      "startedAt": "2026-03-03T10:30:00Z",
-      "totalIterations": 3,
-      "lastError": null,
-      "lastErrorCount": 0,
-      "components": {
-        "auth-login": {
-          "type": "prerequisite",
-          "testFile": "tests/e2e/auth.spec.ts",
-          "attempts": [
-            {
-              "attemptNumber": 1,
-              "error": "Timeout waiting for '[data-testid=\"login-submit\"]'",
-              "fixAgent": "@developer",
-              "fixDescription": "Fixed missing data-testid on login button",
-              "result": "pass",
-              "duration": "45s"
-            }
-          ],
-          "status": "fixed"
+```typescript
+// Write fix loop state
+helm_session_set_state("verification.loop", {
+  originalFeature: "tests/ui-verify/profile-dropdown-settings.spec.ts",
+  startedAt: "2026-03-03T10:30:00Z",
+  totalIterations: 3,
+  lastError: null,
+  lastErrorCount: 0,
+  components: {
+    "auth-login": {
+      type: "prerequisite",
+      testFile: "tests/e2e/auth.spec.ts",
+      attempts: [
+        {
+          attemptNumber: 1,
+          error: "Timeout waiting for '[data-testid=\"login-submit\"]'",
+          fixAgent: "@developer",
+          fixDescription: "Fixed missing data-testid on login button",
+          result: "pass",
+          duration: "45s"
         }
-      }
+      ],
+      status: "fixed"
     }
   }
-}
+});
+
+// Read current state
+const loopState = helm_session_get_state("verification.loop");
 ```
 
 ### Stop Conditions

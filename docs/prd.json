@@ -111,8 +111,8 @@
         "No behavioral changes to specialist agents, data files, scripts, scaffolds, automations, or agent templates"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Updated 7 files with legacy reference cleanup: test-flow, builder-verification, builder-delegation, test-ui-verification, test-verification-loop, test-failure-handling, session-state. 9 files were already clean.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -125,7 +125,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T18:25:00Z"
     },
     {
       "id": "US-005",

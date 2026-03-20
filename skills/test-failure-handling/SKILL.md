@@ -205,7 +205,7 @@ When user selects [A]:
    ⚠️ ABANDON FEATURE?
    
    This will revert all changes made for this story.
-    The chunk will be marked as "abandoned" in session.json.
+    The task will be marked as "abandoned" in session state.
     
     Type "confirm" to proceed or "cancel" to go back.
     > _
@@ -213,7 +213,7 @@ When user selects [A]:
 
 2. **On confirm:**
    - Revert story changes (git checkout)
-   - Update chunk status to `abandoned` in `session.json`
+   - Update task status to `abandoned` via `helm_session_set_state("currentTask.status", "abandoned")`
    - Log to verification-failures.json: `"resolution": "abandoned"`
 
 3. **Display result:**

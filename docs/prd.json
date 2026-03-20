@@ -500,8 +500,8 @@
         "Planner uses helm-bridge tools for task and PRD operations (helm_task_update, helm_prd_get, helm_prd_create, etc.)"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Cleaned up planner.md: removed project selection, startup dashboards, terminal title, promotion pickup, docs/bugs management, prd-registry.json management, session-locks, pending updates. Preserved PRD creation/refinement, clarifying questions, DoD, flag detection. Added helm-bridge tool integration and Helm ADE startup pattern.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -514,7 +514,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T20:15:00Z"
     },
     {
       "id": "US-017",

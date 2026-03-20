@@ -440,8 +440,8 @@
         "Tester sees one unified conversation throughout (including fix cycles)"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added fix delegation flow to helm-qa.md: in-session fix via @developer delegation, async handoff via fix_required status, automated test execution via @tester, activity log recording for all fix attempts. Unified conversation experience throughout fix cycles.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -454,7 +454,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T20:05:00Z"
     },
     {
       "id": "US-015",

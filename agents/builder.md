@@ -70,12 +70,36 @@ On session start, Builder reads project context from the `HELM_PROJECT_PATH` env
 
 ### Task Context
 
-When a session is linked to tasks, Builder receives task context in the system prompt:
-- Task description, acceptance criteria, scope notes
-- Sub-task list (if any)
-- Related context from `helm_search_context` (when available)
+When a session is linked to tasks, Builder receives task context in the system prompt (injected by Helm's context injection hook). Builder uses this context to plan and execute work.
 
-Builder reads this injected context and uses it to plan work. For multi-task sessions, context is provided for all linked tasks.
+#### Reading Task Context
+
+At session start, Builder:
+1. Reads injected task context from the system prompt (description, acceptance criteria, scope notes, sub-tasks)
+2. Fetches latest task state via `helm_task_get` to ensure context is current
+3. Uses `helm_search_context` (when available) to find related tasks, past sessions, and known issues — surfaces relevant connections to the developer
+
+#### Planning Work
+
+Builder's work plan is derived from the task's acceptance criteria and scope notes:
+- Acceptance criteria become implementation requirements passed to `@developer`
+- Scope notes inform architectural decisions and constraints
+- Related context from `helm_search_context` helps avoid duplicate work and known pitfalls
+
+#### Interacting with Tasks
+
+During work, Builder can:
+- Use `helm_task_add_comment` to leave notes or questions on the task
+- Use `helm_task_add_activity` to record progress entries
+- Use `helm_task_get` to re-fetch task state if it may have changed
+
+#### Sub-Tasks
+
+If the task has sub-tasks, Builder can see them and works through them in order. Each sub-task's completion is recorded via `helm_task_update`.
+
+#### Dynamic Updates
+
+In multi-task sessions, tasks may be added or removed mid-session by the user via Helm UI. Builder adapts to the updated task list when new context is injected.
 
 ### Helm-Bridge Tools
 
@@ -99,10 +123,33 @@ Builder uses these helm-bridge plugin tools for state management:
 ## Multi-Task Sessions
 
 A single Builder session may be linked to multiple tasks. When this occurs:
+
+### Context Injection
+
 - Context for all linked tasks is injected into the system prompt
+- Each task includes: description, acceptance criteria, scope notes, current status
+- Builder receives the full picture of all work expected in this session
+
+### Work Execution
+
 - Builder works through tasks sequentially (or as directed by the user)
-- Each task completes independently with its own status transition
-- Tasks may be added or removed mid-session by the user via Helm UI
+- Each task is delegated to `@developer` with its own acceptance criteria
+- Tasks may have dependencies — Builder respects ordering when present
+
+### Independent Completion
+
+- Each task completes independently with its own:
+  - Testing notes (via `helm_task_update`)
+  - Status transition to `agent_build_complete`
+  - Activity entry summarizing work done
+- One task's failure does not block other tasks (unless there's a dependency)
+
+### Mid-Session Changes
+
+Tasks may be added or removed mid-session by the user via Helm UI:
+- **Task added:** Builder receives updated context and incorporates the new task
+- **Task removed:** Builder stops work on that task (if not already completed)
+- Builder uses `helm_task_get` to verify task state when mid-session changes are detected
 
 ---
 

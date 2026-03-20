@@ -212,8 +212,8 @@
         "Multi-task sessions: when multiple tasks are linked, Builder receives context for all tasks and works through them. Dynamic updates when tasks are added/removed mid-session (companion PRD US-NEW-O)"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Expanded Task Context and Multi-Task Sessions sections in builder.md. Added detailed helm-bridge tool usage for task reading, planning, interaction, sub-tasks, and mid-session changes.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -226,7 +226,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T18:55:00Z"
     },
     {
       "id": "US-008",

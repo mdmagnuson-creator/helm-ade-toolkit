@@ -310,8 +310,8 @@
         "The rewritten skill is significantly shorter than 1812 lines — the bulk of the current skill is Task Spec file management"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Rewrote adhoc-workflow skill from 1812 to 385 lines (79% reduction). Removed Phase 0 analysis gate, Task Spec file generation, task-registry.json, local archival, Phase 2 Ship flow, dashboards. Preserved quality checks via test-flow, scope growth detection, design decision capture. Added helm-bridge tool integration.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -324,7 +324,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T19:45:00Z"
     },
     {
       "id": "US-011",

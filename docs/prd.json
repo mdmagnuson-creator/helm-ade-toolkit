@@ -81,8 +81,8 @@
         "A clear API contract is defined for how skills read/write verification state: helm_session_get_state(key) / helm_session_set_state(key, value) or equivalent"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Updated chunk.schema.json to document Supabase-backed verification state with _stateAccessPattern API contract. Updated builder-config.schema.json to remove lastSessionPath. All 15 original chunk properties preserved.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -95,7 +95,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T18:15:00Z"
     },
     {
       "id": "US-004",

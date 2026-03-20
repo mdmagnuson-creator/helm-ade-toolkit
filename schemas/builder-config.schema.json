@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://opencode.ai/schemas/builder-config.json",
   "title": "Builder Config",
-  "description": "Machine-specific Builder configuration (builder-config.json). Gitignored — stores CLI auth state, cached project context, and pointer to active session. Lives at docs/builder-config.json in each project.",
+  "description": "Machine-specific Builder configuration (builder-config.json). Gitignored — stores CLI auth state and cached project context. Lives at docs/builder-config.json in each project. Session management is handled by Helm — no local session pointers.",
   "type": "object",
 
   "properties": {
@@ -92,11 +92,6 @@
           }
         }
       }
-    },
-    "lastSessionPath": {
-      "type": ["string", "null"],
-      "description": "Relative path to the most recent active session folder (e.g., docs/sessions/2026-03-08-a1b2c3). Used for fast session discovery on startup. Cleared when session is archived.",
-      "examples": ["docs/sessions/2026-03-08-a1b2c3"]
     }
   },
 

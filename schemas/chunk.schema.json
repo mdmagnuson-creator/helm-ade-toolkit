@@ -1,10 +1,60 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://opencode.ai/schemas/chunk.json",
-  "title": "Chunk Metadata",
-  "description": "Full metadata for a single work chunk (chunk.json). Only read when working on this chunk or during compaction recovery for the current chunk. Lives at docs/sessions/{session-id}/chunks/{chunk-id}/chunk.json.",
+  "title": "Verification State Schema",
+  "description": "Documents the data shape for verification state stored in Supabase via helm-bridge tools. Used as reference documentation for the verification state structure, not as a local file format validator. Agents maintain state in local memory during active work for low-latency access. State syncs to Supabase on: story completion, fix loop iteration, session pause/complete. On session resume, state is loaded from Supabase.",
   "type": "object",
   "required": ["id", "storyId", "title", "status"],
+
+  "_stateAccessPattern": {
+    "type": "object",
+    "description": "Documents how agents read/write verification state. This is a documentation-only property — not stored in the data itself.",
+    "properties": {
+      "read": {
+        "type": "string",
+        "const": "helm_session_get_state(key)",
+        "description": "Read state for a specific key. Returns the value from local memory cache. Keys: 'verification', 'tests', 'resolvedActivities', 'reassignment', 'advisory', 'commit', 'uncommitted', 'pendingUpdates'"
+      },
+      "write": {
+        "type": "string",
+        "const": "helm_session_set_state(key, value)",
+        "description": "Write state for a specific key. Updates local memory cache immediately. Queues Supabase sync."
+      },
+      "sync": {
+        "type": "string",
+        "const": "helm_session_sync()",
+        "description": "Flush local memory state to Supabase. Called automatically on: story completion, fix loop iteration, session pause, session complete."
+      },
+      "load": {
+        "type": "string",
+        "const": "helm_session_load()",
+        "description": "Load all state from Supabase into local memory. Called on session resume (crash recovery, context compaction, session restart)."
+      }
+    }
+  },
+
+  "_storageNotes": {
+    "type": "object",
+    "description": "Documentation-only property explaining the storage model.",
+    "properties": {
+      "localMemoryCaching": {
+        "type": "string",
+        "const": "Agents maintain state in local memory during active work for low-latency access. No file I/O during hot paths."
+      },
+      "syncPoints": {
+        "type": "string",
+        "const": "State syncs to Supabase on: story completion, fix loop iteration, session pause, session complete."
+      },
+      "sessionResume": {
+        "type": "string",
+        "const": "On session resume (crash recovery, context compaction, restart), state is loaded from Supabase via helm_session_load()."
+      },
+      "stateKeys": {
+        "type": "array",
+        "const": ["verification", "tests", "resolvedActivities", "reassignment", "advisory", "commit", "uncommitted", "pendingUpdates"],
+        "description": "Valid keys for helm_session_get_state() and helm_session_set_state()"
+      }
+    }
+  },
 
   "properties": {
     "id": {

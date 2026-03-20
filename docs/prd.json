@@ -471,8 +471,8 @@
         "Task status transitions are handled via helm_task_update"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added test completion flow to helm-qa.md: test passed activity recording, explicit merged status prohibition, warning handling in pass summaries, fail-entire-task with fix_required/needs_planning paths, multi-task pivot flow. QA never sets merged status.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -485,7 +485,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T20:10:00Z"
     },
     {
       "id": "US-016",

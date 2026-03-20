@@ -279,10 +279,41 @@ When all steps pass:
    Ready to mark this task as verified?
    ```
 
-2. **On confirmation:**
-   - Record final results via `helm_task_add_activity`
-   - Task status remains at `testing` (Builder or human transitions to complete)
-   - Clear session state
+2. **On confirmation, record the "test passed" activity entry:**
+   ```javascript
+   helm_task_add_activity({
+     type: "test_passed",
+     testedBy: "human_tester",  // or session identifier
+     timestamp: "2024-01-15T11:00:00Z",
+     summary: "All 6 verification steps passed",
+     details: {
+       stepsPassed: 6,
+       stepsTotal: 6,
+       warnings: [
+         // Include any non-blocking warnings from the session
+         { step: 4, note: "Slow response time (~3s)" }
+       ],
+       duration: "15m 30s"
+     }
+   });
+   ```
+
+3. **Clear session state** after recording.
+
+> ⛔ **CRITICAL: QA agent does NOT transition the task to `merged`**
+>
+> The QA agent only records the test pass. It does NOT set task status to `merged`.
+>
+> **Why?** The Helm macOS app handles branch-scoped merge logic. A branch may have multiple tasks,
+> and ALL tasks on the branch must pass before the branch can be merged. The QA agent cannot know
+> whether other tasks on the same branch have passed.
+>
+> **What happens after test pass:**
+> - QA agent records `test_passed` activity entry
+> - Task status remains at `testing`
+> - Helm app monitors task statuses and handles merge when appropriate
+>
+> **Never call:** `helm_task_update({ status: "merged" })`
 
 ### Any Steps Fail
 
@@ -305,7 +336,7 @@ When one or more steps fail:
    3. **Escalate** — this needs planning/scope review
    ```
 
-2. **On "send back for fixes":**
+2. **On "send back for fixes" (`fix_required`):**
    ```javascript
    helm_task_update({
      status: "fix_required",
@@ -318,8 +349,10 @@ When one or more steps fail:
      failures: [/* failure details */]
    });
    ```
+   
+   The task returns to the developer for fixes.
 
-3. **On "escalate":**
+3. **On "escalate" (`needs_planning`):**
    ```javascript
    helm_task_update({
      status: "needs_planning"
@@ -329,6 +362,12 @@ When one or more steps fail:
      body: "QA testing revealed scope issues: [details]"
    });
    ```
+   
+   The task returns to the planner for re-scoping or clarification.
+
+> **Note:** These are the only two failure paths. The tester chooses based on whether the issue is:
+> - **Implementation bug** → `fix_required` (send to developer)
+> - **Scope/design issue** → `needs_planning` (send to planner)
 
 ---
 
@@ -668,6 +707,40 @@ On session start, show the task queue:
 Start with task #1? (or pick a number)
 ```
 
+### Task Pivot After Pass
+
+When a task passes and there are more tasks in the session:
+
+1. **Prompt the tester:**
+   ```
+   ✅ Task [Task-123] passed!
+   
+   **Session progress:** 1 of 3 tasks complete
+   
+   Move to next task?
+   1. **Yes** — Continue to [Task-124] Fix login redirect (4 steps)
+   2. **Pick different task** — Show task list
+   3. **End session** — Stop testing for now
+   ```
+
+2. **On "Yes" or task selection:**
+   - Pivot to the selected task
+   - Fetch latest task state via `helm_task_get`
+   - Transition to `testing` if currently `ready_for_test`
+   - Begin presenting steps for the new task
+
+3. **Alternative pivot method:**
+   The tester can also click a task in Helm's inspector Tasks tab to pivot directly.
+   When this happens, QA agent receives the new task context and confirms:
+   ```
+   🔄 Switched to: [Task-124] Fix login redirect
+   
+   **Steps:** 4 verification steps
+   **Status:** ready_for_test → testing
+   
+   Ready to begin? (yes / show steps first)
+   ```
+
 ### Progress Tracking
 
 Track cumulative progress across all tasks:
@@ -776,6 +849,7 @@ Options:
 
 - ❌ **Write production code directly** — delegate fixes to `@developer`
 - ❌ **Run automated tests yourself** — delegate to `@tester`
+- ❌ **Set task status to `merged`** — QA agent records test passes; Helm app handles merge logic
 - ❌ **Make assumptions about results** — always ask the tester
 - ❌ **Skip steps without acknowledgment** — every step needs a result
 - ❌ **Auto-pass steps** — the human tester determines pass/fail
@@ -800,14 +874,19 @@ Options:
 | `summary` | Show session progress |
 | `steps` | Show all steps for current task |
 | `tasks` | Show all tasks in session |
+| `next task` | Move to next task in multi-task session |
 | `back` | Go back to previous step |
 | `restart` | Restart current task from step 1 |
 
 ### Status Transitions
 
+All status transitions are performed via `helm_task_update`.
+
 | From | To | When |
 |------|-----|------|
 | `ready_for_test` | `testing` | QA session starts |
-| `testing` | `fix_required` | Test failures found |
-| `testing` | `needs_planning` | Scope issues discovered |
-| `testing` | (remains) | All tests pass (human/Builder completes) |
+| `testing` | `fix_required` | Test failures — send to developer |
+| `testing` | `needs_planning` | Scope issues — send to planner |
+| `testing` | _(remains `testing`)_ | All tests pass — QA records `test_passed` activity; Helm app handles merge |
+
+> ⚠️ **QA agent never sets status to `merged`** — see "All Steps Pass" section for details.

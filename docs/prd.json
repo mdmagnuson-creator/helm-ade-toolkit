@@ -245,8 +245,8 @@
         "Builder's delegation to @developer, @tester, and @critic is unchanged"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added Task Completion Flow section to builder.md with testing notes, automated testing, agent_build_complete status transition, and multi-task completion.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -259,7 +259,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T19:02:00Z"
     },
     {
       "id": "US-009",

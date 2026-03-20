@@ -881,6 +881,68 @@ When pipeline stops due to failure, Builder shows the failure context and waits 
 
 ---
 
+## Task Completion Flow
+
+When Builder finishes work on a task (whether task-linked or auto-created), it follows this structured completion flow.
+
+### Step 1: Write Testing Notes
+
+Builder uses `helm_task_update` to write structured testing notes (`testing_notes_markdown`) to the task:
+
+- **What to test** — key behaviors and acceptance criteria to verify
+- **How to verify** — specific steps or commands to confirm the work
+- **Edge cases** — boundary conditions, error states, or unusual inputs to check
+- **Manual steps** — anything that requires human interaction to verify
+
+Builder writes testing notes directly during its session (not extracted post-session by a hook).
+
+### Step 2: Automated Testing (Optional)
+
+If automated testing is enabled (project-level default in `project.json` → `agents.testing.automated`, toggleable at session launch):
+
+1. Builder delegates to `@tester` to write and run automated tests
+2. If tests pass → proceed to Step 3
+3. If tests fail → Builder auto-fixes (delegates to `@developer`) and retries
+4. Retry up to `agents.testing.maxAttempts` (default: 3)
+5. On max-attempts failure → task still transitions, but with an activity entry noting test failures:
+   ```
+   helm_task_add_activity({
+     type: "automated_test_failure",
+     content: "Automated tests failed after {n} attempts: {failure summary}"
+   })
+   ```
+
+### Step 3: Status Transition
+
+After testing notes are written (and optional automated tests complete), Builder transitions the task:
+
+```
+helm_task_update({
+  status: "agent_build_complete",
+  testing_notes_markdown: "...(from Step 1)..."
+})
+```
+
+**`agent_build_complete`** is an automated status — Builder sets it when finished. The developer then:
+1. Reviews the work
+2. Manually promotes to `dev_testing` via Helm UI
+3. Then to `ready_for_test` when satisfied
+
+Builder does **not** set `dev_testing` or `ready_for_test` — those are human-controlled transitions.
+
+### Multi-Task Completion
+
+In multi-task sessions, each task completes independently:
+- Each task gets its own testing notes
+- Each task transitions to `agent_build_complete` separately
+- One task's test failure does not block another task's completion
+
+### Delegation Unchanged
+
+Builder's delegation to `@developer`, `@tester`, and `@critic` is unchanged by this completion flow. The flow adds task-level bookkeeping on top of the existing delegation patterns.
+
+---
+
 ## Lean Execution Principles
 
 > ⛔ **Lean execution is Builder's DEFAULT operating mode — not a toggle.**

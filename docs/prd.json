@@ -670,8 +670,8 @@
         "Prompt states: RLS is enforced server-side — the assistant cannot access cross-org data even if asked"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Created agents/helm-assistant.md (551 lines). Project manager personality with identity lock, explicit tool allowlist (16 tools), Helm feature knowledge reference, confirmation patterns (silent reads, confirmed writes), session handoff patterns to Builder/QA/Planner, behavioral constraints (no fs/git/code/tests, cancel-only, RLS enforcement).",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -684,7 +684,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T20:35:00Z"
     }
   ]
 }

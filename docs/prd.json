@@ -145,8 +145,8 @@
         "Builder prompt acknowledges multi-task sessions — multiple tasks linked to a single session, with context injected for each, and dynamic updates when tasks are added/removed mid-session"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Rewrote builder.md from 1825 to 1113 lines (39% reduction). Removed legacy project selection, session management, dashboards, git completion workflow. Added helm-bridge tools, session context, multi-task sessions. Preserved all core behavioral sections.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -159,7 +159,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T18:40:00Z"
     },
     {
       "id": "US-006",

@@ -11,7 +11,7 @@ description: "PRD mode workflow for Builder. Use when building features from PRD
 
 > ⛔ **CRITICAL: This skill requires the `helm-bridge` plugin.**
 >
-> Before performing any PRD operations, verify the `helm_prd_*` tools are available.
+> Before performing any PRD operations, verify the `helm_prd_*` and `helm_task_*` tools are available.
 > If tools are not available, STOP and report:
 > ```
 > ⛔ helm-bridge plugin tools not available. Cannot perform PRD operations 
@@ -21,106 +21,46 @@ description: "PRD mode workflow for Builder. Use when building features from PRD
 >
 > **Do NOT fall back to file I/O** — if the tools fail, stop.
 
-## Git Auto-Commit Enforcement
-
-> ⛔ **CRITICAL: Check `git.autoCommit` setting before ANY commit operation**
->
-> **Trigger:** Before running `git commit` at any step in this workflow.
->
-> **Check:** `project.json` → `git.autoCommit`
-> - If `true` (default): Proceed with commits normally
-> - If `false`: **NEVER run `git commit`** — failure to comply violates project constraint
->
-> **When autoCommit is disabled, replace commit steps with:**
-> 1. Stage changes: `git add -A` (or specific files)
-> 2. Report what would be committed:
->    ```
->    📋 READY TO COMMIT (manual commit required)
->    
->    Staged files:
->      [list of files]
->    
->    Suggested commit message:
->      feat: [summary from PRD]
->    
->    Run: git commit -m "feat: [summary from PRD]"
->    ```
-> 3. **Do NOT run `git commit`** — wait for user to commit manually
-> 4. Continue workflow only after user confirms commit was made
->
-> **This applies to ALL commit steps in this workflow** (Step 3, story commits, etc.)
-
 ## Overview
 
-PRD mode implements features from PRDs stored in Supabase. It operates in four phases:
+PRD mode implements features from PRDs stored in Supabase. Each PRD story maps to a task that Builder processes in sequence.
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  CLAIM PHASE    │ ──► │  BUILD PHASE    │ ──► │   SHIP PHASE    │ ──► │ CLEANUP PHASE   │
-│                 │     │                 │     │                 │     │                 │
-│ Check conflicts │     │ Implement each  │     │ Run tests, PR,  │     │ Archive PRD,    │
-│ setup branch    │     │ story in order  │     │ merge           │     │ generate script │
-└─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
+┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
+│   CLAIM PRD         │ ──► │   BUILD STORIES     │ ──► │   COMPLETE          │
+│                     │     │                     │     │                     │
+│ Load PRD, check     │     │ Process stories in  │     │ All stories done,   │
+│ conflicts, claim    │     │ order, quality      │     │ hand off to Builder │
+│                     │     │ checks per story    │     │ completion flow     │
+└─────────────────────┘     └─────────────────────┘     └─────────────────────┘
 ```
 
-## Todo Sync Rules (PRD)
+## Helm-Bridge Tools Reference
 
-Use OpenCode right-panel todos as the live checklist, derived from `session.json` → `chunks[]`.
+| Tool | Purpose |
+|------|---------|
+| `helm_prd_get` | Fetch PRD content and stories from Supabase |
+| `helm_prd_list` | List PRDs with filters (status, limit) |
+| `helm_prd_update` | Update PRD progress (status, current_story, completed_stories) |
+| `helm_prd_story_update` | Update story status after completion |
+| `helm_task_get` | Fetch task state (each story maps to a task) |
+| `helm_task_update` | Update task status, fields, testing notes |
+| `helm_task_add_activity` | Record activity entries (test results, critic results, fix attempts) |
+| `helm_task_add_comment` | Leave notes/questions on a task |
+| `helm_session_set_state(key, value)` | Persist session state (fix loop counts, verification state) |
+| `helm_session_get_state(key)` | Read session state |
+| `helm_session_sync()` | Flush state to Supabase |
 
-1. Create one todo per story/chunk when PRD work starts (`US-001`, `US-002`, ...).
-2. Set current chunk to `in_progress`; keep remaining chunks `pending`.
-3. When a chunk finishes and post-story checks pass, mark it `completed`.
-4. Each chunk's status in `session.json` drives the right-panel todo state.
-5. On session resume, rebuild right-panel todos from `session.json` → `chunks[]` before continuing.
-
-## Post-Story Status Update (MANDATORY)
-
-> ⛔ **After completing a story, you MUST update its status via `helm_prd_story_update`.**
->
-> **Failure behavior:** If you find yourself about to commit code for a completed story without first calling `helm_prd_story_update` with `status: "completed"` — STOP and update the story status before committing.
-
-After each story completes:
-
-1. **Update the story via `helm_prd_story_update`:**
-   ```
-   helm_prd_story_update({
-     prd_id: "prd-[name]",
-     story_id: "US-001",
-     status: "completed",
-     completed_at: "2026-02-28T10:30:00Z",
-     notes: "Implemented with React component, added unit tests"
-   })
-   ```
-
-2. **Update the PRD-level status via `helm_prd_update`:**
-   ```
-   helm_prd_update({
-     prd_id: "prd-[name]",
-     status: "in_progress",
-     current_story: "US-002",  // next pending story
-     completed_stories: 1
-   })
-   ```
-
-3. **Include local session state updates in the story commit** (session.json, chunk.json)
-
-**Why this matters:**
-- **Resumability:** Interrupted sessions know exactly which stories are done
-- **Visibility:** User can check PRD status and see accurate progress
-- **Handoff:** Another agent or human can pick up where Builder left off
-- **Audit trail:** `completed_at` timestamps provide implementation timeline
+---
 
 ## PRD Lifecycle States
 
-PRDs go through 5 states:
+PRDs progress through these states:
 
 ```
 ┌───────┐     ┌───────┐     ┌─────────────┐     ┌─────────┐     ┌───────────┐
-│ draft │ ──▶ │ ready │ ──▶ │ in_progress │ ──▶ │ pr_open │ ──▶ │ completed │
+│ draft │ ──► │ ready │ ──► │ in_progress │ ──► │ pr_open │ ──► │ completed │
 └───────┘     └───────┘     └─────────────┘     └─────────┘     └───────────┘
-    │                              │
-    │         (skip for           │
-    └─────────small PRDs)─────────┘
 ```
 
 | State | Meaning |
@@ -129,32 +69,7 @@ PRDs go through 5 states:
 | `ready` | PRD approved, waiting to be picked up |
 | `in_progress` | Implementation actively happening |
 | `pr_open` | PR created, awaiting review/merge |
-| `completed` | PR merged, Playwright tests passed (or skipped via testVerifySettings), work done |
-
-### State Migration
-
-If you encounter PRDs with legacy states, migrate them automatically:
-- `committed` → `in_progress` (work not yet pushed)
-- `pushed` → `in_progress` (no PR yet)
-- `merged` → `completed` (legacy state)
-- `awaiting_e2e` → `completed` (legacy state — E2E deferral removed)
-
-## Git Execution Mode (PRD)
-
-Resolve git behavior from `docs/project.json`:
-
-1. `agents.gitWorkflow`
-2. If `trunk`, resolve `agents.trunkMode` (default: `branchless`)
-3. Resolve default branch from `git.defaultBranch` (fallback: `main`)
-
-Rules:
-- `trunk + branchless`:
-  - Execute directly on default branch
-  - Do not create/checkout feature branches
-  - Treat PRD `branchName` as metadata only
-  - Skip PR creation unless user explicitly overrides
-- `trunk + pr-based` or non-trunk workflows:
-  - Use existing branch + PR flow in this skill
+| `completed` | PR merged, work done |
 
 ---
 
@@ -162,14 +77,22 @@ Rules:
 
 When user selects a PRD to build:
 
-### Step 1: Get PRD Details and Check for Conflicts
+### Step 1: Load PRD Content
 
 Fetch the PRD and its stories:
+
 ```
 helm_prd_get({ prd_id: "prd-[name]" })
 ```
 
-Check for conflicts by listing active PRDs:
+The response includes:
+- PRD metadata (title, description, status)
+- Stories array with id, description, acceptance criteria, status
+
+### Step 2: Check for Conflicts
+
+List active PRDs to check for conflicts:
+
 ```
 helm_prd_list({ status: "in_progress" })
 ```
@@ -177,21 +100,10 @@ helm_prd_list({ status: "in_progress" })
 - If HIGH conflict risk with an active session, warn and get confirmation
 - If MEDIUM conflict risk, note it but proceed if user confirms
 
-### Step 2: Credential Readiness Check
-
-Before starting implementation, inspect credential metadata from the PRD:
-
-- Check PRD `notes` or custom fields for `credentialRequirements` (if present).
-- For each entry with `requestTiming: "upfront"`, ask for credential readiness before starting story execution.
-- If user does not have a credential yet, mark it `deferred` and continue only with stories that do not depend on it.
-- Persist statuses in `session.json` under the session-level `credentials` field with `pending|provided|deferred`.
-- Never ask users to paste actual secrets into chat; request secure local setup via environment variables/secrets manager.
-
-If no credential requirements are listed, continue normally.
-
-### Step 3: Update PRD Status to In Progress
+### Step 3: Claim the PRD
 
 Update the PRD to claim it:
+
 ```
 helm_prd_update({
   prd_id: "prd-[name]",
@@ -201,52 +113,13 @@ helm_prd_update({
 })
 ```
 
-### Step 4: Set Execution Branch
+### Step 4: Display Story List
 
-If `trunk + branchless`:
-
-```bash
-git checkout <default-branch>
-```
-
-If not branchless trunk mode, create branch from PRD branch name (stored in PRD notes or derived from prd_id):
-
-```bash
-git checkout -b feature/<prd-name> <default-branch>
-```
-
-### Step 5: Initialize Architecture Automation Baseline
-
-Before story execution begins, ensure architecture automation assets exist and are current:
-
-1. **Architecture guardrails** (generate when missing):
-   - import boundary rules
-   - layer constraints (UI/app/domain/data)
-   - restricted direct access patterns
-2. **Bounded-context docs** (generate when missing):
-   - `docs/architecture/bounded-contexts.md`
-   - optional `docs/architecture/contexts/*.md`
-3. Persist initialization status in `session.json` under session-level `architecture` field.
-
-Default policy:
-- `guardrails.strictness`: `standard`
-- `boundedContexts.policy`: `strict`
-
-Only prompt users for policy overrides, not routine generation/refresh.
-
-### Step 6: Story List Review (with Flow Chart Option)
-
-Before starting story execution, fetch stories and show the list:
-
-```
-helm_prd_get({ prd_id: "prd-[name]" })
-```
-
-Display the stories from the response and offer the flow chart option:
+Show the stories and offer to proceed:
 
 ```
 ═══════════════════════════════════════════════════════════════════════
-                        STARTING PRD EXECUTION
+                      STARTING PRD EXECUTION
 ═══════════════════════════════════════════════════════════════════════
 
 PRD: {prd-title}
@@ -257,215 +130,151 @@ Stories: {total count}
   US-003: {description}
   ...
 
-Pipeline per story: implement → test-flow → commit → postChangeActions
+Pipeline per story: implement → test-flow → status update
 
 [G] Go — start executing stories
-[F] Show implementation flow chart
 
 > _
 ═══════════════════════════════════════════════════════════════════════
 ```
 
-When user selects `[F]`, show the implementation flow chart (same format as adhoc-workflow → Step 0.2a) adapted to the PRD's stories using `US-XXX` prefixes. After viewing, return to this dashboard.
-
-> ℹ️ The flow chart format and adaptation rules are defined in `adhoc-workflow` → Step 0.2a. Both modes use the same pipeline (see `builder.md` → Story Processing Pipeline).
-
 ---
 
 ## Phase 2: Build Stories
 
-For each story in priority order:
+Process each story in priority order.
 
-### Per-Story Quality Checks (MANDATORY)
+### Per-Story Flow
+
+For each story:
+
+#### Step 2.1: Delegate to @developer
+
+Generate a verification contract and delegate implementation:
+
+```yaml
+<context>
+version: 1
+project:
+  path: {absolute path}
+  stack: {stack from project.json}
+  commands:
+    test: {commands.test}
+    lint: {commands.lint}
+conventions:
+  summary: |
+    {2-5 sentence summary from CONVENTIONS.md}
+currentWork:
+  mode: prd
+  prdId: "prd-[name]"
+  storyId: "US-001"
+  description: "{story description}"
+</context>
+
+Implement: {story description}
+
+## Verification Contract
+
+Your work will be verified by:
+1. Typecheck — No type errors
+2. Lint — No lint errors
+3. Unit tests — Tests for [component/module] must pass
+4. [E2E if applicable] — Page behavior test
+
+Requirements:
+- {acceptance criteria from story}
+```
+
+#### Step 2.2: Run Quality Checks
 
 > 📚 **SKILL: test-flow** → "Skip Gate → Activity Resolution → Quality Check Pipeline"
 >
-> Load the `test-flow` skill for the complete quality check pipeline that runs after every story completion.
-> It includes skip-gate logic, activity resolution, typecheck/lint/test/rebuild/critic/Playwright,
-> and the completion prompt. **No prompts, no skipping** — test-flow runs automatically.
+> Load the `test-flow` skill for the complete quality check pipeline.
+> It includes typecheck/lint/test/rebuild/critic/Playwright.
 >
-> **PRD-specific context to pass:**
+> **PRD-specific context:**
 > - `mode: "prd"` — 5-attempt Playwright retry strategy (vs ad-hoc's 3-attempt)
- > - `storyId` and `prdId` from `session.json` → `currentChunk` and session metadata
-> - `storyChangedFiles` for story-scoped Playwright test selection
+> - `storyId` and `prdId` for scoped test selection
 >
-> **PRD-specific behaviors (defined in test-flow):**
-> - **Story-scoped Playwright:** Tests are scoped to changed files + 1-hop consumers (not full suite)
-> - **5-attempt retry:** On Playwright failure, retry up to 5 times with progressive fix delegation
-> - **Skip and log:** After 5 failures, skip Playwright and log to the chunk's `playwrightSkips` in `chunk.json`, then continue to next story
- > - **Playwright install check:** One-time per session check, cached in `builder-config.json`
->
-> **Failure behavior:** Steps 1-4 (typecheck/lint/test/critic): max 3 attempts, then STOP and report to user.
+> **Failure behavior:** Steps 1-4 (typecheck/lint/test/critic): max 3 attempts, then STOP.
 > Step 5 (Playwright): max 5 attempts, then skip and log, continue to next story.
 
-### UI Verification Enforcement
+Record quality check results via `helm_task_add_activity`:
 
-> 📚 **SKILL: test-ui-verification** → "Verification Flow"
->
-> Load the `test-ui-verification` skill for the full UI verification flow including:
-> - Playwright verification execution and status handling
-> - Skip patterns (docs, config, test files, CI/CD, non-UI extensions)
-> - Override mechanism (user can force-verify or force-skip with reason)
-> - Verification status: `verified`, `unverified` (BLOCKS completion), `skipped` (logs to test-debt.json)
->
-> **PRD-specific behavior:** If verification status is `unverified`, the story remains `in_progress`
-> until verified or explicitly skipped. Skipped verifications are logged to `test-debt.json`.
-
-**After all checks pass**, Builder continues to the next story (or shows completion prompt if E2E is offered).
-
-### Step 1: Implement the Story
-
-0. **Generate verification contract BEFORE delegation:**
-   
-   Before delegating to @developer, generate a verification contract (see `builder.md` → "Verification Contracts"):
-   
-   ```
-   Contract generation for story US-003:
-   1. Parse story description for advisory/skip patterns
-   2. Identify expected file changes from story context
-   3. Generate criteria based on file patterns
-    4. Store contract in the current `chunk.json` → `verification.contract`
-   ```
-   
-   **Include contract in specialist prompt:**
-   
-   When delegating to @developer, include the verification contract in a human-readable format:
-   
-   ```markdown
-   ## Verification Contract
-   
-   Your work will be verified by:
-   1. **Typecheck** — No type errors
-   2. **Lint** — No lint errors
-   3. **Unit tests** — Tests for [component/module name] must pass
-   4. **E2E test** — [If applicable] Page behavior test (runs immediately/deferred)
-   
-   Write your implementation knowing these criteria will be checked.
-   ```
-   
-   This gives the specialist clear targets and helps them write testable code.
-
-0.5. **Credential gate before implementation:**
-   - Check story `requiredCredentials[]` (if present).
-   - If any required credential is still `pending`/`deferred`, prompt at the story boundary.
-   - For `requestTiming: "after-initial-build"`, this is the first required prompt point.
-   - If credential is still unavailable, skip to the next unblocked story and clearly report the block.
-
-1. **Run the workflow steps** from `workflows.prd`:
-
-   ```
-   For each step in workflows.prd:
-       Execute the step
-       If step fails:
-           Attempt to fix (run @developer with error context)
-           If still fails after 2 attempts:
-               Report and ask user
-   ```
-
-2. **Post-change actions** run automatically after commit (see `builder.md` → Story Processing Pipeline → Step 4.5, and `test-flow` → Section 5.5):
-   - `postChangeActions` in `project.json` defines downstream propagation (support articles, AI tools, marketing pages, pending updates)
-   - These fire after the per-story commit in Step 2.5 as part of Pipeline Step 4.5, not during the quality pipeline
-   - No story-level flags needed — trigger conditions in `postChangeActions` determine what runs
-
-3. **Update story todo state (BEFORE commit):**
-   - Before implementation: mark current chunk `in_progress` via `todowrite` and update `session.json`
-   - After implementation + required checks: mark chunk `completed` in both places
-   - **⚠️ This must happen BEFORE Step 2.5 (commit)** to ensure state is included in the commit
-
-4. **Handle developer failures:**
-   - If developer fails more than once on a story, analyze the PRD
-   - Update the PRD in Supabase with clarifications if needed via `helm_prd_update` or `helm_prd_story_update`
-   - If developer struggles with cleanup, run @wall-e
-
-### Step 2: Automatic Testing After Story (US-003)
-
-> ⚠️ **Quality checks (including postChangeWorkflow pipeline) already ran above. This step handles additional E2E test generation and deferral.**
-
-Use `test-flow` as the canonical source for all test behavior.
-
-1. Read effective story intensity from `session.json` (`chunks[]` for current chunk).
-2. Execute **PRD Mode Test Flow (US-003)** from `test-flow` for any remaining E2E handling.
-3. Do not duplicate test logic here. Follow `test-flow` for:
-   - E2E test generation based on story intensity
-   - E2E deferral to PRD completion (when intensity allows deferral)
-   - Retry/fix loops and failure handling
-   - `chunk.json` updates for queued tests
-4. After test-flow completes for the story, update chunk status in `session.json` to `completed` and continue.
-
-### Step 2.5: Update State & Commit After Each Story
-
-> ⛔ **CRITICAL: Update Supabase state and local session files BEFORE committing.**
->
-> State updates that happen after the commit will be lost if the session ends.
->
-> **Failure behavior:** If you find yourself about to run `git commit` without first calling `helm_prd_story_update` (story status) and `helm_prd_update` (PRD progress), plus updating `session.json` and `chunk.json` — STOP and update those first.
-
-After a story completes and post-story checks pass:
-
-**1. Update Supabase state FIRST:**
-
-- **Update the completed story:**
-  ```
-  helm_prd_story_update({
-    prd_id: "prd-[name]",
-    story_id: "US-001",
-    status: "completed",
-    completed_at: "<ISO timestamp>",
-    notes: "Implemented with 3 components, added unit tests"
-  })
-  ```
-
-- **Update PRD progress:**
-  ```
-  helm_prd_update({
-    prd_id: "prd-[name]",
-    current_story: "US-002",  // or null if done
-    completed_stories: <incremented count>
-  })
-  ```
-
-**2. Update local session state:**
-
-- **`session.json` + `chunk.json`:**
-   - Update current chunk status to `completed` in `session.json`
-   - Set `currentChunk` to next chunk (or null if done)
-   - Chunk's `chunk.json` already records verification results
-
-**3. Then commit (including local state files):**
-
-- Follow **Git Auto-Commit Enforcement** above (respect `git.autoCommit`)
-- Use a per-story commit message format:
-  - `feat: [prd-summary] (US-00X)`
-
-```bash
-# Verify local state files are staged before committing
-git add -A  # includes session.json, chunk.json
-git status  # confirm state files are in staged changes
-git commit -m "feat: [summary from PRD] (US-00X)"
+```
+helm_task_add_activity({
+  task_id: "{story_task_id}",
+  activity_type: "quality_check",
+  content: "typecheck: passed, lint: passed, tests: 12 passed, critic: passed"
+})
 ```
 
-**Why this order matters:** If you commit before updating state, and the session ends (crash, rate limit, context compaction), the committed code and PRD state will be out of sync — git will show stories implemented, but Supabase will show them as pending.
+#### Step 2.3: Track Fix Loop (if needed)
 
-### Step 3: Repeat for All Stories
+If quality checks fail, track fix attempts via session state:
 
-Continue Steps 1-2 for each story until all are complete.
+```
+// Track fix loop for story
+helm_session_set_state("fixLoop.US-001", {
+  attempts: 2,
+  lastError: "typecheck failed: Property 'foo' does not exist",
+  lastAttempt: "<ISO timestamp>"
+})
+```
 
-### Step 4: Boundary Drift Detection During Build
+After each fix attempt, re-run quality checks. Max 3 attempts for typecheck/lint/test, max 5 for Playwright.
 
-After each story, detect boundary-impacting changes and refresh docs/guardrails as needed:
+#### Step 2.4: Update Story Status
 
-1. Detect drift signals:
-   - new/renamed domain modules
-   - cross-layer imports violating policy
-   - context ownership changes
-2. If drift detected:
-   - refresh guardrail artifacts
-   - refresh bounded-context docs
-3. Record a short change summary in `session.json` (session-level `architecture.boundaryChanges[]`).
+After story completes and quality checks pass:
+
+**Update the story in Supabase:**
+
+```
+helm_prd_story_update({
+  prd_id: "prd-[name]",
+  story_id: "US-001",
+  status: "completed",
+  completed_at: "<ISO timestamp>",
+  notes: "Implemented with React component, added unit tests"
+})
+```
+
+**Update PRD progress:**
+
+```
+helm_prd_update({
+  prd_id: "prd-[name]",
+  current_story: "US-002",  // next pending story
+  completed_stories: 1
+})
+```
+
+**Update task status:**
+
+```
+helm_task_update({
+  task_id: "{story_task_id}",
+  status: "agent_build_complete"
+})
+```
+
+#### Step 2.5: Commit Story Changes
+
+> ⚓ **AGENTS.md: Git Auto-Commit Enforcement**
+>
+> Check `project.json` → `git.autoCommit` before committing:
+> - If `true` or `onStoryComplete`: commit with per-story message
+> - If `manual` or `false`: stage files and report, do NOT commit
+
+```bash
+git add -A
+git commit -m "feat: [prd-summary] (US-00X)"
+```
 
 ### Critic Batching
 
-When to run @critic depends on the configured `criticMode`:
+When to run @critic depends on configured `criticMode`:
 
 | Mode | When Critic Runs |
 |------|------------------|
@@ -473,329 +282,83 @@ When to run @critic depends on the configured `criticMode`:
 | `balanced` | After story 2, then every 3 stories (5, 8, 11...) |
 | `fast` | Only at PRD completion |
 
-**Configuration cascade** (highest priority first):
+**Configuration cascade:**
 1. CLI flag: `--critic-mode=strict`
 2. Project: `project.json` → `agents.criticMode`
 3. Fallback: `balanced`
 
-> ℹ️ **Note:** Rigor profiles are deprecated. Critic mode is now configured directly in `project.json` or via CLI flag. The system automatically determines which critics to run based on file changes (see test-flow skill for activity resolution).
+Record critic results via `helm_task_add_activity`:
 
-**Balanced mode details:**
-- If PRD has ≤2 stories, behave like `fast` (one critic run at end)
-- Always run critic at PRD completion regardless of mode
+```
+helm_task_add_activity({
+  task_id: "{story_task_id}",
+  activity_type: "critic_review",
+  content: "critic: passed, security: no issues, edge-cases: 2 suggestions (addressed)"
+})
+```
+
+### Step 3: Repeat for All Stories
+
+Continue Steps 2.1-2.5 for each story until all are complete.
 
 ---
 
-## Phase 3: Ship
+## Phase 3: PRD Completion
 
-After all stories are complete, ship the work:
+When all stories have `status: "completed"`:
 
-### Step 1: Run Quality Gates
+### Step 1: Run Final Quality Gates
 
 Use commands from `docs/project.json`:
 
 ```bash
-# Example - actual commands come from project.json
-# CI=true prevents watch mode for test runners
 npm run typecheck && CI=true npm run test && npm run build
 ```
 
-### Step 1.5: Run Architecture Guardrail Checks
+### Step 2: Run Queued E2E Tests
 
-Run guardrail validation in the same pre-ship gate path:
+If any Playwright tests were deferred to PRD completion, run them now using `test-flow` retry semantics.
 
-```bash
-# Example commands; use project-defined equivalents when available
-npm run lint:architecture || npm run guardrails:check
-```
+### Step 3: Update PRD Status
 
-If violations exist:
-- attempt auto-fix/update where safe
-- re-run checks
-- if still failing, stop and report explicit remediation guidance
+Mark PRD ready for completion:
 
-### Step 1.75: Refresh Bounded-Context Docs if Needed
-
-If boundary-impacting changes were detected during the PRD:
-
-1. Regenerate `docs/architecture/bounded-contexts.md`
-2. Regenerate/refresh `docs/architecture/contexts/*.md` if used
-3. Include a concise boundary delta summary in ship output
-
-### Step 2: Run ALL Queued E2E Tests
-
-First, gather all queued E2E tests from completed chunks' `chunk.json` files:
-- All tests in `pendingTests.e2e.generated[]`
-- This includes story E2E tests AND any ad-hoc E2E tests deferred to PRD completion
-
-If no E2E tests are queued (for example, `testing.autoGenerate: false` and no manually added tests), skip this step and continue to Step 2.5.
-
-Start dev server if needed (see Dev Server Management).
-
-Run queued E2E execution and failure handling using `test-flow` retry semantics (max attempts, @developer fix loop, and stop conditions).
-
-### Step 2.5: Run Quality Checks (if enabled) (US-008)
-
-Check `project.json → testing.qualityChecks`:
-
-```json
-{
-  "testing": {
-    "qualityChecks": true  // default: false
-  }
-}
-```
-
-**If `qualityChecks: true`:**
-
-Run @quality-critic with context:
-```
-Run @quality-critic with:
-  devServerUrl: http://localhost:{devPort}  # Get devPort from docs/project.json
-  changedFiles: [files changed in this PRD/session]
-  mode: comprehensive  // for PRD completion
-```
-
-@quality-critic will check:
-- Accessibility (axe-core) — WCAG 2.1 AA compliance
-- Layout Shift (CLS) — cumulative layout shift detection
-- Visual Regression — screenshot comparison with baselines
-- Performance — FCP, LCP, TTI metrics
-
-**Handle quality check results:**
-
-- If no critical issues → Continue to step 3
-- If critical issues → Show prompt with [F]ix / [S]kip options
-
-### Step 3: Commit Final Changes
-
-Commit all remaining changes:
-
-If per-story commits are enabled, ensure there are no uncommitted changes before this step.
-
-```bash
-git add -A
-git commit -m "feat: [summary from PRD]"
-```
-
-### Step 3.5: Generate PRD Completion Report Artifact
-
-Before final completion/archival, generate:
-
-- `docs/completed/[prd-id]/completion-report.md`
-
-Support report modes:
-- `detailed` (default)
-- `compact` (if configured in project config)
-
-Required report sections:
-
-1. PRD metadata (id, name, completion timestamp)
-2. Story-to-acceptance mapping (what shipped)
-3. Files and system areas changed
-4. Data/migration impact
-5. API changes and auth/permission notes
-6. UI/UX changes
-7. Verification evidence (commands + pass/fail)
-8. Deferred items / known issues / follow-ups
-
-Always reference this report path in final Builder completion output.
-
-### Step 4: Push and PR (Git Completion Workflow)
-
-> ⚓ **AGENTS.md: Git Completion Workflow**
->
-> This step follows the canonical Git Completion Workflow defined in AGENTS.md.
-> Both PRD mode and ad-hoc mode use the same workflow for consistency.
-
-**4a. Validate Configuration (Fail Fast)**
-
-Read `project.json` → `git.agentWorkflow`:
-
-```json
-{
-  "git": {
-    "agentWorkflow": {
-      "pushTo": "staging",
-      "createPrTo": "main",
-      "requiresHumanApproval": ["main", "production"]
-    }
-  }
-}
-```
-
-**If `git.agentWorkflow` is not defined:** STOP with Missing Config Error (see AGENTS.md).
-
-**4b. Push to Configured Branch**
-
-Push to the `pushTo` branch:
-
-```bash
-git push origin {git.agentWorkflow.pushTo}
-```
-
-**4c. Prompt for PR Creation**
-
-**If `createPrTo` differs from `pushTo`**, prompt the user:
-
-```
-═══════════════════════════════════════════════════════════════════════
-                         PUSH COMPLETE
-═══════════════════════════════════════════════════════════════════════
-
-✅ PRD "{prd-name}" pushed to origin/{pushTo}
-
-Your workflow is configured to create PRs to '{createPrTo}'.
-
-[P] Create PR to {createPrTo}
-[S] Stay on {pushTo} (no PR yet)
-
-> _
-═══════════════════════════════════════════════════════════════════════
-```
-
-**If `createPrTo` equals `pushTo`**, skip PR creation (work is already on target branch).
-
-### Step 5: Create PR (if user chooses [P])
-
-Create the PR:
-
-```bash
-gh pr create --base {createPrTo} --title "feat: {description from PRD}" --body "{PR body with story list}"
-```
-
-**Update PRD status to `pr_open`:**
 ```
 helm_prd_update({
   prd_id: "prd-[name]",
-  status: "pr_open"
+  status: "in_progress",  // still in_progress until PR is merged
+  completed_stories: {total}
 })
 ```
 
-Store `prNumber` and `prUrl` in session state for reference.
+### Step 4: Hand Off to Builder Completion Flow
 
-**Check if target branch requires human approval:**
+> ⚓ **Builder agent (US-009): Session Completion & Merge**
+>
+> The PRD workflow skill's job ends here. Builder's Session Completion & Merge section handles:
+> - Git push to configured branch
+> - PR creation (if configured)
+> - PR merge (if auto-merge allowed)
+> - PRD status transition to `pr_open` then `completed`
+>
+> See Builder agent for the complete git completion workflow.
 
-| `createPrTo` in `requiresHumanApproval`? | Action |
-|------------------------------------------|--------|
-| Yes | Report "✅ PR #{number} created. Human approval required to merge." |
-| No | Proceed to merge handling (Step 6) |
+Report PRD readiness:
 
-### Step 6: Handle Merge (if auto-merge allowed)
-
-**If `createPrTo` NOT in `requiresHumanApproval`:**
-
-Merge immediately after CI passes (or call @felix for CI wait).
-
-```bash
-gh pr merge <prNumber> --squash --delete-branch
 ```
+═══════════════════════════════════════════════════════════════════════
+                    PRD IMPLEMENTATION COMPLETE
+═══════════════════════════════════════════════════════════════════════
 
-### Step 7: Report Completion and Update Session
+PRD: {prd-title}
+Stories completed: {total}/{total}
 
-Report the final state:
+Quality gates: ✅ Passed
+E2E tests: ✅ Passed (or skipped if configured)
 
-| Outcome | Message |
-|---------|---------|
-| Pushed only (no PR) | "Changes pushed to {pushTo}. Create PR when ready. Status: `in_progress`" |
-| PR created, awaiting human | "PR #{number} created. Human approval required to merge. Status: `pr_open`" |
-| PR created and merged | "PR #{number} merged to {createPrTo}. Status: `completed` (pending cleanup)" |
-
----
-
-## Phase 4: Cleanup (runs on next Builder startup)
-
-When Builder starts, check for PRDs that need cleanup:
-
-### Step 1: Check PR Status
-
-List PRDs with `pr_open` status:
+Ready for git completion workflow.
+═══════════════════════════════════════════════════════════════════════
 ```
-helm_prd_list({ status: "pr_open" })
-```
-
-For each:
-- Check if PR was merged: `gh pr view <PR-NUMBER> --json state`
-
-### Step 2: Handle Merged PRs
-
-If `state: "MERGED"`:
-
-1. **Automatic PRD Completion Playwright Execution:**
-   
-   Check `testVerifySettings.prdUIVerify_PRDCompletionTest` (default: `true` if absent):
-   
-   - If `true` → Run holistic Playwright tests automatically covering the full PRD's changes. Fix loop continues until pass (max 20 attempts per issue). On exhaustion, STOP and report:
-     ```
-     ⛔ PLAYWRIGHT FIX LOOP EXHAUSTED
-     
-     Attempted 20 fixes for the following issue without success:
-       [issue description]
-     
-     Files affected: [list]
-     Last error: [error summary]
-     ```
-   - If `false` → Skip silently with: `⏭️ Skipping PRD completion Playwright tests: testVerifySettings.prdUIVerify_PRDCompletionTest is false`
-   
-   After Playwright passes (or is skipped), proceed automatically to step 2.
-
-2. **Generate human testing script** (see template below)
-
-3. **Mark PRD as completed in Supabase:**
-   ```
-   helm_prd_update({
-     prd_id: "prd-[name]",
-     status: "completed",
-     completed_at: "<ISO timestamp>"
-   })
-   ```
-
-4. **Archive PRD files locally (optional):**
-   - Create folder: `docs/completed/[prd-id]/`
-   - Move the generated `human-testing-script.md` to archive folder
-   - Store completion report locally
-
-5. **Clear E2E queue from chunk files:**
-   - Clear `pendingTests.e2e` from each chunk's `chunk.json`
-   - Clear `deferredTo` flag
-
-   > ℹ️ **No top-level verification reset needed.** Per-chunk verification isolation in `chunk.json` means
-   > each chunk owns its own `verification.contract` and `verification.results`. When a new task starts,
-   > it gets a fresh chunk with clean verification state — no cross-contamination is possible.
-
-6. **Run @prd-impact-analyzer:**
-   - Check if completed work unblocks other PRDs (via `helm_prd_list`)
-   - Check if conflict risks have changed
-   - Update affected PRDs accordingly
-
-7. **Report and offer to open:**
-   ```
-   ✅ Cleaned up merged PRD: [prd-name]
-   
-   📋 Human testing script ready:
-      docs/completed/[prd-id]/human-testing-script.md
-   
-   Would you like me to open it? (y/n)
-   ```
-
-### Step 3: Handle Other States
-
-- **If `state: "OPEN"`:** Keep current state, report: "⏳ PR still open"
-- **If `state: "CLOSED"` (not merged):** Warn and ask user what to do
-
-### Step 4: Check for Stale Sessions
-
-List in-progress PRDs and check for stale sessions:
-```
-helm_prd_list({ status: "in_progress" })
-```
-
-- `in_progress` with no heartbeat for > 1 hour → warn: "PRD [name] may be abandoned (no heartbeat)"
-- Check `pr_open` PRDs for > 24 hours → suggest checking PR status
-
-### Step 5: Check Merge Queue Status
-
-If queued entries exist for this project, show queue status and offer to process.
 
 ---
 
@@ -808,148 +371,66 @@ If user makes an ad-hoc request while a PRD is active:
    - If it's unrelated → run as ad-hoc (separate from PRD)
 
 2. **For unrelated ad-hoc requests:**
-   - Run the `workflows.adhoc` steps
+   - Load `adhoc-workflow` skill
    - **⚠️ PRD PROTECTION: Do NOT modify PRD state during ad-hoc work**
    - Commit separately from PRD work
-   - Generate an ad-hoc report
    - Return to PRD work when done
 
-3. **Example:**
-   ```
-   [Working on prd-error-logging]
-   
-   User: "Oh also, can you fix the typo in the footer?"
-   
-   Builder: "That's outside the current PRD scope. I'll handle it as ad-hoc.
-          Running ad-hoc workflow..."
-   
-   [Runs adhoc workflow, generates adhoc-2026-02-20-fix-footer-typo.md]
-   
-   Builder: "✅ Fixed footer typo.
-          
-          📋 Ad-hoc report: docs/completed/adhoc/adhoc-2026-02-20-fix-footer-typo.md
-          
-          Continuing with prd-error-logging..."
-   ```
-
 ---
 
-## Human Testing Script Template
+## Session State Management
 
-When archiving a completed PRD, generate `human-testing-script.md`:
+All session state is persisted via helm-bridge tools:
 
-**Audience:** Non-technical PMs and QA testers.
+| State | Tool | Key |
+|-------|------|-----|
+| Current story | `helm_prd_update` | `current_story` field |
+| Quality check results | `helm_task_add_activity` | activity entry |
+| Fix loop tracking | `helm_session_set_state` | `fixLoop.{storyId}` |
+| Critic results | `helm_task_add_activity` | activity entry |
 
-```markdown
-# Testing Script: [Feature Name]
+### State Persistence Example
 
-**Feature:** [Human-readable feature name]  
-**Completed:** [Date]  
-**Tested by:** _________________  
-**Test date:** _________________
+```
+// Track verification state for story
+helm_session_set_state("verification.US-001", {
+  typecheck: "passed",
+  lint: "passed",
+  tests: "passed",
+  playwright: "deferred"
+})
 
----
-
-## What Was Built
-
-[2-3 sentences describing what the user can now do]
-
----
-
-## Before You Start
-
-- [ ] Make sure you're logged into the application
-- [ ] [Any setup needed]
-
----
-
-## Test Scenarios
-
-### Scenario 1: [User goal]
-
-**Starting point:** [Where the user begins]
-
-**Steps:**
-1. [Action in plain language]
-2. [Next action]
-3. [Next action]
-
-**What should happen:**
-- [Expected outcome]
-
-**Result:** ☐ Pass  ☐ Fail
-
----
-
-## Edge Cases to Try
-
-| Try this | Expected behavior |
-|----------|-------------------|
-| [Edge case] | [What should happen] |
-
----
-
-## Things That Should Still Work
-
-- [ ] [Related feature 1]
-- [ ] [Related feature 2]
-
----
-
-## Final Check
-
-- [ ] All scenarios passed
-- [ ] Edge cases behave correctly  
-- [ ] Existing features still work
-
-**Overall result:** ☐ Ready to ship  ☐ Needs fixes
+// Read state on resume
+const verificationState = helm_session_get_state("verification.US-001")
 ```
 
 ---
 
 ## PRD History Command
 
-Users can request full PRD history with "show PRD history" or similar phrases.
-
-**Trigger phrases:**
-- "show PRD history"
-- "show all completed PRDs"
-- "list archived PRDs"
-- "PRD archive"
-
-**Response format:**
-
-```
-═══════════════════════════════════════════════════════════════════════
-                        PRD HISTORY
-═══════════════════════════════════════════════════════════════════════
-
-Recent (last 5):
-  ✅ prd-error-logging        Completed: 2026-03-02
-  ✅ prd-user-profile         Completed: 2026-02-28
-  ✅ prd-auth-flow            Completed: 2026-02-25
-  ✅ prd-dashboard            Completed: 2026-02-20
-  ✅ prd-settings             Completed: 2026-02-15
-
-Archived (15 total):
-  📦 prd-onboarding           Completed: 2026-02-10
-  📦 prd-notifications        Completed: 2026-02-05
-  📦 prd-search               Completed: 2026-01-30
-  ... (12 more)
-
-View all completed: helm_prd_list({ status: "completed", limit: 100 })
-View PRD details: helm_prd_get({ prd_id: "[prd-id]" })
-═══════════════════════════════════════════════════════════════════════
-```
+Users can request PRD history with "show PRD history" or similar phrases.
 
 **Implementation:**
 
 ```
-# List recent completed PRDs
+// List recent completed PRDs
 helm_prd_list({ status: "completed", limit: 5 })
 
-# Get details for a specific PRD
+// Get details for a specific PRD
 helm_prd_get({ prd_id: "prd-[name]" })
 ```
 
-This keeps startup reads minimal while allowing full history access on demand.
+---
+
+## What This Skill Does NOT Do
+
+The following are handled elsewhere:
+
+| Responsibility | Handled By |
+|----------------|------------|
+| Git commit/push/PR | Builder agent (US-009 Git Completion Workflow) |
+| PRD creation | @planner agent |
+| Session logging | Helm native session infrastructure |
+| Branch creation | Helm creates working branches for sessions |
+| Dashboard rendering | Helm native UI |
+| Post-merge cleanup | Builder agent (Phase 4 cleanup on startup) |

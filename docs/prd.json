@@ -340,8 +340,8 @@
         "The rewritten skill reflects that shipping is now Helm-managed — the skill's job ends at \"all stories complete, all quality checks pass,\" and session completion is handled by US-009"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Rewrote prd-workflow skill from 955 to 436 lines (54% reduction). Removed local session/chunk management, branch setup, session archive, Phase 3 Ship flow. Preserved story processing pipeline, quality checks, critic dispatch, fix loop tracking. Added helm-bridge tool integration.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -354,7 +354,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T19:50:00Z"
     },
     {
       "id": "US-012",

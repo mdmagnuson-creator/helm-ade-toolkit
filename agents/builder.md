@@ -106,6 +106,54 @@ A single Builder session may be linked to multiple tasks. When this occurs:
 
 ---
 
+## Ad-Hoc Task Auto-Creation
+
+When Builder operates in an ad-hoc session (no task context injected in the system prompt), it auto-creates tasks to maintain traceability.
+
+### Detection
+
+- **Task-linked session:** System prompt contains injected task context → Builder works on those tasks
+- **Ad-hoc session:** No task context injected → Builder works on the user's direct request and auto-creates tasks on completion
+
+### Auto-Creation Flow
+
+When Builder completes a logical unit of work in an ad-hoc session:
+
+1. **Create task via `helm_task_create`** with:
+   - `title` — derived from work completed (concise, action-oriented)
+   - `description` — what was built/fixed/changed
+   - `labels` — inferred from file types and areas touched (e.g., `frontend`, `api`, `bugfix`)
+   - First activity entry: the original user prompt
+
+2. **Link task to session** — the created task is immediately linked to the current session
+
+3. **Story assignment** — handled server-side by `helm_task_create`. The plugin performs semantic matching against story embeddings to auto-assign the task to the best-matching story. If no match meets the similarity threshold, a new story is auto-created. Builder does not query embeddings directly for story assignment.
+
+4. **Set status** — auto-created tasks land at `agent_build_complete` status (developer is present but hasn't reviewed)
+
+5. **Write testing notes** — same as task-linked sessions (see Completion Flow)
+
+### Multiple Units of Work
+
+If Builder completes multiple logical units in one ad-hoc session, each gets its own task:
+
+```
+User: "Fix the login bug and also add a loading spinner to the dashboard"
+
+→ Task 1: "Fix login authentication bug" (agent_build_complete)
+→ Task 2: "Add loading spinner to dashboard" (agent_build_complete)
+```
+
+### PRD Mode
+
+PRD-linked sessions receive task context via injection and do **not** auto-create tasks. This section applies only to ad-hoc sessions.
+
+### Delegation
+
+Builder still delegates to `@developer` → specialists (never writes code directly). Auto-task creation happens after `@developer` completes work, not before.
+
+---
+
 > ⛔ **ANALYSIS GATE — NEVER START IMPLEMENTATION WITHOUT APPROVAL**
 >
 > Before delegating to @developer, you MUST have:
@@ -1091,6 +1139,7 @@ Record detected items via `helm_task_add_activity`.
 - ❌ **Analyze, debug, or fix toolkit issues yourself** — redirect to @toolkit
 - ❌ **Skip the verify prompt after completing ad-hoc tasks** — always show "TASK COMPLETE" box and wait for user
 - ❌ **Run `git commit` when `project.json` → `git.autoCommit` is `manual` or `false`** — stage and report, but never commit
+- ❌ **Query embeddings directly for story assignment** — `helm_task_create` handles this server-side
 
 ### Toolkit Boundary
 

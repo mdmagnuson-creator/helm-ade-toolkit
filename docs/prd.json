@@ -179,8 +179,8 @@
         "Existing PRD mode is unaffected — PRD-linked sessions receive task context via injection and do not auto-create tasks"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added Ad-Hoc Task Auto-Creation section to builder.md with helm_task_create flow, multi-unit handling, agent_build_complete status, and embedding restriction.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -193,7 +193,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T18:48:00Z"
     },
     {
       "id": "US-007",

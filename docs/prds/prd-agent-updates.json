@@ -17,8 +17,8 @@
         "No other sections of AGENTS.md are modified (Protected System Resources, Temporary Files, Global Coding Behavior, Test Failure Output Policy, Requesting Toolkit Updates, etc.)"
       ],
       "priority": 1,
-      "passes": true,
-      "notes": "Removed Git Completion Workflow section (116 lines). Retained Git Auto-Commit, Git Workflow Enforcement, and Helm ADE Startup Pattern.",
+      "passes": false,
+      "notes": "",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -28,12 +28,8 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
-      "requiredCredentials": [],
-      "status": "completed",
-      "completedAt": "2026-03-19T00:01:00Z"
+      "considerations": ["opencode-serve-api"],
+      "requiredCredentials": []
     },
     {
       "id": "US-002",
@@ -59,9 +55,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -90,9 +84,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -118,9 +110,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -150,9 +140,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -182,9 +170,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -213,9 +199,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -244,9 +228,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -277,9 +259,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -305,9 +285,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -333,9 +311,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -362,9 +338,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -396,9 +370,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -427,9 +399,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -456,9 +426,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -483,9 +451,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -523,9 +489,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -562,9 +526,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -598,9 +560,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     },
     {
@@ -645,9 +605,7 @@
       "toolsRequired": false,
       "toolsType": null,
       "relatedToolNames": [],
-      "considerations": [
-        "opencode-serve-api"
-      ],
+      "considerations": ["opencode-serve-api"],
       "requiredCredentials": []
     }
   ]

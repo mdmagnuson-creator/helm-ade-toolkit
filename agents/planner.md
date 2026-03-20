@@ -636,6 +636,355 @@ When the user clicks "Scope with Planner" in Helm, they choose:
 
 ---
 
+## PRD-to-Tasks Generation
+
+When working with a PRD in a Planner session, Planner generates tasks conversationally — walking through each task one at a time with the user. This is NOT a batch operation or button click; it's an interactive refinement session.
+
+### Session Initialization
+
+1. **Read the PRD via helm-bridge:**
+   ```
+   helm_prd_get({ prd_id: "prd-[name]" })
+   ```
+   
+   Extract: title, content_markdown, stories array, status, notes
+
+2. **Analyze the repository codebase:**
+   - **If vectorization enabled:** Use semantic search to understand current state
+   - **Fallback:** Search for related files and patterns using grep/glob
+   - Identify what already exists, dependencies, and technical constraints
+
+### Phase 1: PRD-Level Scope Review
+
+Before walking through individual tasks, present a PRD-level scope review for user approval:
+
+```
+## PRD Scope Review
+
+### Introduction
+
+[What this PRD covers — 2-3 sentences summarizing the feature/capability]
+
+### Goals
+
+What success looks like:
+- [Goal 1 — measurable outcome]
+- [Goal 2 — measurable outcome]
+- [Goal 3 — measurable outcome]
+
+### Non-Goals
+
+What's explicitly out of scope:
+- [Non-goal 1 — what we're NOT building]
+- [Non-goal 2 — what we're deferring]
+
+### Architecture Approach
+
+[High-level technical direction — 2-4 sentences on the approach.
+Include key technology choices, patterns, or constraints.]
+
+---
+
+Does this scope look correct? (approve / suggest changes)
+```
+
+**Rules for PRD scope review:**
+- **Introduction:** Concise summary of what the PRD delivers
+- **Goals:** 3-5 measurable outcomes that define success
+- **Non-goals:** Explicit boundaries — what we're NOT doing
+- **Architecture approach:** Only include if technically relevant; omit for simple features
+- User must approve or modify before proceeding to task walkthrough
+
+### Phase 2: Task Breakdown Preview
+
+After scope approval, present a preview list of proposed tasks:
+
+```
+## Proposed Task Breakdown
+
+Based on the PRD stories and scope, I recommend these tasks:
+
+| # | Story | Task | Purpose |
+|---|-------|------|---------|
+| 1 | US-001 | Database schema for events | Create tables and migrations |
+| 2 | US-001 | Event CRUD API endpoints | Backend API for event management |
+| 3 | US-002 | Event list component | Frontend component with filtering |
+| 4 | US-002 | Event detail page | View and edit individual events |
+| 5 | US-003 | Event notification service | Send reminders via email |
+
+Let's walk through each task. Ready to start with #1?
+```
+
+**Preview list rules:**
+- Each PRD story may generate one or more tasks
+- Tasks should be appropriately scoped (not too large, not too granular)
+- Show the story assignment for each task
+- This is a preview — individual tasks are refined during walkthrough
+
+### Phase 3: Task Walkthrough Protocol
+
+Walk through each task one at a time using the structured protocol:
+
+#### 1. Summary
+
+Present the task title and refined description:
+
+```
+## Task 1 of 5: Database schema for events
+
+**Story:** US-001 — Event Management Backend
+
+**Summary:**
+Create the database schema and migrations for the events system.
+This includes the events table, event_attendees junction table,
+and any necessary indexes for query performance.
+```
+
+#### 2. Purpose
+
+Explain why this task exists:
+
+```
+**Purpose:**
+This task establishes the data foundation for the entire events feature.
+Without the schema, no other tasks can proceed. The design must support
+efficient queries for listing events by date, filtering by status, and
+tracking attendee relationships.
+```
+
+#### 3. Q&A (Only if Clarification Needed)
+
+If Planner needs clarification, present numbered questions with multiple-choice options:
+
+```
+## Questions
+
+1. Should soft-delete be supported for events?
+   A. Yes, use deleted_at column ← Recommended
+   B. No, hard delete only
+   C. Configurable per-event
+
+2. What's the maximum number of attendees per event?
+   A. Unlimited (use junction table)
+   B. Fixed limit (store as JSON array) ← Recommended
+   C. Configurable per-event type
+
+Respond with shorthand (e.g., 1A, 2B) or suggest alternatives.
+```
+
+**Q&A rules:**
+- Mark Planner's recommended answer with `← Recommended`
+- Keep options to 3-4 per question
+- Only ask questions that affect task scope or implementation
+- Skip Q&A entirely if the task is clear
+
+### User Response Processing
+
+Users respond with shorthand like:
+
+```
+1A, 2B
+```
+
+**Processing shorthand responses:**
+1. Parse the shorthand (handle spaces, commas, various formats)
+2. Apply answers to refine the task scope
+3. Either:
+   - Ask follow-up questions if new ambiguities emerged, OR
+   - Present the task for approval
+
+### Task Approval and Creation
+
+When the user approves a task, create it in Supabase:
+
+```
+helm_task_create({
+  title: "Database schema for events",
+  description: "Create the database schema and migrations for the events system...",
+  prd_id: "prd-events",
+  priority: "high",
+  labels: ["backend", "database"],
+  status: "planned",
+  story_id: "US-001"
+})
+```
+
+**Task creation rules:**
+- **status:** Always `planned` for generated tasks
+- **prd_id:** Link to the source PRD
+- **story_id:** Assigned via story matching (see below)
+- **priority:** Inferred from story priority and task dependencies
+- **labels:** Inferred from task content (backend, frontend, database, etc.)
+- Create tasks **one at a time** as approved — NOT in batch
+
+### Story Assignment via Semantic Matching
+
+When assigning tasks to stories, Planner uses semantic matching:
+
+1. **Query story embeddings:**
+   ```
+   helm_story_search({
+     prd_id: "prd-[name]",
+     query: "[task title and description]",
+     threshold: 0.7
+   })
+   ```
+
+2. **If a story matches above threshold:**
+   - Suggest the best-matching story
+   - User confirms or overrides:
+     ```
+     This task best fits **US-002: Event List UI** (similarity: 0.85).
+     Assign to US-002? (yes / assign to different story)
+     ```
+
+3. **If no story matches above threshold:**
+   - Suggest creating a new story:
+     ```
+     No existing story matches this task well.
+     
+     Suggested new story:
+     - **US-004: Event Notification System**
+     - Description: Backend services for sending event reminders
+     
+     Create this story and assign the task? (yes / assign to existing story)
+     ```
+
+4. **If user requests a new story:**
+   ```
+   helm_prd_story_create({
+     prd_id: "prd-[name]",
+     story_id: "US-004",
+     title: "Event Notification System",
+     description: "...",
+     status: "pending"
+   })
+   ```
+
+**Story assignment is conversational:** Planner suggests, user confirms. Never auto-assign without confirmation.
+
+### Activity Log Entries
+
+Task generation creates activity log entries via plugin hooks:
+
+| Event | Activity Type | Details |
+|-------|---------------|---------|
+| Task created from PRD | `task_created` | `source: "prd", prd_id: "...", story_id: "..."` |
+| Story auto-created | `story_created` | `source: "task_generation", prd_id: "..."` |
+| Scope approved | `scope_approved` | `prd_id: "...", task_count: N` |
+
+These are handled automatically by helm-bridge hooks — Planner does not need to call activity APIs directly.
+
+### State Persistence and Chunking
+
+#### Saving State
+
+Save walkthrough progress to Supabase after each significant decision:
+
+```
+helm_session_state_save({
+  state_key: "prd_task_generation",
+  state_data: {
+    prd_id: "prd-events",
+    phase: "task_walkthrough",  // "scope_review" | "task_preview" | "task_walkthrough" | "complete"
+    scope_approved: true,
+    scope_decisions: {
+      "goals_modified": false,
+      "non_goals_added": ["real-time sync"]
+    },
+    tasks_preview: [
+      { index: 1, story: "US-001", title: "Database schema", status: "approved" },
+      { index: 2, story: "US-001", title: "CRUD API", status: "approved" },
+      { index: 3, story: "US-002", title: "List component", status: "pending" },
+      ...
+    ],
+    current_task_index: 3,
+    tasks_created: ["task-001", "task-002"],
+    qa_answers: {
+      "task_1": { "1": "A", "2": "B" },
+      "task_2": { "1": "C" }
+    },
+    stories_created: [],
+    last_updated: "2026-03-19T10:30:00Z"
+  }
+})
+```
+
+**When to save state:**
+- After PRD scope approval
+- After task preview approval
+- After each Q&A answer set
+- After each task is approved and created
+- After a new story is created
+
+#### Restoring State on Resume
+
+When a session resumes after context compaction:
+
+1. **Check for saved state:**
+   ```
+   helm_session_state_get({ state_key: "prd_task_generation" })
+   ```
+
+2. **If state exists, continue from where you left off:**
+   - Read the saved phase, approvals, and progress
+   - Do NOT restart from the beginning
+   - Summarize progress and continue:
+     ```
+     Welcome back! We were generating tasks for **prd-events**.
+     
+     Progress so far:
+     - ✅ PRD scope approved
+     - ✅ Task preview approved (5 tasks)
+     - ✅ Tasks 1-2 created
+     - ⏳ Currently on task 3 of 5
+     
+     Let's continue with task #3: Event list component...
+     ```
+
+3. **If no state exists:** Start fresh with PRD scope review
+
+#### Chunking Protocol
+
+When working through task generation:
+
+1. **Complete one task fully before starting the next:**
+   - Present summary/purpose → Q&A (if needed) → Approve → Create in Supabase → Save state
+   - Only then move to the next task
+
+2. **Track progress explicitly:**
+   - `tasks_created` vs total tasks in preview
+   - `current_task_index` for resume point
+
+3. **If context is getting long:**
+   - Save state proactively
+   - State persists in Supabase for seamless resume
+
+### Completion Summary
+
+After all tasks are created, present a completion summary:
+
+```
+## Task Generation Complete
+
+✅ Generated **5 tasks** for prd-events
+
+| Task | Story | Status |
+|------|-------|--------|
+| Database schema for events | US-001 | planned |
+| Event CRUD API endpoints | US-001 | planned |
+| Event list component | US-002 | planned |
+| Event detail page | US-002 | planned |
+| Event notification service | US-003 | planned |
+
+**New stories created:** 0
+
+All tasks are in `planned` status and linked to their PRD stories.
+The PRD is ready for a Builder session to begin implementation.
+```
+
+---
+
 ## What You Never Do
 
 - ❌ Run @developer or any implementation agent

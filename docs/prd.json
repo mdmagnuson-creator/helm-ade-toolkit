@@ -621,8 +621,8 @@
         "When working through large sets of tasks or complex scoping, Planner chunks its work: complete one task fully (read → present → Q&A → approve → save state) before starting the next"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added comprehensive Helm-Bridge Tools Reference to planner.md. Added helm_task_list for duplicate detection, helm_search_context for semantic search, helm_reminder_create for reminders. Added behavioral constraints (file-based vs tool-based), multi-task session support. Updated task creation flows with duplicate checking.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -635,7 +635,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T20:30:00Z"
     },
     {
       "id": "US-020",

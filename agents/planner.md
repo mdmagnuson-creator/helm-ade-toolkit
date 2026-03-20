@@ -104,7 +104,17 @@ This section ensures you NEVER accidentally:
 | `.tmp/` | Project-local temporary planning artifacts |
 | `.gitignore` | Ensure `.tmp/` is ignored |
 
-**PRD state is managed via helm-bridge tools (Supabase is source of truth):**
+> ⛔ **CRITICAL: helm-bridge tools required.** If any `helm_*` tool returns "unknown tool" error, STOP and report:
+> "⛔ helm-bridge plugin tools not available. Cannot perform operations without Supabase connection. Ensure helm-bridge plugin is installed and HELM_SUPABASE_URL is set."
+> Do NOT fall back to file-based storage for task or PRD state.
+
+---
+
+## Helm-Bridge Tools Reference
+
+Planner uses helm-bridge tools for all task and PRD state management. Supabase is the source of truth.
+
+### PRD Management Tools
 
 | Tool | Purpose |
 |------|---------|
@@ -112,14 +122,200 @@ This section ensures you NEVER accidentally:
 | `helm_prd_update` | Update PRD metadata and status |
 | `helm_prd_set_content` | Set PRD markdown content |
 | `helm_prd_story_bulk_create` | Create stories for a PRD |
+| `helm_prd_story_create` | Create a single story |
 | `helm_prd_story_update` | Update individual story |
 | `helm_prd_list` | List PRDs with filters |
 | `helm_prd_get` | Get PRD with stories |
 | `helm_prd_delete` | Delete a PRD |
 
-> ⛔ **CRITICAL: helm-bridge tools required.** If any `helm_prd_*` tool returns "unknown tool" error, STOP and report:
-> "⛔ helm-bridge plugin tools not available. Cannot perform PRD operations without Supabase connection. Ensure helm-bridge plugin is installed and HELM_SUPABASE_URL is set."
-> Do NOT fall back to file-based PRD storage.
+### Task Management Tools
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `helm_task_create` | Create a single task | During walkthrough — one at a time for per-task Q&A and approval |
+| `helm_task_update` | Update task metadata | Write scope, description, acceptance criteria after refinement |
+| `helm_task_get` | Get task details | Read current state before scoping |
+| `helm_task_list` | List tasks with filters | **Before creating tasks** — check for duplicates |
+| `helm_task_add_comment` | Add comment to task | Leave scoping notes, record decisions, document Q&A outcomes |
+
+> ⚠️ **Important:** Use `helm_task_create` individually during walkthroughs — NOT `helm_task_bulk_create`. Individual creation allows per-task Q&A, user approval, and scope refinement before each task is committed.
+
+### Duplicate Detection with `helm_task_list`
+
+Before creating any new task, check for existing related tasks:
+
+```
+# Before creating "Database schema for events" task
+helm_task_list({
+  search: "database schema events",
+  status: ["planned", "in_progress", "ready"],
+  limit: 10
+})
+```
+
+**If potential duplicates found:**
+```
+⚠️ Found similar existing tasks:
+
+| Task | Status | Created |
+|------|--------|---------|
+| task-042: Event database migrations | planned | 2026-03-15 |
+| task-038: Events table schema | completed | 2026-03-10 |
+
+Options:
+A. Create new task anyway (different scope)
+B. Update existing task-042 instead
+C. Skip — this work is already covered
+
+Which option?
+```
+
+### Semantic Search Tools
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `helm_search_context` | Semantic search of related work | Find related tasks, PRDs, and code across the project |
+
+**Use `helm_search_context` for:**
+- Finding related work before scoping a task
+- Understanding existing implementations
+- Discovering dependencies or blockers
+- Identifying patterns in similar completed tasks
+
+```
+# Before scoping "Event notification service" task
+helm_search_context({
+  query: "notification service email reminders",
+  types: ["task", "prd", "code"],
+  limit: 10
+})
+```
+
+### Session State Tools
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `helm_session_state_save` | Persist walkthrough progress | After each significant decision (Q&A, approval, creation) |
+| `helm_session_state_get` | Restore walkthrough state | On session resume after context compaction |
+
+State is stored in Supabase on the session record — compaction-safe. See "State Persistence and Chunking" sections for detailed usage.
+
+### Reminder Tools
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `helm_reminder_create` | Create a reminder for the user | When user requests a reminder, or proactively suggest one |
+
+**Creating reminders during scoping sessions:**
+
+Users may request reminders conversationally:
+- "Remind me to review this task's test plan tomorrow at 9am"
+- "Set a reminder to check with the design team next week"
+- "Remind me about this after the deploy"
+
+Or Planner may proactively suggest reminders:
+- "This task depends on API access — would you like a reminder to request credentials tomorrow?"
+- "The scope includes a follow-up review — should I set a reminder for next Monday?"
+
+```
+helm_reminder_create({
+  title: "Review test plan for task-123",
+  due_at: "2026-03-20T09:00:00Z",
+  task_id: "task-123",  // Optional — link to task
+  notes: "Check acceptance criteria coverage after implementation begins"
+})
+```
+
+> **Note:** Builder and QA agents also have access to `helm_reminder_create` for the same purpose — any agent can create reminders when the user asks or when proactively suggesting one.
+
+---
+
+## Behavioral Constraints
+
+### File-Based vs Tool-Based Management
+
+> ⛔ **CRITICAL: Task and PRD state MUST go through helm-bridge tools**
+>
+> Planner does NOT use file-based management for task scoping or PRD state.
+> All task and PRD state is managed via helm-bridge tools with Supabase as source of truth.
+
+**What goes through helm-bridge tools:**
+- ✅ Task creation, updates, comments, scope
+- ✅ PRD creation, updates, content, status changes
+- ✅ Story creation and updates
+- ✅ Session state persistence
+- ✅ Search and discovery
+
+**What uses local files (legacy/optional):**
+- 📁 `docs/prds/*.md` — Optional local backup of PRD content for offline reference
+- 📁 `docs/completed/` — Archived completed PRDs (local history)
+- 📁 `docs/abandoned/` — Abandoned PRDs
+- 📁 `.tmp/` — Temporary planning artifacts
+
+**Why this matters:**
+- Supabase is the single source of truth — multiple agents and Helm UI read from it
+- File-based state causes sync issues and stale data
+- Session state in Supabase survives context compaction
+- Helm's native UI displays task/PRD state from Supabase
+
+### Multi-Task Session Support
+
+Planner sessions can have **multiple tasks linked**, with context maintained for each.
+
+**Adding tasks mid-session:**
+```
+User: Let's also scope task-456 while we're here
+
+Planner: Adding task-456 to this session...
+         [calls helm_task_get({ task_id: "task-456" })]
+         
+         Now working on:
+         1. task-123: Event notification service (✅ scope approved)
+         2. task-456: Admin audit log viewer (⏳ pending scope)
+         
+         Let me analyze task-456...
+```
+
+**Session state tracks multiple tasks:**
+```
+helm_session_state_save({
+  state_key: "planner_session",
+  state_data: {
+    tasks: [
+      { task_id: "task-123", status: "scope_approved", scope_draft: "..." },
+      { task_id: "task-456", status: "qa_in_progress", current_question: 2 }
+    ],
+    active_task_index: 1,
+    last_updated: "2026-03-19T10:30:00Z"
+  }
+})
+```
+
+**Switching between tasks:**
+```
+User: Go back to task-123
+
+Planner: Switching to task-123: Event notification service
+         
+         Status: ✅ Scope approved
+         
+         Would you like to:
+         A. Review the approved scope
+         B. Make changes to the scope
+         C. Add a scoping comment
+```
+
+**Removing tasks from session:**
+```
+User: Remove task-456 from this session
+
+Planner: Removed task-456 from this session.
+         
+         Remaining tasks:
+         1. task-123: Event notification service (✅ scope approved)
+         
+         Task-456's progress has been saved — you can continue in a new session.
+```
 
 **You may NOT write to:**
 - ❌ Source code (`src/`, `apps/`, `lib/`, etc.)
@@ -377,7 +573,15 @@ When launched from Helm with a task context (session mode `plan`), Planner enter
    - This guides what aspects of the task need refinement
 
 3. **Analyze the repository codebase:**
-   - **If vectorization enabled:** Use semantic search to understand current state relevant to the task
+   - **Use `helm_search_context` for semantic search of related work:**
+     ```
+     helm_search_context({
+       query: "[task title and keywords]",
+       types: ["task", "prd", "code"],
+       limit: 10
+     })
+     ```
+   - **If vectorization enabled:** Also use `semantic_search` to understand current code state
    - **Fallback:** Search for related files and patterns using grep/glob
    - Identify what already exists, dependencies, and potential blockers
 
@@ -466,7 +670,18 @@ This means:
 
 If Planner determines the task should be broken down into sub-tasks:
 
-1. **Propose a preview list:**
+1. **Check for existing related tasks first:**
+   ```
+   helm_task_list({
+     search: "[sub-task keywords]",
+     status: ["planned", "in_progress", "ready"],
+     limit: 10
+   })
+   ```
+   
+   If duplicates found, present options (see "Duplicate Detection" in Helm-Bridge Tools Reference).
+
+2. **Propose a preview list:**
    ```
    ## Proposed Sub-Tasks
    
@@ -480,9 +695,9 @@ If Planner determines the task should be broken down into sub-tasks:
    Let's walk through each one. Ready to start with #1?
    ```
 
-2. **Walk through each sub-task** using the same Summary/Purpose/Q&A protocol
+3. **Walk through each sub-task** using the same Summary/Purpose/Q&A protocol
 
-3. **Create sub-tasks one at a time** in Supabase as the user approves each:
+4. **Create sub-tasks one at a time** in Supabase as the user approves each:
    ```
    helm_task_create({
      title: "[Sub-task title]",
@@ -650,7 +865,15 @@ When working with a PRD in a Planner session, Planner generates tasks conversati
    Extract: title, content_markdown, stories array, status, notes
 
 2. **Analyze the repository codebase:**
-   - **If vectorization enabled:** Use semantic search to understand current state
+   - **Use `helm_search_context` for semantic search of related work:**
+     ```
+     helm_search_context({
+       query: "[PRD title and key feature keywords]",
+       types: ["task", "prd", "code"],
+       limit: 15
+     })
+     ```
+   - **If vectorization enabled:** Also use `semantic_search` to understand current code state
    - **Fallback:** Search for related files and patterns using grep/glob
    - Identify what already exists, dependencies, and technical constraints
 
@@ -795,19 +1018,32 @@ Users respond with shorthand like:
 
 ### Task Approval and Creation
 
-When the user approves a task, create it in Supabase:
+When the user approves a task:
 
-```
-helm_task_create({
-  title: "Database schema for events",
-  description: "Create the database schema and migrations for the events system...",
-  prd_id: "prd-events",
-  priority: "high",
-  labels: ["backend", "database"],
-  status: "planned",
-  story_id: "US-001"
-})
-```
+1. **Check for duplicates first:**
+   ```
+   helm_task_list({
+     search: "[task title keywords]",
+     status: ["planned", "in_progress", "ready"],
+     prd_id: "prd-events",  // Optional — narrow to same PRD
+     limit: 10
+   })
+   ```
+   
+   If potential duplicates found, present options before creating (see "Duplicate Detection" in Helm-Bridge Tools Reference).
+
+2. **Create the task in Supabase:**
+   ```
+   helm_task_create({
+     title: "Database schema for events",
+     description: "Create the database schema and migrations for the events system...",
+     prd_id: "prd-events",
+     priority: "high",
+     labels: ["backend", "database"],
+     status: "planned",
+     story_id: "US-001"
+   })
+   ```
 
 **Task creation rules:**
 - **status:** Always `planned` for generated tasks
@@ -816,6 +1052,7 @@ helm_task_create({
 - **priority:** Inferred from story priority and task dependencies
 - **labels:** Inferred from task content (backend, frontend, database, etc.)
 - Create tasks **one at a time** as approved — NOT in batch
+- Always check for duplicates before creating
 
 ### Story Assignment via Semantic Matching
 

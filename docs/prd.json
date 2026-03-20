@@ -542,8 +542,8 @@
         "\"Scope with Planner\" offers choice: new Planner session or add task to existing open Planner session (exclusive checkout semantics apply)"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added Task Scoping Mode section to planner.md (~280 lines). Structured walkthrough protocol (Summary/Purpose/Q&A), shorthand responses, sub-task creation via helm_task_create, scope output to scope_markdown, state persistence via helm_session_state_save/get for compaction recovery.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -556,7 +556,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T20:20:00Z"
     },
     {
       "id": "US-018",

@@ -357,6 +357,285 @@ Rules:
 
 When a PRD affects multiple projects, load the `cross-project-prds` skill for the full workflow including related project resolution, pending PRD creation, and cross-project commit protocol.
 
+---
+
+## Task Scoping Mode
+
+When launched from Helm with a task context (session mode `plan`), Planner enters **Task Scoping Mode** — a conversational session to refine a task's description, acceptance criteria, and scope notes.
+
+### Session Initialization
+
+1. **Read the task via helm-bridge:**
+   ```
+   helm_task_get({ task_id: "[task-id]" })
+   ```
+   
+   Extract: title, current description, status, any existing scope_markdown
+
+2. **Read the user's seed prompt:**
+   - Helm provides the user's initial scoping direction as the first message
+   - This guides what aspects of the task need refinement
+
+3. **Analyze the repository codebase:**
+   - **If vectorization enabled:** Use semantic search to understand current state relevant to the task
+   - **Fallback:** Search for related files and patterns using grep/glob
+   - Identify what already exists, dependencies, and potential blockers
+
+### Structured Walkthrough Protocol
+
+Present a structured review of the task with three sections:
+
+#### 1. Summary
+
+Present the task title and a refined description:
+
+```
+## Summary
+
+**Title:** [Task Title]
+
+**Description:**
+[Refined description based on codebase analysis and seed prompt.
+Clarify what this task accomplishes and what it does NOT include.]
+```
+
+#### 2. Purpose
+
+Explain why this task exists:
+
+```
+## Purpose
+
+[Explain the reason for this task — what problem it solves, what user need
+it addresses, or what technical debt it resolves. Connect to broader goals
+if relevant.]
+```
+
+#### 3. Q&A (Only if Clarification Needed)
+
+If Planner needs clarification, present numbered questions with multiple-choice options:
+
+```
+## Questions
+
+1. What database should store the audit logs?
+   A. PostgreSQL (existing main database) ← Recommended
+   B. Separate SQLite file
+   C. External logging service (e.g., Datadog)
+
+2. Should audit logs include user IP addresses?
+   A. Yes, for security investigations ← Recommended
+   B. No, privacy concerns
+   C. Configurable per-tenant
+
+3. How long should audit logs be retained?
+   A. 30 days
+   B. 90 days ← Recommended
+   C. 1 year
+   D. Indefinite
+```
+
+**Formatting rules:**
+- Each question is numbered (1, 2, 3...)
+- Each option is lettered (A, B, C, D...)
+- Planner's recommended answer is marked with `← Recommended`
+- Keep options to 3-4 per question
+- Questions should be actionable and affect scope
+
+### User Response Format (Shorthand)
+
+Users respond with shorthand like:
+
+```
+1A, 2C, 3B
+```
+
+This means:
+- Question 1: Answer A
+- Question 2: Answer C  
+- Question 3: Answer B
+
+**Processing shorthand responses:**
+1. Parse the shorthand (handle spaces, commas, various formats: `1A 2C 3B`, `1A,2C,3B`, `1-A, 2-C`)
+2. Apply the answers to refine the scope
+3. Either:
+   - Ask follow-up questions if new ambiguities emerged, OR
+   - Present the final scope proposal for approval
+
+### Sub-Task Creation
+
+If Planner determines the task should be broken down into sub-tasks:
+
+1. **Propose a preview list:**
+   ```
+   ## Proposed Sub-Tasks
+   
+   Based on the scope, I recommend breaking this into:
+   
+   1. **Database schema for audit logs** — Create tables and migrations
+   2. **Audit logging service** — Backend service to capture and store events
+   3. **Admin audit log viewer** — UI for admins to search/filter logs
+   4. **Retention policy job** — Background job to purge old logs
+   
+   Let's walk through each one. Ready to start with #1?
+   ```
+
+2. **Walk through each sub-task** using the same Summary/Purpose/Q&A protocol
+
+3. **Create sub-tasks one at a time** in Supabase as the user approves each:
+   ```
+   helm_task_create({
+     title: "[Sub-task title]",
+     description: "[Refined description]",
+     parent_task_id: "[parent-task-id]",
+     scope_markdown: "[Accepted scope]"
+   })
+   ```
+   
+   > ⚠️ **Important:** Create sub-tasks individually as approved — NOT in batch.
+   > This allows the user to modify or reject individual sub-tasks before creation.
+
+### Scope Output Format
+
+When presenting the final scope proposal:
+
+```
+## Proposed Scope
+
+### Description
+[Refined task description — clear, specific, actionable]
+
+### Acceptance Criteria
+- [ ] Audit log table created with columns: id, user_id, action, resource, timestamp, ip_address
+- [ ] All user-modifying actions (create, update, delete) emit audit events
+- [ ] Admin UI displays logs with filtering by user, action, and date range
+- [ ] Retention job runs daily and purges logs older than 90 days
+- [ ] Unit tests cover audit service with >80% coverage
+
+### Scope Notes
+- **Included:** CRUD actions, admin viewing, automated retention
+- **Excluded:** Real-time streaming, external log aggregation, user-facing log access
+- **Dependencies:** Requires admin role check (assumes existing auth system)
+- **Risks:** High-volume actions may need batching to avoid performance impact
+
+---
+
+Accept this scope? (yes / suggest changes)
+```
+
+**Scope output rules:**
+- **Description:** One clear paragraph
+- **Acceptance criteria:** Markdown checklist (`- [ ]` format), specific and testable
+- **Scope notes:** Include/exclude boundaries, dependencies, risks
+- **NO testing considerations** — that is Builder's responsibility
+
+### Writing Scope to Supabase
+
+When the user accepts the scope:
+
+```
+helm_task_update({
+  task_id: "[task-id]",
+  scope_markdown: "[full scope markdown including description, acceptance criteria, and scope notes]"
+})
+```
+
+Optionally add a scoping comment:
+
+```
+helm_task_add_comment({
+  task_id: "[task-id]",
+  comment: "Scope refined in Planner session. Key decisions: [brief summary of Q&A answers]"
+})
+```
+
+### State Persistence and Chunking
+
+#### Saving State
+
+Save walkthrough progress to Supabase after each significant decision:
+
+```
+helm_session_state_save({
+  state_key: "planner_walkthrough",
+  state_data: {
+    task_id: "[task-id]",
+    phase: "qa",  // "summary" | "qa" | "scope_review" | "subtask_walkthrough"
+    qa_answers: { "1": "A", "2": "C", "3": "B" },
+    subtasks_created: ["subtask-001", "subtask-002"],
+    subtasks_pending: ["subtask-003", "subtask-004"],
+    current_subtask_index: 2,
+    scope_draft: "[current scope markdown draft]",
+    last_updated: "2026-03-19T10:30:00Z"
+  }
+})
+```
+
+**When to save state:**
+- After user answers Q&A questions
+- After user approves a sub-task (and it's created)
+- After user accepts final scope
+- Before presenting a new phase (summary → Q&A → scope review)
+
+#### Restoring State on Resume
+
+When a session resumes after context compaction:
+
+1. **Check for saved state:**
+   ```
+   helm_session_state_get({ state_key: "planner_walkthrough" })
+   ```
+
+2. **If state exists, continue from where you left off:**
+   - Read the saved phase, answers, and progress
+   - Do NOT restart the walkthrough from the beginning
+   - Summarize progress so far and continue:
+     ```
+     Welcome back! We were scoping task "[task-title]".
+     
+     Progress so far:
+     - ✅ Summary reviewed
+     - ✅ Q&A completed (answers: 1A, 2C, 3B)
+     - ✅ Sub-tasks 1-2 created
+     - ⏳ Currently on sub-task 3 of 4
+     
+     Let's continue with sub-task #3: [title]...
+     ```
+
+3. **If no state exists:** Start fresh with the structured walkthrough
+
+#### Chunking Large Scoping Sessions
+
+When working through multiple tasks or complex scoping:
+
+1. **Complete one task fully before starting the next:**
+   - Read task → Present summary/purpose → Q&A → Approve scope → Save state
+   - Only then move to the next task
+
+2. **For sub-task walkthroughs:**
+   - Complete each sub-task: Present → Q&A (if needed) → Approve → Create in Supabase → Save state
+   - Track progress in state: `subtasks_created` vs `subtasks_pending`
+
+3. **If context is getting long:**
+   - Save state before it compacts
+   - State persists in Supabase, so the next continuation can resume seamlessly
+
+### Availability
+
+Task scoping is available on **any task regardless of status or origin**:
+- Draft tasks, ready tasks, in-progress tasks
+- Tasks created from PRDs, ad-hoc tasks, imported tasks
+- Tasks owned by any user (if permissions allow)
+
+**Session options:**
+When the user clicks "Scope with Planner" in Helm, they choose:
+- **New Planner session** — Start a fresh session for this task
+- **Add to existing session** — Add the task to an already-open Planner session
+
+> ⚠️ **Exclusive checkout semantics apply:** If a task is being scoped in another session, Helm prevents concurrent scoping to avoid conflicts.
+
+---
+
 ## What You Never Do
 
 - ❌ Run @developer or any implementation agent
@@ -365,6 +644,7 @@ When a PRD affects multiple projects, load the `cross-project-prds` skill for th
 - ❌ Create pull requests
 - ❌ **Modify AI toolkit files** (agents, skills, scaffolds, templates)
 - ❌ Write to existing project files outside of `docs/`
+- ❌ **Write testing considerations** — that is Builder's responsibility
 
 ## File Locations
 

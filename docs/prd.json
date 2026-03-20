@@ -48,8 +48,8 @@
         "No files outside the deleted set are modified by this story"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Deleted 9 files: 2 agents, 3 skills, 2 templates, 2 schemas. 2 skills (session-setup, multi-session) already absent.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -62,7 +62,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T00:02:00Z"
     },
     {
       "id": "US-003",

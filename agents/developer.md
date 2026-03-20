@@ -110,23 +110,24 @@ If no context block was provided:
 
 4. **If none of these files exist**, continue with standard behavior.
 
-### Phase 1: Story Selection
+### Phase 1: Task Context
 
 1. **Check if `docs/review.md` exists** — if so, a critic has flagged issues. Fix them first.
 
-2. **Read the PRD:** from `docs/prd.json`
+2. **Get task context from:**
+   - The parent agent's prompt (Builder/QA passes task details)
+   - System prompt injection from helm-bridge
+   - Context block at start of prompt (see Phase 0A)
 
-3. **Read `docs/progress.txt`** (check Codebase Patterns section first)
-
-4. **Pick the highest priority user story** where `passes: false`
+3. **Understand the task requirements** from the provided context before proceeding.
 
 ---
 
-### Phase 2: Story Implementation
+### Phase 2: Task Implementation
 
 **Delegate the implementation** to appropriate specialist subagent(s):
 
-1. **Analyze the story** to determine what files and technologies need to change
+1. **Analyze the task** to determine what files and technologies need to change
 2. **Gather semantic context (if vectorization enabled):**
    - Check `project.json` → `vectorization.enabled`
    - If enabled and `.vectorindex/metadata.json` exists:
@@ -175,28 +176,17 @@ If no context block was provided:
 
 ---
 
-### Phase 3: Update State & Commit
+### Phase 3: Commit Changes
 
-> ⛔ **CRITICAL: Update state files BEFORE committing so they are included in the commit.**
+> ⛔ **CRITICAL: Run quality checks BEFORE committing.**
 >
-> State updates that happen after the commit will be lost if the session ends.
->
-> **Failure behavior:** If you find yourself about to run `git commit` without first updating `docs/prd.json` (`passes: true`) and `session.json` — STOP and update those files before committing.
+> All commits must pass quality checks. Do not commit broken code.
 
-1. **Update PRD:** set `passes: true` for the completed story in `docs/prd.json`
-
-2. **Update session state:**
-   - Update current chunk status in `session.json` → `chunks[]`
-   - Update `chunk.json` with completion details
-   - Right-panel todos are derived from `session.json` chunks (no separate update needed)
-
-3. **Append progress** to `docs/progress.txt`
-
-4. **Run test documentation sync (BEFORE commit):**
+1. **Run test documentation sync (BEFORE commit):**
 
    > ⛔ **CRITICAL: Sync test docs before committing to catch stale references.**
    
-   **Step 4a: Extract keywords from diff:**
+   **Step 1a: Extract keywords from diff:**
    ```bash
    git diff HEAD --name-only  # See what changed
    git diff HEAD              # Extract removed/renamed identifiers
@@ -204,16 +194,16 @@ If no context block was provided:
    
    Look for: removed/renamed function names, variable names, string literals, comments, class names.
    
-   **Step 4b: Expand keywords semantically:**
+   **Step 1b: Expand keywords semantically:**
    - `showQRCode` → `showQRCode`, `QR code`, `QR-code`, `qrcode`
    - `handlePayment` → `handlePayment`, `payment handler`
    
-   **Step 4c: Search test files:**
+   **Step 1c: Search test files:**
    ```bash
    grep -rn "<keywords>" tests/ e2e/ __tests__/ --include="*.ts" --include="*.tsx" | grep -v node_modules
    ```
    
-   **Step 4d: Handle matches:**
+   **Step 1d: Handle matches:**
    | Matches | Action |
    |---------|--------|
    | 0 | Proceed to commit |
@@ -221,13 +211,13 @@ If no context block was provided:
    | 6-15 | Show matches, confirm before updating |
    | 16+ | Narrow search scope, ask Builder for guidance |
    
-   **Step 4e: Update stale references:**
+   **Step 1e: Update stale references:**
    - Read each file with a match
    - Update comments/docstrings to reflect new behavior
    - Prioritize files already touched in this change
    - Never modify files outside `tests/`, `e2e/`, `__tests__/`
    
-   **Step 4f: Verify no stale references remain:**
+   **Step 1f: Verify no stale references remain:**
    ```bash
    grep -rn "<original-keywords>" tests/ e2e/ --include="*.ts" | grep -v node_modules | wc -l
    # Should return 0
@@ -235,7 +225,7 @@ If no context block was provided:
    
    If matches remain: fix them before proceeding to commit.
 
-5. **Commit ALL changes (including state files and updated test docs):**
+2. **Commit changes:**
 
    > ⚓ **AGENTS.md: Git Auto-Commit Enforcement**
    
@@ -244,11 +234,11 @@ If no context block was provided:
    - If `onStoryComplete` (default) or `true`: Proceed with commit
    
    ```bash
-   git add -A  # includes prd.json, session.json, chunk.json
-   git commit -m "feat: [Story ID] - [Story Title]"
+   git add -A
+   git commit -m "feat: [Task ID] - [Task Title]"
    ```
 
-6. **Validate push target (BEFORE pushing):**
+3. **Validate push target (BEFORE pushing):**
 
    > ⚓ **AGENTS.md: Git Workflow Enforcement**
    
@@ -262,10 +252,6 @@ If no context block was provided:
    ```bash
    git push origin <branch>
    ```
-   
-   **Verify state files are staged:**
-   - `docs/prd.json` — story `passes: true`
-   - `session.json` + `chunk.json` — updated session/chunk status
 
 ### Phase 3B: Update Project Capabilities
 
@@ -405,55 +391,32 @@ Only create `pending-updates/` requests for **significant gaps** that would affe
 
 ---
 
-### Phase 4: PRD Completion Check
+### Phase 4: Task Completion
 
-**Check if ALL stories have `passes: true`.**
+**After completing the task:**
 
-**If ALL stories complete:**
-
-1. **Run Post-Completion Polish** — load `post-completion` skill:
+1. **Run Post-Completion Polish** — load `post-completion` skill (if completing a major feature):
    - Step A: Full aesthetic review
    - Step B: Generate missing support articles
    - Step C: Final screenshot check
    - Step D: Copy review for new articles
 
-2. **Final sync and quality gate:**
-   - If multiple sessions active: Rebase from default branch, run all quality checks
-   - If solo session: Just run quality checks (no rebase coordination needed)
+2. **Final quality gate:**
+   - Run all quality checks
+   - Verify tests pass
 
 3. **Merge to default branch:**
    - If multiple sessions active: Create PR for human review
    - If solo session: Direct merge or push
 
-4. **Archive the PRD**
+4. **Analyze Impact on Other PRDs** — invoke @prd-impact-analyzer (if applicable)
 
-5. **Analyze Impact on Other PRDs** — invoke @prd-impact-analyzer
-
-6. **Reply with:**
+5. **Reply with:**
    ```
    <promise>COMPLETE</promise>
    ```
 
-**If stories remain with `passes: false`:** End response normally.
-
----
-
-## Progress Report Format
-
-APPEND to `docs/progress.txt` (never replace):
-
-```
-## [Date/Time] - [Story ID]
-- What was implemented
-- Files changed
-- **Learnings for future iterations:**
-  - Patterns discovered
-  - Gotchas encountered
-  - Useful context
----
-```
-
-**Consolidate patterns** in `## Codebase Patterns` section at TOP of progress.txt.
+**If task is incomplete or blocked:** End response normally with status update.
 
 ---
 
@@ -680,10 +643,10 @@ After completing UI stories:
 
 ## Important
 
-- Work on ONE story per iteration
+- Work on ONE task per iteration
 - Commit frequently
 - Keep CI green
-- Read Codebase Patterns before starting
+- Follow existing code patterns
 
 ---
 

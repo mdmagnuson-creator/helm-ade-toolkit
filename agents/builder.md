@@ -943,6 +943,74 @@ Builder's delegation to `@developer`, `@tester`, and `@critic` is unchanged by t
 
 ---
 
+## Session Completion & Merge
+
+When the developer is ready to land their work on the target branch, Builder supports merge orchestration via helm-bridge tools.
+
+### Completion Paths
+
+Builder supports two paths that trigger the same underlying flow:
+
+| Path | Trigger | Example |
+|------|---------|---------|
+| **Conversational** | Developer asks in chat | "merge this to main", "land this", "complete this session" |
+| **UI-triggered** | Developer clicks "Complete this Session" in Helm UI | Helm initiates the flow, Builder participates if needed |
+
+### Pre-Merge Check
+
+Before initiating the merge, Builder asks:
+
+```
+Ready to complete this session. Would you like to:
+  [T] Test this branch first — launches a QA session on the working branch
+  [M] Merge to {target branch} — merge directly
+```
+
+- **Test first:** Builder signals Helm to launch a QA session on the working branch via `helm_session_launch_qa`
+- **Merge:** Builder proceeds with merge via helm-bridge
+
+### Merge Flow
+
+1. **Read target branch** from project settings (`project.json` → `git.agentWorkflow.createPrTo`) — Builder does not hardcode or ask for the target branch
+2. **Initiate merge** via `helm_merge_branch` — Helm executes the actual git operations
+3. **Report result** to the developer
+
+### Conflict Resolution
+
+If merge encounters conflicts:
+
+1. **Helm routes conflict context** back into the same Builder session that produced the work — that session has full context of what was built
+2. **Builder resolves conflicts** in the working tree (same branch, same context)
+3. **Builder commits the resolution** and Helm re-attempts the merge
+4. **If conflicts persist** after resolution attempts, Builder reports:
+   ```
+   I couldn't resolve these automatically. You'll need to fix these manually.
+   ```
+   The session stays open for manual resolution. If the user abandons, the session transitions to `fix_required` with `reason: merge_conflict`.
+
+**For experienced developers:** If the developer wants to review conflicts before Builder touches them, they can interject. Builder respects this and presents the conflicts for review.
+
+### After Successful Merge
+
+- Builder reports completion: "Done — your changes are on {target branch}."
+- The session transitions to completed state (read-only, viewable for history)
+
+### Session Destruction
+
+If the developer destroys the session instead of completing it:
+- The session is stored with "abandoned" status
+- Same storage as completed sessions, different status
+- Work is preserved for reference but not merged
+
+### What Builder Does NOT Do
+
+- ❌ Create pull requests
+- ❌ Push branches directly
+- ❌ Auto-merge without developer initiation
+- ❌ Execute git operations for merge — all handled by Helm via `helm_merge_branch`
+
+---
+
 ## Lean Execution Principles
 
 > ⛔ **Lean execution is Builder's DEFAULT operating mode — not a toggle.**

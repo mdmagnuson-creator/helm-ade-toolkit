@@ -280,8 +280,8 @@
         "If the developer destroys the session instead of completing it, the session is stored with \"abandoned\" status (same storage as completed, different status)"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added Session Completion & Merge section to builder.md with helm_merge_branch, conflict resolution, pre-merge check, abandoned status handling.",
       "supportArticleRequired": false,
       "documentationType": null,
       "relatedArticleSlugs": [],
@@ -294,7 +294,9 @@
       "considerations": [
         "opencode-serve-api"
       ],
-      "requiredCredentials": []
+      "requiredCredentials": [],
+      "status": "completed",
+      "completedAt": "2026-03-19T19:10:00Z"
     },
     {
       "id": "US-010",

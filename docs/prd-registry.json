@@ -19,7 +19,7 @@
     {
       "id": "prd-agent-updates",
       "title": "Agent & Toolkit Updates for Helm Task Management",
-      "status": "in_progress",
+      "status": "completed",
       "filePath": "docs/prds/prd-agent-updates.md",
       "jsonPath": "docs/prds/prd-agent-updates.json",
       "createdAt": "2026-03-16T00:00:00Z",
@@ -27,7 +27,8 @@
       "stories": 20,
       "phases": 3,
       "notes": "REWRITTEN after full toolkit audit (202 items assessed). Phase 1: Legacy removal & infrastructure (AGENTS.md modernization, file deletions, verification state migration, reference cleanup). Phase 2: Agent rewrites (Builder rewrite, task auto-creation, task-aware sessions, completion flow, session completion/merge, ad-hoc workflow rewrite, PRD workflow rewrite, Developer updates). Phase 3: QA agent, Planner & Assistant (QA prompt, fix delegation, test completion, Planner cleanup, task scoping, PRD-to-tasks, task tools, Helm Assistant prompt). Companion PRD: prd-task-management in helm-ade-macos.",
-      "startedAt": "2026-03-19T00:00:00Z"
+      "startedAt": "2026-03-19T00:00:00Z",
+      "completedAt": "2026-03-19T00:00:00Z"
     }
   ]
 }

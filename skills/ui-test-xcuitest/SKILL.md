@@ -97,6 +97,18 @@ Look for: *.xcodeproj, *.xcworkspace, Package.swift
 Read project.json → commands.test, commands.build for scheme names
 ```
 
+### Step 5: Read Project Testing Conventions
+
+Check `project.json` → `context.testing` for a path to project-specific testing conventions. This file supplements framework knowledge with project-local details:
+
+- ID prefix conventions for pbxproj entries
+- Base test class name and its provided helpers
+- App-specific navigation structure
+- Kill/restart patterns
+- Environment-specific setup
+
+If the field doesn't exist, check the Testing section of `context.conventions` (CONVENTIONS.md) for any project-specific rules.
+
 ## Test File Structure
 
 ### Where Tests Live
@@ -407,7 +419,7 @@ XCTAssertEqual(app.textFields["email-field"].value as? String, "user@example.com
 XCTAssertEqual(app.switches["notifications-toggle"].value as? String, "1") // "1" = on, "0" = off
 XCTAssertEqual(app.sliders["volume-slider"].value as? String, "0.5")
 
-// Label text
+// Label text (AppKit/UIKit — see Gotcha #6 for SwiftUI .value vs .label)
 XCTAssertEqual(app.staticTexts["welcome-message"].label, "Welcome back, John")
 ```
 
@@ -1098,6 +1110,69 @@ override func setUpWithError() throws {
     app.launchArguments.append("-resetOnLaunch")
     app.launch()
 }
+```
+
+### 6. staticTexts Value vs Label (SwiftUI)
+
+In SwiftUI, `staticTexts` elements expose their content through the `value` property, NOT `label`. The `label` property is always empty for SwiftUI `Text` views.
+
+```swift
+// WRONG — label is always "" for SwiftUI Text views
+XCTAssertEqual(app.staticTexts["welcome-message"].label, "Hello World")  // label is ""
+
+// RIGHT — use .value for SwiftUI
+XCTAssertEqual(app.staticTexts["welcome-message"].value as? String, "Hello World")
+```
+
+This only affects SwiftUI. AppKit `NSTextField` and UIKit `UILabel` behave differently.
+
+When checking `project.json` → `apps[].framework`:
+- `swiftui` → use `.value as? String`
+- `appkit` → use `.stringValue` or `.label`
+- `uikit` → use `.label`
+
+### 7. Test File Registration in Xcode Project (pbxproj)
+
+Files placed on disk in the UI test target directory will compile but **0 tests will execute** unless they are registered in the `.xcodeproj/project.pbxproj` file. There are **FOUR** places a test file must appear:
+
+1. **PBXBuildFile section** — `{BUILD_FILE_ID} /* {FileName}.swift in Sources */ = {isa = PBXBuildFile; fileRef = {FILE_REF_ID} /* {FileName}.swift */; };`
+2. **PBXFileReference section** — `{FILE_REF_ID} /* {FileName}.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = {FileName}.swift; sourceTree = "<group>"; };`
+3. **PBXGroup children** for the test target group — `{FILE_REF_ID} /* {FileName}.swift */,`
+4. **PBXSourcesBuildPhase files** for the test target — `{BUILD_FILE_ID} /* {FileName}.swift in Sources */,`
+
+**How to find the right IDs:**
+
+1. Search pbxproj for the test target name (from `project.json` → `testing.ui.testTarget`)
+2. Find the PBXGroup that contains existing test files — note its ID
+3. Find the PBXSourcesBuildPhase for the test target — note its ID
+4. Generate unique 24-character hex IDs for the new `BUILD_FILE_ID` and `FILE_REF_ID`
+5. Check project-specific testing conventions (via `project.json` → `context.testing`) for any ID prefix conventions
+
+**Before adding, always verify not already registered:**
+
+```bash
+grep "YourTestFileName" *.xcodeproj/project.pbxproj
+```
+
+**Common failure mode:** Agent creates the `.swift` file, builds successfully (file compiles), but `xcodebuild test` reports 0 tests found for that class. This ALWAYS means pbxproj registration is missing.
+
+### 8. NSPredicate Timeout Trap
+
+Complex NSPredicates with multiple `OR` or `CONTAINS` clauses cause XCUITest to hang for ~160 seconds before failing. This looks like a frozen test but is actually the accessibility system doing an exhaustive search.
+
+```swift
+// WRONG — will hang for ~160 seconds
+let predicate = NSPredicate(format: "label CONTAINS 'error' OR label CONTAINS 'fail' OR label CONTAINS 'invalid'")
+app.staticTexts.matching(predicate).firstMatch.waitForExistence(timeout: 5)
+
+// RIGHT — fast, sequential checks
+let errorTexts = ["error", "fail", "invalid"]
+let found = errorTexts.contains { keyword in
+    app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", keyword)).count > 0
+}
+
+// BEST — use accessibility identifiers instead of text matching
+app.staticTexts["form-error-message"].waitForExistence(timeout: 5)
 ```
 
 ## Running Tests

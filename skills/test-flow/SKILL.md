@@ -121,6 +121,8 @@ Task complete
 
 ### Activity Resolution Algorithm
 
+**Pre-resolution step:** Read `project.json` → `context.testing` if present. This file contains project-specific testing conventions that may affect test execution (e.g., app kill patterns before test runs, specific test target configuration, base test class requirements). Pass this context to any test-writing agents during activity execution.
+
 ```
 function resolveActivities(changedFiles, diffContent, project):
   # Load rules

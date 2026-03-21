@@ -287,6 +287,7 @@ Before writing any XCUITest, read `project.json` to determine:
    - Mixed → check which framework owns each screen
 3. **CI system** — check for `.github/workflows/` (GitHub Actions) and/or `ci_scripts/` (Xcode Cloud)
 4. **Xcode project structure** — `.xcodeproj` or `.xcworkspace`, scheme names from `commands.test`
+5. **Project testing conventions** — check `project.json` → `context.testing` for path to project-specific testing doc. This contains: ID prefix conventions, base test class details, navigation patterns, app-specific kill/restart patterns, and other project-local rules that supplement the framework skill.
 
 ### Test File Placement
 

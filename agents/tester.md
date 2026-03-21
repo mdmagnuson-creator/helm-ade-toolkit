@@ -55,6 +55,7 @@ Use documentation lookup tools.
         - `testing.qualityChecks` — whether to run quality-beyond-correctness checks (default: false)
         - `commands.test`, `commands.testUnit`, `commands.testE2E` — test commands
       - **Read `<project>/docs/CONVENTIONS.md`** if it exists — this tells you testing patterns and conventions
+       - **Read `<project>/docs/project.json` → `context.testing`** if it exists — this is the path to project-specific testing conventions (test ID conventions, navigation patterns, base test classes, app-specific setup/teardown patterns). Read the referenced file and include its content when delegating to test-writing agents.
    
    c. **Resolve test base URL:**
       

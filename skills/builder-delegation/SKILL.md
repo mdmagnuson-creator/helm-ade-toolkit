@@ -191,6 +191,37 @@ By embedding the canonical content directly, Developer has the exact text in its
 
 ---
 
+## Project Testing Conventions in Delegation
+
+When delegating test-related work to `@tester`, `@ui-tester-playwright`, `@swift-dev`, or `@developer` (for test-adjacent implementation):
+
+1. Check `project.json` → `context.testing` for a path to project-specific testing conventions
+2. If the field exists, **read the referenced file** and include its content in the context block under a `## Project Testing Conventions` section
+3. This supplements framework-level skills (like `ui-test-xcuitest`) with project-local details: ID prefix conventions, base test classes, navigation patterns, app-specific setup/teardown
+
+```yaml
+<context>
+version: 1
+project:
+  path: /Users/dev/code/myapp
+  stack: swift-swiftui
+conventions:
+  summary: |
+    SwiftUI + AppKit hybrid. XCUITest for UI tests.
+    Base test class: AppUITestCase. Kill app before each test.
+  fullPath: /Users/dev/code/myapp/docs/CONVENTIONS.md
+currentWork:
+  story: US-005 Add settings screen tests
+  branch: feature/settings-tests
+</context>
+
+## Project Testing Conventions
+
+[Content from the file referenced by context.testing — paste verbatim]
+```
+
+---
+
 ## Analysis Gate Pre-Delegation Check (Compaction-Resilient)
 
 > ⛔ **MANDATORY CHECK BEFORE EVERY @developer DELEGATION**

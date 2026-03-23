@@ -367,7 +367,6 @@ Builder workflows are defined in loadable skills. Load the appropriate skill **o
 | `browser-debugging` | Visual debugging escalation — see triggers below | 8KB | ~2K tokens |
 | `builder-verification` | Verification incomplete, as-user verification, prerequisite/environment failures | 14KB | ~4K tokens |
 | `builder-error-recovery` | Tool failure, sub-agent failure, or repetitive fix loop detection | 4KB | ~1K tokens |
-| `infrastructure-verification` | Infrastructure files detected in changed files, or runtime error matches infra patterns | 8KB | ~2K tokens |
 | `vercel-supabase-alignment` | Database errors with multi-environment Vercel + Supabase | 5KB | ~1K tokens |
 
 ### Test Skill Loading (Incremental)
@@ -377,7 +376,6 @@ Test functionality is split into focused sub-skills. Load only what you need:
 | Trigger | Load Skill | Size |
 |---------|------------|------|
 | Any task/story completion | `test-flow` | ~22KB |
-| Infrastructure files in changed files | `infrastructure-verification` | ~8KB |
 | Verification loop begins | `test-verification-loop` | ~20KB |
 | Test failure detected | `test-failure-handling` | ~10KB |
 | Prerequisite failure pattern | `test-prerequisite-detection` | ~19KB |
@@ -393,7 +391,6 @@ Test functionality is split into focused sub-skills. Load only what you need:
 |----------|---------------|-------|
 | Simple unit test pass | `test-flow` | ~22KB |
 | Unit test failure + fix | `test-flow` + `test-failure-handling` | ~32KB |
-| Story with migration files | `test-flow` + `infrastructure-verification` | ~30KB |
 | Ad-hoc analysis with probe | `adhoc-workflow` + `test-ui-verification` (probe mode) | ~73KB |
 | UI verification | `test-flow` + `test-ui-verification` + `test-verification-loop` | ~54KB |
 | E2E with prereq failure | `test-flow` + `ui-test-flow` + `test-prerequisite-detection` | ~52KB |
@@ -474,48 +471,6 @@ Compare logged values against code expectations. Look for:
 | Handler called but condition fails | Stale closure, wrong comparison |
 | Works in test, fails in dev | React StrictMode double-mount |
 | Works after HMR, fails on fresh load | Initialization timing |
-
----
-
-## Infrastructure-Error Diagnostic Priority
-
-> ⚠️ **When a runtime error occurs during test-flow or verification, check infrastructure causes FIRST — before debugging application code.**
->
-> This is a **priority ordering** change. Infrastructure checks are fast (CLI-based, ~5 seconds) while application debugging is slow (code reading, context-expensive). Exhaust infrastructure diagnostics first.
-
-### When to Apply
-
-Apply infrastructure-error diagnostic priority when **ANY** of these runtime errors occur:
-
-| Error Pattern | Likely Cause | Fast Diagnostic |
-|---------------|-------------|-----------------|
-| "table not found", "relation does not exist", `PGRST205` | Migration not applied | Check migration status CLI |
-| "column does not exist", `PGRST116` | Migration outdated | Check migration status CLI |
-| "permission denied for table", `PGRST301` | RLS policy not applied | Check migration status CLI |
-| `404 Not Found` on known API endpoints | Route/function not deployed | Check deployment status |
-| Empty results where data is expected | Missing table or RLS blocking | Verify table exists |
-| "resource not found", "stack does not exist" | Cloud resource not created | Check IaC deployment status |
-| "function not found", "Edge Function not found" | Function not deployed | Check function deployment |
-
-### Diagnostic Flow
-
-```
-Runtime error detected
-    │
-    ▼
-Match error against infrastructure patterns (fast regex check)
-    │
-    ├─── Pattern matches ──► Load infrastructure-verification skill → Section 3
-    │         │
-    │         ├── Infra issue confirmed ──► Deploy/fix, re-run test (no re-delegation)
-    │         └── Infra looks fine ──► Continue to normal application debugging
-    │
-    └─── No match ──► Normal debugging (delegate to @explore, then @developer)
-```
-
-> 📚 **SKILL: infrastructure-verification** → "Section 3: Infrastructure-Error Diagnostic Priority"
->
-> Load the `infrastructure-verification` skill for the full diagnostic algorithm, CLI commands, and error pattern matching.
 
 ---
 
@@ -829,20 +784,6 @@ Update the current task's status via `helm_task_update`.
 Delegate the story to `@developer` with full story context (story ID, description, acceptance criteria, project context block). See `builder-delegation` skill for context block format.
 
 If @developer returns an error → set story status to `"failed"`, pipeline **STOPS**. Builder reports failure to user.
-
-**Step 2.5: Verify infrastructure deployments**
-
-> 📚 **SKILL: infrastructure-verification** → Load when infrastructure files detected in changed files.
-
-After @developer returns successfully, scan the changed files for infrastructure patterns (migrations, IaC templates, serverless functions, API routes). If infrastructure files are detected:
-
-1. Load the `infrastructure-verification` skill
-2. Check deployment status using `project.json` → `infrastructure` config (or best-effort CLI detection)
-3. If not deployed and `autoDeployOnVerify: true` → deploy automatically
-4. If not deployed and `autoDeployOnVerify: false` → prompt user: `[D] Deploy now`, `[S] Skip`, `[A] Abort`
-5. If deployment fails → pipeline **STOPS**
-
-If no infrastructure files detected → skip to Step 3.
 
 **Step 3: Run test-flow → unconditional call**
 

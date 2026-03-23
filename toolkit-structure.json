@@ -1,7 +1,7 @@
 {
   "$schema": "https://opencode.ai/schemas/toolkit-structure.json",
   "version": "1.0.0",
-  "generatedAt": "2026-03-21T00:00:00Z",
+  "generatedAt": "2026-03-23T00:00:00Z",
   "repository": "https://github.com/mdmagnuson/helm-ade-toolkit",
   "agents": {
     "total": 64,
@@ -354,7 +354,7 @@
     }
   },
   "skills": {
-    "total": 66,
+    "total": 67,
     "categories": {
       "workflow": {
         "description": "Workflow and lifecycle skills",
@@ -638,6 +638,11 @@
             "name": "cve",
             "path": "skills/cve/SKILL.md",
             "description": "Assess a CVE for exposure, exploitability, and remediation options across one or more repositories."
+          },
+          {
+            "name": "infrastructure-verification",
+            "path": "skills/infrastructure-verification/SKILL.md",
+            "description": "Verify infrastructure deployments (migrations, IaC, functions) after @developer creates files. Prevents phantom bugs from undeployed infrastructure. Triggers on: infrastructure files detected, migration not applied, deployment verification."
           },
           {
             "name": "ui-test-ux-quality",
@@ -1013,6 +1018,12 @@
   "changelog": {
     "generatedFrom": "git log --since=30 days",
     "entries": [
+      {
+        "type": "feat",
+        "scope": "skills,agents,schemas",
+        "description": "add infrastructure-verification skill and Builder Step 2.5 — verifies migrations, IaC, and functions are deployed after creation, adds infrastructure-error diagnostic priority, adds infrastructure section to project.schema.json",
+        "hash": "pending"
+      },
       {
         "type": "feat",
         "scope": "skills,agents",

@@ -258,6 +258,24 @@ Running:
 >
 > This applies to BOTH ad-hoc mode AND PRD mode.
 
+### Infrastructure-Error Diagnostic Priority (Pre-Check)
+
+> ⚠️ **When any quality check step produces a runtime error, check infrastructure causes BEFORE debugging application code.**
+>
+> Infrastructure checks are fast (~5 seconds, CLI-based) while application debugging is slow (context-expensive).
+> This prevents the pattern where Builder spends 3-4 rounds debugging correct code when the real issue is an undeployed migration.
+
+**Trigger:** Any runtime error during Steps 1-5 below that matches an infrastructure error pattern:
+- "relation does not exist", "table not found", `PGRST205`
+- "column does not exist", `PGRST116`
+- "permission denied for table", `PGRST301`
+- `404 Not Found` on known API endpoints
+- "resource not found", "stack does not exist"
+- "function not found", "Edge Function not found"
+- Empty results where data expected + recent migration files exist
+
+**Action:** Load `infrastructure-verification` skill → Section 3 (Infrastructure-Error Diagnostic Priority). If infrastructure issue confirmed → deploy/fix and re-run the failed step. If infrastructure looks fine → continue normal error handling.
+
 ### Activity Execution Order
 
 After @developer completes a task, run resolved activities in this order:
@@ -757,6 +775,7 @@ Load these specialized skills on demand — only when you reach that phase of te
 | Execute E2E tests (PRD or ad-hoc) | `ui-test-flow` |
 | Run Playwright UI verification | `test-ui-verification` |
 | Handle failures, manual fallback | `test-failure-handling` |
+| Verify infrastructure deployments | `infrastructure-verification` |
 | Resolve test base URL | `test-url-resolution` |
 | Clean up test users | `test-user-cleanup` |
 | Sync test documentation | `test-doc-sync` |

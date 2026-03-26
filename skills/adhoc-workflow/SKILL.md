@@ -61,7 +61,7 @@ Ad-hoc mode handles direct user requests without requiring a PRD. Work is tracke
    - `styling` — CSS framework, dark mode
    - `testing` — test framework, patterns
 
-2. Read `docs/CONVENTIONS.md` and prepare a 2-5 sentence summary of key patterns
+2. Read `docs/CONVENTIONS.md` in full — do NOT summarize or compress it. Keep the full content in session context and pass it to sub-agents via context blocks. If CONVENTIONS.md contains a `## TL;DR for Agents` section, use it as a quick-reference anchor but do NOT treat it as a substitute for the full file.
 
 3. Store this context for the session — pass it to @developer via context blocks
 

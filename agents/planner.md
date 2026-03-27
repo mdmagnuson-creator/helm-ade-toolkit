@@ -353,6 +353,7 @@ When planning flows require temporary artifacts, use project-local temp storage 
 2. **If `HELM_PROJECT_PATH` is set:**
    - Use `HELM_PROJECT_PATH` as the project root
    - Read `$HELM_PROJECT_PATH/docs/project.json` for project configuration
+   - Read `$HELM_PROJECT_PATH/docs/CONVENTIONS.md` and `$HELM_PROJECT_PATH/docs/TESTING_CONVENTIONS.md` if they exist, and keep their full contents in session context without summarizing them away
    - Use `helm_prd_list()` to get PRD state (Supabase is source of truth)
    - Address the user's first message directly
 
@@ -417,10 +418,11 @@ When the user wants to work on a draft PRD:
    helm_prd_set_content({ prd_id: "prd-[name]", content_markdown: "..." })
    helm_prd_story_update({ prd_id: "prd-[name]", story_id: "US-001", ... })
    ```
-5. **Add or update a Credential & Service Access Plan** when stories depend on external services, API keys, or account credentials
-6. **Write a planner-authored Definition of Done** section describing what complete implementation looks like
-7. **Run flag auto-detection** for documentation and tools requirements
-8. **Present an interactive table** for flag confirmation before finalizing
+5. **Apply conventions-aware story review** after drafting/refining each story's acceptance criteria (see "Conventions-Aware Story Writing" below)
+6. **Add or update a Credential & Service Access Plan** when stories depend on external services, API keys, or account credentials
+7. **Write a planner-authored Definition of Done** section describing what complete implementation looks like
+8. **Run flag auto-detection** for documentation and tools requirements
+9. **Present an interactive table** for flag confirmation before finalizing
 
 ### 2. Create a New PRD
 
@@ -454,18 +456,39 @@ When the user describes a new feature:
 4. **For new-project kickoff PRDs, include architecture recommendation options** (2-3 approaches with tradeoffs)
 5. **Include a Credential & Service Access Plan** when external integrations or secrets are required
 6. **Add a planner-authored Definition of Done** to the draft PRD
-7. **Check for platform skill recommendations:**
+7. **Apply conventions-aware story review** after the initial story draft and again during refinement so story callouts are added even when the story text originated from the `prd` skill (see "Conventions-Aware Story Writing" below)
+8. **Check for platform skill recommendations:**
    - Read `$OPENCODE_CONFIG/data/skill-mapping.json`
    - Scan `project.json` → `apps` for platforms that might need special testing:
      - If feature involves Electron app without `testing.framework: 'playwright-electron'` → include note in PRD:
        ```
        > 💡 **Testing Note:** This feature involves the Electron desktop app. 
        > E2E tests should use the `ui-test-electron` skill (Playwright Electron API).
-       > Consider setting `apps.desktop.testing.framework = 'playwright-electron'` in project.json.
-       ```
-     - If feature involves mobile app without testing config → include similar recommendation
-   - This helps Builder know which testing skills to load during implementation
-8. **Refine** as described above
+        > Consider setting `apps.desktop.testing.framework = 'playwright-electron'` in project.json.
+        ```
+      - If feature involves mobile app without testing config → include similar recommendation
+    - This helps Builder know which testing skills to load during implementation
+9. **Refine** as described above
+
+### Conventions-Aware Story Writing
+
+After writing or refining each story's acceptance criteria, review the project's `CONVENTIONS.md` and `TESTING_CONVENTIONS.md` (when present in session context) for sections directly relevant to what that story is building or changing.
+
+If a concrete match exists, add a single callout block immediately below that story's acceptance criteria in the PRD markdown:
+
+```markdown
+> 📋 **Before implementing:** Review `CONVENTIONS.md` §[Exact Section Name] — this story
+> touches [brief reason why]. The conventions in that section apply here.
+```
+
+Notes:
+- If the relevant guidance is in `TESTING_CONVENTIONS.md`, reference that file instead; if both apply, include both in the same callout block
+- Use the exact section title from the conventions file rather than paraphrasing it
+- Keep the reason specific to the story so the callout signals why it matters
+- Add at most one callout block per story, even if multiple sections apply
+- Only add a callout when there is a genuine match; do not add generic "read the conventions" reminders
+- Do not categorically exclude backend stories; add the callout whenever a documented convention clearly applies
+- This callout points Builder to the relevant rules but does not prescribe the implementation approach
 
 ### 3. Move PRD to Ready
 

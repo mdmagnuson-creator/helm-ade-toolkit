@@ -70,7 +70,12 @@ On session start, Builder reads project context from the `HELM_PROJECT_PATH` env
 
 ### Task Context
 
-When a session is linked to tasks, Builder receives task context in the system prompt (injected by Helm's context injection hook). Builder uses this context to plan and execute work.
+When a session is linked to tasks, Builder receives task context through one of two paths:
+
+1. **System prompt injection** — Helm's context injection hook injects task details into the system prompt (default for most sessions)
+2. **`/build-tasks` directive** — Helm sends `/build-tasks` as the first message; Builder discovers linked tasks via `helm_task_get` (see "Task-Driven Build Directive" section below)
+
+Both paths lead to the same execution flow — Builder works on the linked tasks using the same delegation, testing, and completion patterns.
 
 #### Reading Task Context
 
@@ -159,8 +164,9 @@ When Builder operates in an ad-hoc session (no task context injected in the syst
 
 ### Detection
 
-- **Task-linked session:** System prompt contains injected task context → Builder works on those tasks
-- **Ad-hoc session:** No task context injected → Builder works on the user's direct request and auto-creates tasks on completion
+- **Task-linked session (injected):** System prompt contains injected task context → Builder works on those tasks
+- **Task-linked session (directive):** First message is `/build-tasks` → Builder discovers linked tasks via `helm_task_get` (see "Task-Driven Build Directive" below)
+- **Ad-hoc session:** No task context injected and no `/build-tasks` directive → Builder works on the user's direct request and auto-creates tasks on completion
 
 ### Auto-Creation Flow
 
@@ -198,6 +204,117 @@ PRD-linked sessions receive task context via injection and do **not** auto-creat
 ### Delegation
 
 Builder still delegates to `@developer` → specialists (never writes code directly). Auto-task creation happens after `@developer` completes work, not before.
+
+---
+
+## Task-Driven Build Directive (`/build-tasks`)
+
+When Helm ADE's "Build from task" flow is used, the app creates a session with linked tasks and sends `/build-tasks` as the first message instead of a verbose task description.
+
+### Detection
+
+On receiving `/build-tasks` as the first message in a session:
+
+1. **Recognize the directive** — this is a task-driven build request, not a user-typed ad-hoc request
+2. **Skip startup UI** — project selection, workflow choice, and startup dashboards are already handled by Helm
+3. **Enter ad-hoc mode automatically** — proceed directly to task discovery and Phase 0 analysis
+
+### Task Discovery
+
+Builder discovers linked tasks from the session:
+
+1. **Fetch linked tasks** via `helm_task_get` for each task linked to the session
+2. **Read task fields:**
+   - `title` — short task name
+   - `description` — detailed description
+   - `scopeMarkdown` — implementation scope notes (if present)
+   - `priority` — task priority level
+   - `status` — current task status (typically `in_progress` or `agent_building`)
+   - `testingNotes` / tester feedback — indicates `fix_required` rework if present
+   - `parentStory` — parent story/PRD info (if task belongs to a story)
+   - `subTasks` — child tasks (if any)
+3. **Use `helm_search_context`** (when available) to find related tasks, past sessions, and known issues
+
+### Context Mapping
+
+Task fields map to ad-hoc analysis context as follows:
+
+| Task Field | Maps To | Purpose |
+|------------|---------|---------|
+| `title` + `description` + `scopeMarkdown` | Ad-hoc request text for Phase 0 analysis | The "what to build" input |
+| `taskId` (e.g., `TSK-001`) | `session.source.taskId` | Traceability link back to task system |
+| `priority` | Analysis priority | Informs urgency and scope decisions |
+| `testingNotes` / tester feedback | Analysis context (rework indicator) | Indicates this is a `fix_required` rework — Builder should focus on the specific feedback |
+| `parentStory` / PRD info | Context block for `@developer` | Provides broader feature context for implementation decisions |
+
+### Single-Task Flow
+
+When one task is linked to the session:
+
+1. **Discover the task** (as above)
+2. **Compose the analysis request** from task title + description + scopeMarkdown
+3. **Run Phase 0 analysis** — full ad-hoc analysis flow including Playwright probe
+4. **Show ANALYSIS COMPLETE dashboard** with task context — wait for `[G]`
+5. **On `[G]`** — execute through the standard story processing pipeline
+6. **On completion** — update task via `helm_task_update` to `agent_build_complete` (standard Task Completion Flow)
+
+### Bulk Mode (Multiple Tasks)
+
+When multiple tasks are linked to the session:
+
+1. **Discover all linked tasks** via `helm_task_get` for each
+2. **Create one chunk per task** in the session — each task becomes a `TSK-{NNN}` entry in `session.chunks[]`
+3. **Show the task list to the user:**
+
+```
+═══════════════════════════════════════════════════════════════════════
+                     TASK-DRIVEN BUILD SESSION
+═══════════════════════════════════════════════════════════════════════
+
+Linked tasks:
+
+  1. TSK-001: Fix header alignment on mobile          (priority: high)
+  2. TSK-002: Add error handling to upload endpoint    (priority: medium)
+  3. TSK-003: Update onboarding copy                   (priority: low)
+
+Processing order: by priority (high → low), then by task ID.
+
+[G] Go ahead — analyze and build all tasks
+[E] Edit order — reorder or exclude tasks
+
+> _
+═══════════════════════════════════════════════════════════════════════
+```
+
+4. **Process tasks sequentially** through the standard story processing pipeline:
+   - Each task gets its own Phase 0 analysis (with Playwright probe)
+   - Each task gets its own `@developer` delegation
+   - Each task gets its own test-flow verification
+   - Each task gets its own commit
+   - Each task completes independently via `helm_task_update` → `agent_build_complete`
+
+5. **One task's failure does not block others** (unless there's a dependency) — consistent with Multi-Task Sessions behavior
+
+### Rework Detection
+
+If a task has `testingNotes` or tester feedback present, Builder treats it as rework:
+
+- **Include the feedback in the analysis context** — the tester's observations are primary input
+- **Focus the analysis on the specific feedback** — don't re-analyze the entire feature
+- **Pass feedback to `@developer`** in the delegation context block — the developer should know what the tester found
+
+### Comparison with Existing Paths
+
+| Aspect | System Prompt Injection | `/build-tasks` Directive |
+|--------|------------------------|--------------------------|
+| Task discovery | Tasks in system prompt | Tasks via `helm_task_get` |
+| Startup UI | Skipped (Helm manages) | Skipped (Helm manages) |
+| Analysis | Full Phase 0 | Full Phase 0 |
+| Execution | Standard pipeline | Standard pipeline |
+| Completion | `helm_task_update` | `helm_task_update` |
+| Bulk support | Yes (multi-task sessions) | Yes (one chunk per task) |
+
+The `/build-tasks` path and the system prompt injection path converge at the same execution flow — they differ only in how task context is discovered.
 
 ---
 

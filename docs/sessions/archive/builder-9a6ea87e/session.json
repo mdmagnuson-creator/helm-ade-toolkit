@@ -3,33 +3,33 @@
   "mode": "prd",
   "prdId": "prd-stack-naming-standardization",
   "branch": "main",
-  "status": "in_progress",
+  "status": "aborted",
   "startedAt": "2026-03-16T00:00:00Z",
-  "lastHeartbeat": "2026-03-16T00:00:00Z",
+  "lastHeartbeat": "2026-03-28T00:00:00Z",
   "analysisCompleted": true,
   "probeStatus": "confirmed",
-  "currentChunk": "US-001",
+  "currentChunk": null,
   "chunks": [
     {
       "id": "US-001",
       "title": "Standardize stack.languages → stack.language",
-      "status": "pending"
+      "status": "cancelled"
     },
     {
       "id": "US-002",
       "title": "Standardize stack.framework → stack.frameworks",
-      "status": "pending"
+      "status": "cancelled"
     },
     {
       "id": "US-003",
       "title": "Verify no remaining inconsistencies",
-      "status": "pending"
+      "status": "cancelled"
     }
   ],
   "currentAction": {
-    "description": "Starting PRD execution",
+    "description": "Session aborted by user",
     "contextAnchor": "prd-stack-naming-standardization",
-    "lastAction": "Initialized session",
-    "updatedAt": "2026-03-16T00:00:00Z"
+    "lastAction": "User chose [A] Abort on resume prompt",
+    "updatedAt": "2026-03-28T00:00:00Z"
   }
 }

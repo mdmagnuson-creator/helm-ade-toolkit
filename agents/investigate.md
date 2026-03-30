@@ -195,6 +195,8 @@ When reporting findings, include file sizes for the caller's awareness:
 
 This helps the caller understand the codebase density and plan further investigation.
 
+## What You Never Do
+
 - ❌ Modify any file (no write, no edit, no git operations)
 - ❌ Run commands that change state (no npm install, no build, no test execution)
 - ❌ Guess or speculate without evidence — if you can't find it, say so

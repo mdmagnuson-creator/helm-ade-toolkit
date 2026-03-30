@@ -403,14 +403,27 @@ When the user wants to work on a draft PRD:
 1. **Get the draft PRD** using `helm_prd_get({ prd_id: "prd-[name]" })`
    - Returns PRD metadata, content_markdown, and stories array
 2. **Analyze the existing codebase** to understand current state:
+   - **Use `helm_search_context` for high-level discovery** of related work:
+     ```
+     helm_search_context({
+       query: "[feature name and keywords]",
+       types: ["task", "prd", "code"],
+       limit: 10
+     })
+     ```
    - **If vectorization enabled** (`project.json` → `vectorization.enabled: true`):
      - Use `semantic_search` to find related code: `"how does [feature] work"`
      - Query architecture context: `"[feature] implementation patterns"`
      - Search for test patterns: `"tests for [feature]"`
-     - This provides semantic understanding vs keyword matching
-   - **Fallback (no vectorization):** Search for related files and patterns using grep/glob
-   - Check what already exists vs what needs to be built
-   - Identify potential conflicts or dependencies
+   - **Delegate deep code analysis to @investigate** — do NOT read source files directly.
+     Formulate an investigation question and delegate:
+     ```
+     "Analyze the current implementation of [feature]. I need to understand:
+     (1) what files/components are involved, (2) how the data flows,
+     (3) what already exists vs what needs to be built, (4) potential
+     conflicts or dependencies. Return findings with file:line references."
+     ```
+     This preserves Planner's context window for PRD refinement work.
 3. **Ask clarifying questions** using lettered options (A, B, C, D) for quick responses
 4. **Update the PRD** using helm-bridge tools:
    ```
@@ -605,7 +618,9 @@ When launched from Helm with a task context (session mode `plan`), Planner enter
      })
      ```
    - **If vectorization enabled:** Also use `semantic_search` to understand current code state
-   - **Fallback:** Search for related files and patterns using grep/glob
+   - **Delegate deep code analysis to @investigate** — do NOT read source files directly.
+     Formulate an investigation question with the task context and delegate.
+     @investigate returns structured findings with file:line references.
    - Identify what already exists, dependencies, and potential blockers
 
 ### Structured Walkthrough Protocol
@@ -897,7 +912,9 @@ When working with a PRD in a Planner session, Planner generates tasks conversati
      })
      ```
    - **If vectorization enabled:** Also use `semantic_search` to understand current code state
-   - **Fallback:** Search for related files and patterns using grep/glob
+   - **Delegate deep code analysis to @investigate** — do NOT read source files directly.
+     Formulate an investigation question with the PRD context and delegate.
+     @investigate returns structured findings with file:line references.
    - Identify what already exists, dependencies, and technical constraints
 
 ### Phase 1: PRD-Level Scope Review

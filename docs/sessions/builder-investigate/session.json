@@ -1,0 +1,42 @@
+{
+  "sessionId": "builder-investigate",
+  "mode": "adhoc",
+  "branch": "main",
+  "status": "completed",
+  "startedAt": "2026-03-30T00:00:00Z",
+  "lastHeartbeat": "2026-03-30T00:00:00Z",
+  "analysisCompleted": true,
+  "probeStatus": "confirmed",
+  "currentChunk": null,
+  "chunks": [
+    {
+      "id": "TSK-001",
+      "title": "Create agents/investigate.md with investigation methodology",
+      "status": "completed"
+    },
+    {
+      "id": "TSK-002",
+      "title": "Update builder.md — replace @explore with @investigate (12 refs)",
+      "status": "completed"
+    },
+    {
+      "id": "TSK-003",
+      "title": "Update planner.md — add @investigate delegation for codebase analysis (3 locations)",
+      "status": "completed"
+    }
+  ],
+  "currentAction": {
+    "description": "All tasks complete — ready to commit and push",
+    "contextAnchor": "agents/investigate.md",
+    "lastAction": "TSK-004 complete — large file handling section added to investigate.md",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  },
+  "decisions": [
+    "Create new investigate agent rather than overriding built-in explore",
+    "Builder: replace all 12 @explore refs with @investigate (same mandatory rule)",
+    "Planner: add @investigate delegation in 3 codebase analysis locations (lines ~405, ~596, ~890)",
+    "Built-in @explore stays available — not disabled",
+    "investigate.md gets read-only permissions matching explore's tool set",
+    "All files in /Users/markmagnuson/code/helm-ade-toolkit/"
+  ]
+}

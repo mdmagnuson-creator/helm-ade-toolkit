@@ -1,0 +1,50 @@
+{
+  "sessionId": "builder-review-fixes",
+  "mode": "adhoc",
+  "branch": "main",
+  "status": "in_progress",
+  "startedAt": "2026-03-30T01:00:00Z",
+  "lastHeartbeat": "2026-03-30T01:00:00Z",
+  "analysisCompleted": true,
+  "probeStatus": "confirmed",
+  "currentChunk": "TSK-001",
+  "chunks": [
+    {
+      "id": "TSK-001",
+      "title": "Fix investigate.md — all 16 issues",
+      "status": "in_progress"
+    },
+    {
+      "id": "TSK-002",
+      "title": "Fix builder.md — all 13 issues",
+      "status": "pending"
+    },
+    {
+      "id": "TSK-003",
+      "title": "Fix planner.md — all 9 issues",
+      "status": "pending"
+    },
+    {
+      "id": "TSK-004",
+      "title": "Fix cross-file consistency — 7 issues",
+      "status": "pending"
+    },
+    {
+      "id": "TSK-005",
+      "title": "Fix remaining low-priority items",
+      "status": "pending"
+    }
+  ],
+  "currentAction": {
+    "description": "Starting TSK-001: Fix investigate.md",
+    "contextAnchor": "agents/investigate.md",
+    "lastAction": "Session initialized, delegating to @developer",
+    "updatedAt": "2026-03-30T01:00:00Z"
+  },
+  "decisions": [
+    "Fix all 45 issues across 3 files (user approved)",
+    "Task ordering: investigate.md first, then builder.md, planner.md, cross-file, lows",
+    "Toolkit repo — no build/test pipeline, verify via read-back",
+    "Commit and push to origin/main after all fixes"
+  ]
+}

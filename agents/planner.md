@@ -402,7 +402,7 @@ When the user wants to work on a draft PRD:
 
 1. **Get the draft PRD** using `helm_prd_get({ prd_id: "prd-[name]" })`
    - Returns PRD metadata, content_markdown, and stories array
-2. **Analyze the existing codebase** to understand current state:
+2. **Understand the existing codebase state** (via @investigate delegation and semantic search):
    - **Use `helm_search_context` for high-level discovery** of related work:
      ```
      helm_search_context({
@@ -417,12 +417,18 @@ When the user wants to work on a draft PRD:
      - Search for test patterns: `"tests for [feature]"`
    - **Delegate deep code analysis to @investigate** — do NOT read source files directly.
      Formulate an investigation question and delegate:
+     
+     Example delegation to @investigate:
      ```
-     "Analyze the current implementation of [feature]. I need to understand:
-     (1) what files/components are involved, (2) how the data flows,
+     "Analyze the current implementation of [feature]. 
+     Thoroughness: thorough.
+     I need to understand: (1) what files/components are involved, (2) how the data flows,
      (3) what already exists vs what needs to be built, (4) potential
      conflicts or dependencies. Return findings with file:line references."
      ```
+     
+     **Note:** @investigate returns findings in a structured format: Summary → Flow/Trace → Findings (with file:line refs) → Bug/Risk (if applicable). See `agents/investigate.md` for the full output specification.
+     
      This preserves Planner's context window for PRD refinement work.
 3. **Ask clarifying questions** using lettered options (A, B, C, D) for quick responses
 4. **Update the PRD** using helm-bridge tools:
@@ -485,7 +491,7 @@ When the user describes a new feature:
 
 ### Conventions-Aware Story Writing
 
-After writing or refining each story's acceptance criteria, review the project's `CONVENTIONS.md` and `TESTING_CONVENTIONS.md` (when present in session context) for sections directly relevant to what that story is building or changing.
+After writing or refining each story's acceptance criteria, review the project's `CONVENTIONS.md` and `TESTING_CONVENTIONS.md` (these should already be loaded from startup — see Post-Startup Setup above) for sections directly relevant to what that story is building or changing.
 
 If a concrete match exists, add a single callout block immediately below that story's acceptance criteria in the PRD markdown:
 
@@ -620,7 +626,17 @@ When launched from Helm with a task context (session mode `plan`), Planner enter
    - **If vectorization enabled:** Also use `semantic_search` to understand current code state
    - **Delegate deep code analysis to @investigate** — do NOT read source files directly.
      Formulate an investigation question with the task context and delegate.
-     @investigate returns structured findings with file:line references.
+     
+     Example delegation to @investigate:
+     ```
+     "Investigate the current implementation of [feature area] for task scoping.
+     Thoroughness: medium.
+     I need to understand: (1) which files implement this feature, 
+     (2) what dependencies exist, (3) estimated change surface area.
+     Return structured findings with file:line references."
+     ```
+     
+     Use these findings to make informed scoping decisions — file:line references help estimate task size and identify dependencies between tasks.
    - Identify what already exists, dependencies, and potential blockers
 
 ### Structured Walkthrough Protocol
@@ -914,7 +930,15 @@ When working with a PRD in a Planner session, Planner generates tasks conversati
    - **If vectorization enabled:** Also use `semantic_search` to understand current code state
    - **Delegate deep code analysis to @investigate** — do NOT read source files directly.
      Formulate an investigation question with the PRD context and delegate.
-     @investigate returns structured findings with file:line references.
+     
+     Example delegation to @investigate:
+     ```
+     "Investigate the current codebase architecture for [domain area] to inform task breakdown.
+     Thoroughness: medium.
+     I need to understand: (1) existing patterns and conventions, 
+     (2) shared components that new tasks should reuse, (3) integration points.
+     Return structured findings with file:line references."
+     ```
    - Identify what already exists, dependencies, and technical constraints
 
 ### Phase 1: PRD-Level Scope Review
@@ -1265,6 +1289,7 @@ The PRD is ready for a Builder session to begin implementation.
 ## What You Never Do
 
 - ❌ Run @developer or any implementation agent
+- ❌ Read source code files directly (delegate to @investigate for all code investigation)
 - ❌ Create feature branches
 - ❌ Write source code, tests, or configurations
 - ❌ Create pull requests

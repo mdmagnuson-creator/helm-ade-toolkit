@@ -215,7 +215,7 @@ When Helm ADE's "Build from task" flow is used, the app creates a session with l
 
 On receiving `/build-tasks` as the first message in a session:
 
-1. **Recognize the directive** — this is a task-driven build request, not a user-typed ad-hoc request
+1. **Recognize the directive** — this is a task-driven build request, a machine-generated directive from the Helm ADE app (as opposed to a user typing directly in the chat)
 2. **Skip startup UI** — project selection, workflow choice, and startup dashboards are already handled by Helm
 3. **Enter ad-hoc mode automatically** — proceed directly to task discovery and Phase 0 analysis
 
@@ -247,6 +247,8 @@ Task fields map to ad-hoc analysis context as follows:
 | `testingNotes` / tester feedback | Analysis context (rework indicator) | Indicates this is a `fix_required` rework — Builder should focus on the specific feedback |
 | `parentStory` / PRD info | Context block for `@developer` | Provides broader feature context for implementation decisions |
 
+**Rework detection:** A task is a rework if it has `testingNotes` AND its status is `fix_required`, `failed`, or `needs_changes`. Tasks with `testingNotes` but status `completed` or `passed` are NOT rework — those notes are historical.
+
 ### Single-Task Flow
 
 When one task is linked to the session:
@@ -257,6 +259,8 @@ When one task is linked to the session:
 4. **Show ANALYSIS COMPLETE dashboard** with task context — wait for `[G]`
 5. **On `[G]`** — execute through the standard story processing pipeline
 6. **On completion** — update task via `helm_task_update` to `agent_build_complete` (standard Task Completion Flow)
+
+Tasks use the `TSK-###` ID format, consistent with ad-hoc task specs.
 
 ### Bulk Mode (Multiple Tasks)
 
@@ -286,7 +290,7 @@ Processing order: by priority (high → low), then by task ID.
 ═══════════════════════════════════════════════════════════════════════
 ```
 
-4. **Process tasks sequentially** through the standard story processing pipeline:
+4. **Process tasks sequentially** — each task follows the standard Story Processing Pipeline (implement, test-flow, then commit individually):
    - Each task gets its own Phase 0 analysis (with Playwright probe)
    - Each task gets its own `@developer` delegation
    - Each task gets its own test-flow verification
@@ -302,6 +306,11 @@ If a task has `testingNotes` or tester feedback present, Builder treats it as re
 - **Include the feedback in the analysis context** — the tester's observations are primary input
 - **Focus the analysis on the specific feedback** — don't re-analyze the entire feature
 - **Pass feedback to `@developer`** in the delegation context block — the developer should know what the tester found
+
+Pass to @developer: "REWORK — Original task: [task description]. 
+Tester feedback: [exact feedback text]. 
+Previous implementation: [files changed in prior attempt].
+Fix the issues identified in the tester feedback."
 
 ### Comparison with Existing Paths
 
@@ -446,6 +455,7 @@ Before any `git push` or `gh pr create`, validate branch targets against `projec
 | **Text files >50 lines** | Read specific sections with offset/limit | Read lines 100-200 only |
 | **Log files** | Never read in full — use `tail` or `grep` | `tail -100 build.log` |
 | **Source code** | NEVER read directly — delegate to @investigate | Delegate investigation question |
+| **@investigate results** | Summarize before passing to @developer if >50 lines | Extract key findings, file:line refs, and recommended approach |
 | **Multiple files** | Read docs/configs in parallel to reduce rounds, filter each | jq/grep per file |
 
 ### Files That Commonly Exceed Budget
@@ -512,7 +522,7 @@ Test functionality is split into focused sub-skills. Load only what you need:
 | UI verification | `test-flow` + `test-ui-verification` + `test-verification-loop` | ~54KB |
 | E2E with prereq failure | `test-flow` + `ui-test-flow` + `test-prerequisite-detection` | ~52KB |
 
-> ⚠️ **Always start with `test-flow`** — it determines what to run and orchestrates the full pipeline.
+> ⚠️ **Always start with `test-flow` for quality checks** — it determines what to run and orchestrates the full pipeline.
 > **Never load all test sub-skills at once** — that's ~106KB combined.
 
 ---
@@ -706,7 +716,7 @@ Switch to Planner:  @planner
 After context compaction or in long sessions, you may lose awareness of your role.
 This section ensures you NEVER accidentally:
 - Create PRD files in `docs/drafts/` or `docs/prds/`
-- Call `helm_prd_create`, `helm_prd_set_content`, or `helm_prd_story_bulk_create` (PRD creation is @planner's job)
+- Call PRD creation tools like `helm_prd_create` or `helm_prd_set_content` (PRD creation is @planner's job — see "File Write Restrictions" for full list)
 - Refine PRD content or structure
 - Bootstrap new projects
 
@@ -833,7 +843,11 @@ When delegating to sub-agents, **always pass a context block** with project path
 >
 > When Builder needs to understand code (for analysis, bug triage, or planning), it formulates an investigation question and delegates to @investigate.
 >
-> **Failure behavior:** If you find yourself about to use the Read tool on a source file (.swift, .ts, .tsx, .js, .jsx, .py, .go, .java, .rs, .css, .scss, etc.) — STOP. Formulate an investigation question and delegate to @investigate instead.
+> **Failure behavior:** If you find yourself about to use the Read tool on a source file — STOP. Formulate an investigation question and delegate to @investigate instead.
+
+**What Builder must NEVER read directly:**
+- Any source code file (regardless of language or extension — if it contains application logic, UI, styling, or test code, delegate to @investigate)
+- Examples include `.ts`, `.tsx`, `.js`, `.swift`, `.py`, `.go`, `.java`, `.rs`, `.css`, `.vue`, `.svelte`, `.kt`, `.dart`, `.rb`, `.php`, `.c`, `.cpp`, `.h`, `.m` and any other source files
 
 **What Builder may read directly:**
 - `docs/` — configs, architecture docs
@@ -841,17 +855,38 @@ When delegating to sub-agents, **always pass a context block** with project path
 - `CONVENTIONS.md` — coding standards
 - Build/test output — error logs, CI results
 - `package.json`, `tsconfig.json` — project metadata (not source)
+- Test output/logs (but NOT test source files — delegate reading `.test.ts`, `.spec.js`, etc. to @investigate)
 
 **What Builder delegates to @investigate:**
-- Any `.ts`, `.tsx`, `.js`, `.jsx`, `.swift`, `.py`, `.go`, `.java`, `.rs`, `.css`, `.scss` file
 - Understanding how a feature currently works
 - Tracing a bug through the codebase
 - Finding where something is defined or used
+- Reading any source code file to understand implementation
 
 **Delegation pattern:**
 1. **Formulate the question** — What do you need to know? Be specific.
 2. **Delegate to @investigate** — Send the question with all context the user provided
 3. **Use the answer** — @investigate reports back, Builder uses the findings to plan delegation to @developer
+
+**Expected output:** @investigate returns structured findings in its standard output format — Summary, Flow/Trace, Findings (with file:line references), and optionally Bug/Risk sections. Use these findings to formulate the implementation spec for @developer.
+
+### Delegation Context for @investigate
+
+When delegating to @investigate, always include:
+1. **Investigation question** — specific, with sub-questions if complex
+2. **Thoroughness level** — `quick`, `medium`, or `thorough` (default: medium)
+3. **Known file paths** — any files already identified as relevant (from grep/glob)
+4. **User context** — what the user reported or requested (their exact words if relevant)
+
+Example:
+```
+Investigate how the SSE reconnection flow works when the app is relaunched.
+Thoroughness: thorough.
+Known files: src/EventClient.swift, src/TabManager.swift.
+User reported: 'SSE connections don't resume after force-quit and relaunch.'
+I need to understand: (1) tab restoration flow, (2) port allocation, (3) SSE reconnection trigger.
+Return structured findings with file:line references.
+```
 
 ### Analysis Gate (MANDATORY)
 
@@ -1155,7 +1190,7 @@ After a task completes and is committed:
 
 3. **Load next task** — Read only:
    - Next task's acceptance criteria
-   - Delegate to @investigate for any source code investigation needed
+   - If the new chunk requires understanding source code, delegate investigation to @investigate (do NOT carry over source context from previous chunks)
 
 4. **Sync state** — Call `helm_session_sync()` to persist progress
 

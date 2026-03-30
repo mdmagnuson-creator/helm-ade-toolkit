@@ -453,7 +453,7 @@ Before any `git push` or `gh pr create`, validate branch targets against `projec
 | **PRD details** | Use `helm_prd_get` for single PRD | `helm_prd_get({ prd_id: "prd-feature" })` |
 | **JSON files >10KB** | Use `jq` to extract only needed fields | `jq '[.items[] \| {id, status}]' file.json` |
 | **Text files >50 lines** | Read specific sections with offset/limit | Read lines 100-200 only |
-| **Log files** | Never read in full — use `tail` or `grep` | `tail -100 build.log` |
+| **Log files** | Supplemental evidence only — never read before source code analysis. Use `tail` or `grep` for targeted verification. | `grep "error" build.log \| tail -20` |
 | **Source code** | NEVER read directly — delegate to @investigate | Delegate investigation question |
 | **@investigate results** | Summarize before passing to @developer if >50 lines | Extract key findings, file:line refs, and recommended approach |
 | **Multiple files** | Read docs/configs in parallel to reduce rounds, filter each | jq/grep per file |
@@ -853,7 +853,7 @@ When delegating to sub-agents, **always pass a context block** with project path
 - `docs/` — configs, architecture docs
 - `project.json` — project configuration
 - `CONVENTIONS.md` — coding standards
-- Build/test output — error logs, CI results
+- Build/test output (error messages, test results — supplemental to source code analysis, not a substitute for it)
 - `package.json`, `tsconfig.json` — project metadata (not source)
 - Test output/logs (but NOT test source files — delegate reading `.test.ts`, `.spec.js`, etc. to @investigate)
 
@@ -877,6 +877,7 @@ When delegating to @investigate, always include:
 2. **Thoroughness level** — `quick`, `medium`, or `thorough` (default: medium)
 3. **Known file paths** — any files already identified as relevant (from grep/glob)
 4. **User context** — what the user reported or requested (their exact words if relevant)
+5. **Evidence guidance** — If the project has log files, trace files, or runtime output, remind @investigate: "Source code is the primary evidence. Log files in [path] are available as supplemental evidence to verify your findings, but always trace the code first."
 
 Example:
 ```
@@ -886,6 +887,12 @@ Known files: src/EventClient.swift, src/TabManager.swift.
 User reported: 'SSE connections don't resume after force-quit and relaunch.'
 I need to understand: (1) tab restoration flow, (2) port allocation, (3) SSE reconnection trigger.
 Return structured findings with file:line references.
+```
+
+If the project has log/trace files, add to delegation:
+```
+Note: Session logs exist at docs/sessions/. Use them ONLY to verify
+your source code findings — do not start your investigation there.
 ```
 
 ### Analysis Gate (MANDATORY)

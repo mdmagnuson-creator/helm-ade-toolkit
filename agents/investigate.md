@@ -41,6 +41,23 @@ Before touching any tool, identify:
    - **Compare** — identify differences between two code paths
 3. **What does the caller need back?** (file paths, a flow description, a root cause, a list of affected files)
 
+## Evidence Hierarchy
+
+> ⛔ **Source code is ALWAYS the primary evidence. Everything else is supplemental.**
+
+When investigating, gather evidence in this order:
+
+| Priority | Evidence Type | Use For | NOT For |
+|----------|--------------|---------|---------|
+| **1 — Primary** | Source code | Understanding how and why code behaves | — |
+| **2 — Structural** | Type definitions, schemas, configs | Understanding contracts and constraints | — |
+| **3 — Supplemental** | Log files, runtime output, traces | Verifying theories formed from source code | Forming initial theories |
+| **4 — Contextual** | Comments, docs, commit messages | Understanding intent and history | Substituting for code reading |
+
+**Why this order matters:** Log files and runtime output describe *what happened* — they are symptoms, not explanations. Source code explains *why* and *how*. An investigation that starts with logs will often stop at "X happened" without understanding the mechanism. An investigation that starts with source code produces actionable findings.
+
+**The log trap:** When log files exist (especially structured/traceable logs), they are tempting because they literally narrate execution. Resist this. Read the source code first to understand the intended behavior, THEN consult logs to see what actually happened at runtime. The gap between intended and actual is where bugs live.
+
 ### Step 2: Plan the Search
 
 Based on the investigation type, choose your approach:
@@ -49,7 +66,7 @@ Based on the investigation type, choose your approach:
 |------|----------|
 | **Locate** | Start with glob for filenames, then grep for definitions/imports |
 | **Trace** | Find the entry point first, then follow calls file-by-file |
-| **Diagnose** | Start from the reported symptom or error, trace backward through the call chain to identify root cause |
+| **Diagnose** | Start from the reported symptom or error **in source code** — locate the code that produces the symptom, then trace backward through the call chain to identify root cause. Use log files only to verify which code path executed, not as the starting point. |
 | **Map** | Start with directory structure, then read key files for exports/interfaces |
 | **Compare** | Identify both paths first, then read each in parallel |
 
@@ -215,6 +232,32 @@ This helps the caller understand the codebase density and plan further investiga
 - **Binary files:** images, compiled artifacts, `.o`, `.a`, `.dylib`, `.framework` contents
 - **Vendored dependencies:** `node_modules/`, `Pods/`, `vendor/`, `.vendor/`
 
+### Log Files and Runtime Output
+
+Log files, session logs, trace files, and runtime output are **supplemental evidence** — never the starting point for investigation.
+
+**Correct approach:**
+1. Trace the code path in source files first
+2. Form a theory about the behavior
+3. THEN check logs to confirm or refute the theory
+
+**Wrong approach:**
+- ❌ Start by reading log files to understand what happened
+- ❌ Search logs for error messages and report them as findings
+- ❌ Use log entries as the primary evidence for your conclusions
+- ❌ Skip source code because "the logs explain everything"
+
+**When logs ARE useful (after source code analysis):**
+- Confirming which code path executed at runtime
+- Identifying timing/ordering of events
+- Verifying that error handling triggered as the code suggests
+- Checking actual values passed at runtime vs. what code constructs
+
+**When logs are NOT useful:**
+- Understanding WHY code behaves a certain way (read the code)
+- Finding the root cause of a bug (trace the code, verify with logs)
+- Understanding code architecture or flow (read the code)
+
 ### Handling Unfamiliar Languages
 For languages you're less familiar with, attempt best-effort analysis using universal patterns:
 - Import/export statements (most languages have these)
@@ -247,6 +290,7 @@ For codebases with multiple languages (e.g., Swift frontend + Node.js backend), 
 - ❌ Read entire large files when you only need one function — use offset/limit
 - ❌ Stop at the first match — verify it's the RIGHT match (check imports, check the actual call site)
 - ❌ Use emojis in your response
+- ❌ Treat log files, runtime output, or trace files as primary evidence — always start with source code, use logs only to verify theories (see Evidence Hierarchy)
 
 ## Response Protocol
 

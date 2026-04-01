@@ -4,14 +4,20 @@ agent: builder
 ---
 
 You have tasks linked to this session that need to be built.
-The tasks are already in your system prompt under "Active Task Context" — injected automatically when the session was created.
 
-1. Read the task context from your system prompt (look for the "Active Task Context" section above)
-2. If task IDs were passed as arguments below, use those to identify which tasks to build
-3. Filter to tasks that are ready to build (status: "approved", "planned", or "new")
-4. For any task that needs more detail, use `helm_task_get` with the task ID
-5. Create your todo list from the buildable tasks, ordered by priority
-6. Begin implementing each task in order
+## Task Discovery (in order of preference)
+
+1. **System prompt context** — Check for "Active Task Context" section above (injected automatically by Helm)
+2. **`helm_session_task_list`** — Call with no arguments to get tasks linked to this session (uses HELM_SESSION_ID automatically). This is more efficient than `helm_task_list` which fetches all org tasks.
+3. **`helm_task_get`** — If specific task IDs were passed as arguments below, fetch each one directly
+
+## Build Flow
+
+1. Discover linked tasks using the methods above
+2. Filter to tasks that are ready to build (status: "approved", "planned", or "new")
+3. For any task that needs more detail, use `helm_task_get` with the task ID
+4. Create your todo list from the buildable tasks, ordered by priority
+5. Begin implementing each task in order
 
 When you complete a task, use `helm_task_update` to transition it to "agent_build_complete" status.
 

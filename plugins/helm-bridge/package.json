@@ -1,0 +1,15 @@
+{
+  "name": "@helm/bridge",
+  "version": "2.0.0",
+  "description": "Helm ADE bridge plugin for opencode — generic event bus between agents and the native app",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.2.27",
+    "@supabase/supabase-js": "^2.49.0",
+    "zod": "^3.23.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

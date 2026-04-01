@@ -1,4 +1,7 @@
 node_modules
+# Allow plugin dependencies (no npm install step in toolkit pipeline)
+!plugins/*/node_modules/
+
 .vscode
 .DS_Store
 *.log
@@ -12,6 +15,9 @@ projects.json
 builder-config.json
 bun.lock
 package.json
+# Allow plugin package files (plugins are self-contained)
+!plugins/*/package.json
+!plugins/*/package-lock.json
 
 # Agent communication queues (instance-specific)
 project-updates/

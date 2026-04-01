@@ -1397,7 +1397,7 @@ export default async function helmBridgePlugin(ctx) {
             contextAnchor: z.string().optional(),
             lastAction: z.string().optional(),
           }).optional().describe("Current action being performed"),
-          summary_stats: z.record(z.any()).optional().describe("Arbitrary summary statistics JSON"),
+          summary_stats: z.record(z.string(), z.any()).optional().describe("Arbitrary summary statistics JSON"),
         },
         async execute({ session_id, session_name, total_chunks, completed_chunks, current_chunk_id, current_action, summary_stats }) {
           if (!supabase) {

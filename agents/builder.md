@@ -131,19 +131,29 @@ Tasks follow this status progression:
 | `new` | Creator | Task just created |
 | `approved` | Planner/Human | Task approved for development |
 | `planned` | Planner | Task has been scoped and planned |
-| `in_progress_development` | Builder | Builder is actively working on this task |
-| `agent_build_complete` | Builder | Builder finished — awaiting developer review |
+| `in_progress_development` | Human/Automation | Builder is actively working on this task |
+| `agent_build_complete` | Human/Automation | Builder finished — awaiting developer review |
 | `ready_for_dev_test` | Developer | Developer reviewed, ready for dev testing |
 | `ready_for_staging_test` | Developer | Passed dev test, ready for staging |
 | `fix_required` | QA/Tester | QA found issues — needs rework |
 | `completed` | Human | Task fully complete |
 | `canceled` | Human | Task canceled |
 
-**Builder's transitions:**
-- → `in_progress_development` — when starting work on a task
-- → `agent_build_complete` — when finished (with testing notes written)
+**Builder does NOT update task status.** Status transitions are managed by human reviewers or automation rules configured in Helm. Builder signals completion via testing notes, comments, and activity entries.
 
 **Rework detection:** If status is `fix_required`, check `testing_notes` for tester feedback before implementing fixes.
+
+### ⛔ Status Update Prohibition
+
+Builder MUST NOT update task status via `helm_task_update`. The `status` field is stripped by the plugin and will be ignored.
+
+To signal completion of work on a task:
+1. Write testing notes: `helm_task_update({ testing_notes_markdown: "..." })`
+2. Mark session-task as done: `helm_session_task_update({ task_id, agent_status: "done" })`
+3. Add completion activity: `helm_task_add_activity({ type: "agent_work_complete" })`
+4. Optionally add a summary comment: `helm_task_add_comment({ task_id, body: "..." })`
+
+Human reviewers decide when to advance the task's status.
 
 ### Helm-Bridge Tools
 
@@ -153,11 +163,12 @@ Builder uses these helm-bridge plugin tools:
 |------|---------|
 | `helm_task_get` | Fetch latest task state by UUID |
 | `helm_task_list` | List tasks with optional filters (org-scoped) |
-| `helm_task_update` | Update task status, fields, testing notes |
+| `helm_task_update` | Update task fields (testing notes, description, title, priority — NOT status) |
 | `helm_task_create` | Create a new task |
 | `helm_task_add_comment` | Leave notes/questions on a task |
 | `helm_task_add_activity` | Record activity log entries |
 | `helm_session_task_list` | List tasks linked to a session (efficient — queries junction table) |
+| `helm_session_task_update` | Update session_tasks junction (agent_status, agent_completed_at) |
 | `helm_session_state_get` | Read session state from Supabase |
 | `helm_session_state_save` | Write session state to Supabase |
 | `helm_search_context` | Semantic search for related tasks/sessions (best-effort) |
@@ -197,7 +208,7 @@ A single Builder session may be linked to multiple tasks. When this occurs:
 
 - Each task completes independently with its own:
   - Testing notes (via `helm_task_update`)
-  - Status transition to `agent_build_complete`
+  - Completion signal via `helm_session_task_update` (agent_status: 'done')
   - Activity entry summarizing work done
 - One task's failure does not block other tasks (unless there's a dependency)
 
@@ -984,9 +995,10 @@ Load `builder-delegation` skill for full context block format and semantic searc
 
 ### Pipeline Steps
 
-**Step 1: Set story status → in_progress**
+**Step 1: Begin work on task**
 
-Update the current task's status via `helm_task_update`.
+Mark the session_tasks junction as working via `helm_session_task_update` (agent_status: "working").
+Do NOT update the task's status field.
 
 > Per-task verification isolation: each task starts with clean verification state via `helm_session_state_save` — no stale data from previous tasks.
 
@@ -1065,13 +1077,12 @@ Read project.json → postChangeActions[]
 
 Report result per action: `✅ pass`, `⚠️ warn` (failed but non-blocking), or `❌ fail` (blocking).
 
-**Step 5: Update story status → completed**
+**Step 5: Signal task completion**
 
-Update the current task via `helm_task_update`:
-- `status`: `"completed"`
-- `completed_at`: ISO timestamp
-- `testFlowResult`: pass/fail summary from Step 3
-- `postChangeActionsResult`: pass/warn/fail summary from Step 4.5
+Mark the session_tasks junction as done via `helm_session_task_update` (agent_status: "done", agent_completed_at: ISO timestamp).
+Write testing notes via `helm_task_update` (testing_notes_markdown only — do NOT pass a status field).
+Add a completion activity via `helm_task_add_activity` (type: "agent_work_complete").
+Do NOT update the task's status field — status transitions are managed by human reviewers.
 
 Also sync verification state via `helm_session_state_save`.
 
@@ -1123,29 +1134,30 @@ If automated testing is enabled (project-level default in `project.json` → `ag
    })
    ```
 
-### Step 3: Status Transition
+### Step 3: Signal Completion (No Status Change)
 
-After testing notes are written (and optional automated tests complete), Builder transitions the task:
+After testing notes are written (and optional automated tests complete), Builder signals it is done:
 
 ```
-helm_task_update({
-  status: "agent_build_complete",
-  testing_notes_markdown: "...(from Step 1)..."
+helm_session_task_update({
+  task_id: "<task-id>",
+  agent_status: "done"
+})
+
+helm_task_add_activity({
+  task_id: "<task-id>",
+  type: "agent_work_complete",
+  description: "Builder completed work on this task. See testing notes for verification steps."
 })
 ```
 
-**`agent_build_complete`** is an automated status — Builder sets it when finished. The developer then:
-1. Reviews the work
-2. Manually promotes to `dev_testing` via Helm UI
-3. Then to `ready_for_test` when satisfied
-
-Builder does **not** set `dev_testing` or `ready_for_test` — those are human-controlled transitions.
+Builder does **not** change the task's status. The task remains at its current status until a human reviewer advances it.
 
 ### Multi-Task Completion
 
 In multi-task sessions, each task completes independently:
 - Each task gets its own testing notes
-- Each task transitions to `agent_build_complete` separately
+- Each task is signaled as done via `helm_session_task_update` separately
 - One task's test failure does not block another task's completion
 
 ### Delegation Unchanged
@@ -1482,10 +1494,11 @@ Record detected items via `helm_task_add_activity`.
 | `helm_prd_update` | Update PRD progress (completed_stories, current_story, status transitions during build) |
 | `helm_prd_story_update` | Update story status after completion |
 | `helm_task_get` | Fetch task state |
-| `helm_task_update` | Update task status, fields, testing notes |
+| `helm_task_update` | Update task fields (testing notes, description, title, priority — NOT status) |
 | `helm_task_add_comment` | Leave notes/questions on tasks |
 | `helm_task_add_activity` | Record activity entries |
 | `helm_session_task_list` | List tasks linked to a session |
+| `helm_session_task_update` | Signal work status (agent_status: "working" / "done") |
 | `helm_session_state_get` | Read verification state |
 | `helm_session_state_save` | Write verification state |
 | `helm_search_context` | Semantic search (best-effort) |

@@ -11,6 +11,19 @@ const HELM_SESSION_ID = process.env.HELM_SESSION_ID;
 const HELM_DEVICE_ID = process.env.HELM_DEVICE_ID;
 const HELM_ORG_ID = process.env.HELM_ORG_ID;
 
+// TSK-012: Extract user ID from Supabase JWT access token
+function getUserIdFromToken() {
+  if (!HELM_SUPABASE_ACCESS_TOKEN) return null;
+  try {
+    const payload = HELM_SUPABASE_ACCESS_TOKEN.split('.')[1];
+    const decoded = JSON.parse(Buffer.from(payload, 'base64').toString());
+    return decoded.sub || null; // sub claim is the user UUID
+  } catch (e) {
+    console.warn('[helm-bridge] Failed to decode access token:', e.message);
+    return null;
+  }
+}
+
 // Plugin state for task context injection
 const pluginState = {
   sessionTasks: null,
@@ -947,8 +960,9 @@ export default async function helmBridgePlugin(ctx) {
           priority: z.enum(["critical", "high", "medium", "low"]).optional().describe("Updated priority"),
           status: z.enum(["new", "in_progress_development", "ready_for_dev_test", "ready_for_staging_test", "failed_staging_test", "passed_staging_test", "ready_for_end_user_test", "failed_end_user_test", "passed_end_user_test", "ready_for_prod_test", "failed_prod_test", "passed_prod_test", "completed", "canceled"]).optional().describe("Updated status"),
           assignee_ids: z.array(z.string()).optional().describe("Updated array of assignee user UUIDs"),
+          testing_notes_markdown: z.string().optional().describe("Structured testing notes: what to test, how to verify, edge cases"),
         },
-        async execute({ id, title, description, priority, status, assignee_ids }) {
+        async execute({ id, title, description, priority, status, assignee_ids, testing_notes_markdown }) {
           if (!supabase) {
             return JSON.stringify({ error: "Helm bridge not configured: missing HELM_SUPABASE_URL or HELM_SUPABASE_ANON_KEY" });
           }
@@ -962,7 +976,11 @@ export default async function helmBridgePlugin(ctx) {
             if (title !== undefined) updateData.title = title;
             if (description !== undefined) updateData.description_markdown = description;
             if (priority !== undefined) updateData.priority = priority;
-            if (status !== undefined) updateData.status = status;
+            // TSK-011: Status updates are disabled — status transitions are managed by human reviewers
+            if (status !== undefined) {
+              console.warn('[helm-bridge] helm_task_update: status field ignored — agent status updates are disabled');
+            }
+            if (testing_notes_markdown !== undefined) updateData.testing_notes_markdown = testing_notes_markdown;
             // Note: assignee_ids is in task_assignees junction table, not tasks table
 
             const { data, error } = await supabase
@@ -1120,13 +1138,14 @@ export default async function helmBridgePlugin(ctx) {
 
       helm_task_add_comment: tool({
         description:
-          "Add a comment to a task. Supports threaded replies via parent_comment_id.",
+          "Add a comment to a task. Supports threaded replies via parent_comment_id. Comments are attributed to the session user and tagged with the agent source.",
         args: {
           task_id: z.string().describe("UUID of the task to comment on"),
           body: z.string().describe("Comment body text"),
           parent_comment_id: z.string().optional().describe("UUID of parent comment for threaded replies"),
+          author_source: z.string().optional().describe("Source of the comment: 'agent:builder', 'agent:planner', etc. Defaults to 'agent:builder'"),
         },
-        async execute({ task_id, body, parent_comment_id }) {
+        async execute({ task_id, body, parent_comment_id, author_source }) {
           if (!supabase) {
             return JSON.stringify({ error: "Helm bridge not configured: missing HELM_SUPABASE_URL or HELM_SUPABASE_ANON_KEY" });
           }
@@ -1136,9 +1155,14 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
+            // TSK-012: Include author attribution
+            const resolvedSessionId = HELM_SESSION_ID || null;
             const insertData = {
               task_id,
               body_markdown: body,
+              author_id: getUserIdFromToken(), // user who launched the session
+              author_source: author_source || 'agent:builder',
+              session_id: resolvedSessionId,
             };
             if (parent_comment_id) insertData.parent_comment_id = parent_comment_id;
 
@@ -1156,6 +1180,7 @@ export default async function helmBridgePlugin(ctx) {
               task_id,
               comment_id: data.id,
               is_reply: !!parent_comment_id,
+              author_source: insertData.author_source,
             });
 
             return JSON.stringify({ success: true, id: data.id, task_id: data.task_id });
@@ -1354,6 +1379,112 @@ export default async function helmBridgePlugin(ctx) {
             return JSON.stringify({ tasks: result.tasks, count: result.tasks.length });
           } catch (err) {
             return JSON.stringify({ error: `Failed to list session tasks: ${err.message}` });
+          }
+        },
+      }),
+
+      // TSK-014: Session metadata update tool
+      helm_session_update: tool({
+        description: "Update session metadata. Use this to set session name, update progress, or save summary stats. Cannot update session status (managed by the app).",
+        args: {
+          session_id: z.string().optional().describe("UUID of the session. Falls back to HELM_SESSION_ID env var"),
+          session_name: z.string().optional().describe("Display name for the session"),
+          total_chunks: z.number().optional().describe("Total number of tasks/chunks in this session"),
+          completed_chunks: z.number().optional().describe("Number of completed tasks/chunks"),
+          current_chunk_id: z.string().optional().describe("ID of the currently active chunk/task"),
+          current_action: z.object({
+            description: z.string(),
+            contextAnchor: z.string().optional(),
+            lastAction: z.string().optional(),
+          }).optional().describe("Current action being performed"),
+          summary_stats: z.record(z.any()).optional().describe("Arbitrary summary statistics JSON"),
+        },
+        async execute({ session_id, session_name, total_chunks, completed_chunks, current_chunk_id, current_action, summary_stats }) {
+          if (!supabase) {
+            return JSON.stringify({ error: "Helm bridge not configured" });
+          }
+
+          const resolvedSessionId = session_id || HELM_SESSION_ID;
+          if (!resolvedSessionId) {
+            return JSON.stringify({ error: "No session_id provided and HELM_SESSION_ID not set" });
+          }
+
+          try {
+            const updateData = { updated_at: new Date().toISOString() };
+            if (session_name !== undefined) updateData.session_name = session_name;
+            if (total_chunks !== undefined) updateData.total_chunks = total_chunks;
+            if (completed_chunks !== undefined) updateData.completed_chunks = completed_chunks;
+            if (current_chunk_id !== undefined) updateData.current_chunk_id = current_chunk_id;
+            if (current_action !== undefined) updateData.current_action = current_action;
+            if (summary_stats !== undefined) updateData.summary_stats = summary_stats;
+            // Note: last_heartbeat is updated automatically
+            updateData.last_heartbeat = new Date().toISOString();
+
+            const { data, error } = await supabase
+              .from("sessions")
+              .update(updateData)
+              .eq("id", resolvedSessionId)
+              .select("id, session_name, total_chunks, completed_chunks")
+              .single();
+
+            if (error) {
+              return JSON.stringify({ error: `Failed to update session: ${error.message}` });
+            }
+
+            return JSON.stringify({ success: true, updated: data });
+          } catch (err) {
+            return JSON.stringify({ error: `Failed to update session: ${err.message}` });
+          }
+        },
+      }),
+
+      // TSK-014: Session task agent status update tool
+      helm_session_task_update: tool({
+        description: "Update the agent's work status on a specific task within this session. Use this to signal when you start working on a task or complete it.",
+        args: {
+          session_id: z.string().optional().describe("UUID of the session. Falls back to HELM_SESSION_ID env var"),
+          task_id: z.string().describe("UUID of the task"),
+          agent_status: z.enum(["working", "done", "blocked"]).describe("Agent's work status on this task"),
+        },
+        async execute({ session_id, task_id, agent_status }) {
+          if (!supabase) {
+            return JSON.stringify({ error: "Helm bridge not configured" });
+          }
+
+          const resolvedSessionId = session_id || HELM_SESSION_ID;
+          if (!resolvedSessionId) {
+            return JSON.stringify({ error: "No session_id provided and HELM_SESSION_ID not set" });
+          }
+
+          if (!task_id) {
+            return JSON.stringify({ error: "task_id is required" });
+          }
+
+          try {
+            const updateData = {
+              agent_status,
+            };
+            if (agent_status === "done") {
+              updateData.agent_completed_at = new Date().toISOString();
+            }
+
+            const { data, error } = await supabase
+              .from("session_tasks")
+              .update(updateData)
+              .eq("session_id", resolvedSessionId)
+              .eq("task_id", task_id)
+              .select("session_id, task_id, agent_status, agent_completed_at")
+              .single();
+
+            if (error) {
+              return JSON.stringify({ error: `Failed to update session task: ${error.message}` });
+            }
+
+            await emitEvent("session.task.updated", { session_id: resolvedSessionId, task_id, agent_status });
+
+            return JSON.stringify({ success: true, updated: data });
+          } catch (err) {
+            return JSON.stringify({ error: `Failed to update session task: ${err.message}` });
           }
         },
       }),

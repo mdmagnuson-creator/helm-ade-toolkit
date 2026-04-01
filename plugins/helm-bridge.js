@@ -199,19 +199,13 @@ function formatTaskContext(task, sessionMode) {
   if (sessionMode === "qa" || sessionMode === "testing") {
     // QA sessions: emphasize testing fields
     if (task.testing_notes) ctx += `\n**Testing Notes:**\n${task.testing_notes}\n`;
-    if (task.acceptance_criteria) ctx += `\n**Acceptance Criteria:**\n${task.acceptance_criteria}\n`;
   } else if (sessionMode === "planner" || sessionMode === "prdRefine") {
     // Planner sessions: emphasize scoping
-    if (task.scope_notes) ctx += `\n**Scope Notes:**\n${task.scope_notes}\n`;
+    if (task.scope_markdown) ctx += `\n**Scope Notes:**\n${task.scope_markdown}\n`;
     if (task.description_markdown) ctx += `\n**Full Description:**\n${task.description_markdown}\n`;
   } else {
     // Builder/ad-hoc: implementation focus
-    if (task.acceptance_criteria) ctx += `\n**Acceptance Criteria:**\n${task.acceptance_criteria}\n`;
-    if (task.scope_notes) ctx += `\n**Scope Notes:**\n${task.scope_notes}\n`;
-  }
-
-  if (task.labels?.length) {
-    ctx += `- **Labels**: ${task.labels.join(", ")}\n`;
+    if (task.scope_markdown) ctx += `\n**Scope Notes:**\n${task.scope_markdown}\n`;
   }
 
   // Include story/PRD context if available
@@ -882,7 +876,6 @@ export default async function helmBridgePlugin(ctx) {
           description: z.string().optional().describe("Task description"),
           status: z.enum(["new", "in_progress_development", "ready_for_dev_test", "ready_for_staging_test", "failed_staging_test", "passed_staging_test", "ready_for_end_user_test", "failed_end_user_test", "passed_end_user_test", "ready_for_prod_test", "failed_prod_test", "passed_prod_test", "completed", "canceled"]).optional().describe("Task status (default: 'new')"),
           priority: z.enum(["critical", "high", "medium", "low"]).optional().describe("Task priority (default: 'medium')"),
-          labels: z.array(z.string()).optional().describe("Array of label strings for categorization"),
           parent_task_id: z.string().optional().describe("UUID of parent task for subtasks"),
           parent_story_id: z.string().optional().describe("Story ID (e.g., 'US-001') to link this task to"),
           parent_prd_id: z.string().optional().describe("UUID of associated PRD"),
@@ -890,7 +883,7 @@ export default async function helmBridgePlugin(ctx) {
           repo_id: z.string().optional().describe("UUID of associated repository"),
           org_id: z.string().optional().describe("Organization UUID. Falls back to HELM_ORG_ID env var"),
         },
-        async execute({ title, description, status, priority, labels, parent_task_id, parent_story_id, parent_prd_id, assignee_ids, repo_id, org_id }) {
+        async execute({ title, description, status, priority, parent_task_id, parent_story_id, parent_prd_id, assignee_ids, repo_id, org_id }) {
           if (!supabase) {
             return JSON.stringify({ error: "Helm bridge not configured: missing HELM_SUPABASE_URL or HELM_SUPABASE_ANON_KEY" });
           }
@@ -912,10 +905,9 @@ export default async function helmBridgePlugin(ctx) {
               priority: priority || "medium",
             };
             if (description) insertData.description_markdown = description;
-            if (labels) insertData.labels = labels;
             if (parent_task_id) insertData.parent_task_id = parent_task_id;
-            if (parent_story_id) insertData.parent_story_id = parent_story_id;
-            if (parent_prd_id) insertData.parent_prd_id = parent_prd_id;
+            if (parent_story_id) insertData.story_id = parent_story_id;
+            if (parent_prd_id) insertData.prd_id = parent_prd_id;
             // Note: assignee_ids is in task_assignees junction table, not tasks table
             if (repo_id) insertData.repo_id = repo_id;
 
@@ -948,9 +940,8 @@ export default async function helmBridgePlugin(ctx) {
           priority: z.enum(["critical", "high", "medium", "low"]).optional().describe("Updated priority"),
           status: z.enum(["new", "in_progress_development", "ready_for_dev_test", "ready_for_staging_test", "failed_staging_test", "passed_staging_test", "ready_for_end_user_test", "failed_end_user_test", "passed_end_user_test", "ready_for_prod_test", "failed_prod_test", "passed_prod_test", "completed", "canceled"]).optional().describe("Updated status"),
           assignee_ids: z.array(z.string()).optional().describe("Updated array of assignee user UUIDs"),
-          labels: z.array(z.string()).optional().describe("Updated labels array"),
         },
-        async execute({ id, title, description, priority, status, assignee_ids, labels }) {
+        async execute({ id, title, description, priority, status, assignee_ids }) {
           if (!supabase) {
             return JSON.stringify({ error: "Helm bridge not configured: missing HELM_SUPABASE_URL or HELM_SUPABASE_ANON_KEY" });
           }
@@ -966,7 +957,6 @@ export default async function helmBridgePlugin(ctx) {
             if (priority !== undefined) updateData.priority = priority;
             if (status !== undefined) updateData.status = status;
             // Note: assignee_ids is in task_assignees junction table, not tasks table
-            if (labels !== undefined) updateData.labels = labels;
 
             const { data, error } = await supabase
               .from("tasks")
@@ -990,17 +980,16 @@ export default async function helmBridgePlugin(ctx) {
 
       helm_task_list: tool({
         description:
-          "List tasks with optional filters. Returns task metadata for matching tasks. Use filters to narrow results by status, assignee, PRD, label, or priority.",
+          "List tasks with optional filters. Returns task metadata for matching tasks. Use filters to narrow results by status, assignee, PRD, or priority.",
         args: {
           repo_id: z.string().optional().describe("Filter by repository UUID"),
           status: z.enum(["new", "in_progress_development", "ready_for_dev_test", "ready_for_staging_test", "failed_staging_test", "passed_staging_test", "ready_for_end_user_test", "failed_end_user_test", "passed_end_user_test", "ready_for_prod_test", "failed_prod_test", "passed_prod_test", "completed", "canceled"]).optional().describe("Filter by status"),
           assignee_ids: z.array(z.string()).optional().describe("Filter by assignee UUIDs (matches tasks with ANY of these assignees)"),
           prd_id: z.string().optional().describe("Filter by PRD UUID"),
-          label: z.string().optional().describe("Filter by label (matches tasks containing this label)"),
           priority: z.enum(["critical", "high", "medium", "low"]).optional().describe("Filter by priority"),
           org_id: z.string().optional().describe("Organization UUID. Falls back to HELM_ORG_ID env var"),
         },
-        async execute({ repo_id, status, assignee_ids, prd_id, label, priority, org_id }) {
+        async execute({ repo_id, status, assignee_ids, prd_id, priority, org_id }) {
           if (!supabase) {
             return JSON.stringify({ error: "Helm bridge not configured: missing HELM_SUPABASE_URL or HELM_SUPABASE_ANON_KEY" });
           }
@@ -1013,7 +1002,7 @@ export default async function helmBridgePlugin(ctx) {
           try {
             let query = supabase
               .from("tasks")
-              .select("id, title, description_markdown, priority, status, parent_task_id, prd_id, labels, repo_id, created_at, updated_at")
+              .select("id, title, description_markdown, priority, status, parent_task_id, prd_id, repo_id, created_at, updated_at")
               .eq("org_id", effectiveOrgId)
               .order("created_at", { ascending: false });
 
@@ -1028,9 +1017,6 @@ export default async function helmBridgePlugin(ctx) {
             }
             if (priority) {
               query = query.eq("priority", priority);
-            }
-            if (label) {
-              query = query.contains("labels", [label]);
             }
             // Note: assignee_ids filter not implemented - assignees are in task_assignees junction table
 
@@ -1087,7 +1073,7 @@ export default async function helmBridgePlugin(ctx) {
 
             // Fetch activity log
             const { data: activityData, error: activityError } = await supabase
-              .from("task_activity_log")
+              .from("task_activity")
               .select("*")
               .eq("task_id", id)
               .order("created_at", { ascending: false });
@@ -1096,15 +1082,22 @@ export default async function helmBridgePlugin(ctx) {
               return JSON.stringify({ error: `Failed to get task activity: ${activityError.message}` });
             }
 
-            // Fetch linked sessions (sessions that have worked on this task)
-            const { data: sessionsData, error: sessionsError } = await supabase
-              .from("sessions")
-              .select("id, status, started_at, ended_at")
-              .eq("task_id", id)
-              .order("started_at", { ascending: false });
+            // Fetch linked sessions via junction table
+            const { data: sessionTasksData, error: sessionTasksError } = await supabase
+              .from("session_tasks")
+              .select("session_id")
+              .eq("task_id", id);
 
-            // Sessions might not have task_id column yet, so ignore errors gracefully
-            const sessions = sessionsError ? [] : sessionsData;
+            let sessions = [];
+            if (!sessionTasksError && sessionTasksData?.length) {
+              const sessionIds = sessionTasksData.map((st) => st.session_id);
+              const { data: sessionsData, error: sessionsError } = await supabase
+                .from("sessions")
+                .select("id, status, started_at, ended_at")
+                .in("id", sessionIds)
+                .order("started_at", { ascending: false });
+              sessions = sessionsError ? [] : sessionsData;
+            }
 
             return JSON.stringify({
               task: taskData,
@@ -1120,14 +1113,13 @@ export default async function helmBridgePlugin(ctx) {
 
       helm_task_add_comment: tool({
         description:
-          "Add a comment to a task. Supports threaded replies via parent_comment_id and @mentions via mentioned_user_ids.",
+          "Add a comment to a task. Supports threaded replies via parent_comment_id.",
         args: {
           task_id: z.string().describe("UUID of the task to comment on"),
           body: z.string().describe("Comment body text"),
           parent_comment_id: z.string().optional().describe("UUID of parent comment for threaded replies"),
-          mentioned_user_ids: z.array(z.string()).optional().describe("Array of user UUIDs mentioned in the comment"),
         },
-        async execute({ task_id, body, parent_comment_id, mentioned_user_ids }) {
+        async execute({ task_id, body, parent_comment_id }) {
           if (!supabase) {
             return JSON.stringify({ error: "Helm bridge not configured: missing HELM_SUPABASE_URL or HELM_SUPABASE_ANON_KEY" });
           }
@@ -1139,10 +1131,9 @@ export default async function helmBridgePlugin(ctx) {
           try {
             const insertData = {
               task_id,
-              body,
+              body_markdown: body,
             };
             if (parent_comment_id) insertData.parent_comment_id = parent_comment_id;
-            if (mentioned_user_ids) insertData.mentioned_user_ids = mentioned_user_ids;
 
             const { data, error } = await supabase
               .from("task_comments")
@@ -1158,7 +1149,6 @@ export default async function helmBridgePlugin(ctx) {
               task_id,
               comment_id: data.id,
               is_reply: !!parent_comment_id,
-              mentioned_count: mentioned_user_ids?.length || 0,
             });
 
             return JSON.stringify({ success: true, id: data.id, task_id: data.task_id });
@@ -1195,7 +1185,7 @@ export default async function helmBridgePlugin(ctx) {
             if (metadata) insertData.metadata = metadata;
 
             const { data, error } = await supabase
-              .from("task_activity_log")
+              .from("task_activity")
               .insert(insertData)
               .select("id, task_id, activity_type, created_at")
               .single();

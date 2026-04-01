@@ -1330,6 +1330,34 @@ export default async function helmBridgePlugin(ctx) {
         },
       }),
 
+      helm_session_task_list: tool({
+        description:
+          "List tasks linked to a session via the session_tasks junction table. Returns full task details including story/PRD context. More efficient than helm_task_list when you only need tasks for the current session.",
+        args: {
+          session_id: z.string().optional().describe("UUID of the session. Falls back to HELM_SESSION_ID env var"),
+        },
+        async execute({ session_id }) {
+          if (!supabase) {
+            return JSON.stringify({ error: "Helm bridge not configured: missing HELM_SUPABASE_URL or HELM_SUPABASE_ANON_KEY" });
+          }
+
+          const effectiveSessionId = session_id || HELM_SESSION_ID;
+          if (!effectiveSessionId) {
+            return JSON.stringify({ error: "session_id is required: provide it as argument or set HELM_SESSION_ID env var" });
+          }
+
+          try {
+            const result = await fetchSessionTasks(effectiveSessionId);
+            if (!result || !result.tasks?.length) {
+              return JSON.stringify({ tasks: [], message: "No tasks linked to this session" });
+            }
+            return JSON.stringify({ tasks: result.tasks, count: result.tasks.length });
+          } catch (err) {
+            return JSON.stringify({ error: `Failed to list session tasks: ${err.message}` });
+          }
+        },
+      }),
+
       // ========================================
       // Reminder Tools
       // ========================================

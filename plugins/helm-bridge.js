@@ -169,7 +169,7 @@ async function fetchSessionTasks(sessionId) {
       return null;
     }
 
-    // Enrich tasks with story/PRD context
+    // Enrich tasks with story/PRD context and attachments
     for (const task of tasks) {
       if (task.story_id) {
         try {
@@ -190,6 +190,40 @@ async function fetchSessionTasks(sessionId) {
         } catch (e) {
           // Ignore story fetch errors
         }
+      }
+
+      // Fetch attachments for this task
+      try {
+        const { data: attachmentsData, error: attachmentsError } = await supabase
+          .from("task_attachments")
+          .select("id, file_name, content_type, file_size, storage_path, is_image, created_at")
+          .eq("task_id", task.id)
+          .order("created_at", { ascending: true });
+
+        if (!attachmentsError && attachmentsData?.length) {
+          // Generate signed URLs for each attachment (1 hour expiry)
+          task._attachments = await Promise.all(
+            attachmentsData.map(async (attachment) => {
+              let signedUrl = null;
+              try {
+                const { data: urlData, error: urlError } = await supabase.storage
+                  .from("task-attachments")
+                  .createSignedUrl(attachment.storage_path, 3600);
+                if (!urlError && urlData?.signedUrl) {
+                  signedUrl = urlData.signedUrl;
+                }
+              } catch (e) {
+                // Ignore URL generation errors
+              }
+              return {
+                ...attachment,
+                signed_url: signedUrl,
+              };
+            })
+          );
+        }
+      } catch (e) {
+        console.error(`[helm-bridge] Failed to fetch attachments for task ${task.id}:`, e.message);
       }
     }
 
@@ -240,6 +274,21 @@ function formatTaskContext(task, sessionMode) {
     }
     if (sc.prdGoals) {
       ctx += `- **PRD Goals:** ${sc.prdGoals}\n`;
+    }
+  }
+
+  // Include attachments if available
+  if (task._attachments && task._attachments.length > 0) {
+    ctx += `\n**Attachments** (${task._attachments.length} file${task._attachments.length > 1 ? "s" : ""}):\n`;
+    for (const attachment of task._attachments) {
+      const sizeKB = Math.round(attachment.file_size / 1024);
+      const sizeStr = sizeKB >= 1024 ? `${Math.round(sizeKB / 1024)} MB` : `${sizeKB} KB`;
+      const typeStr = attachment.is_image ? "image" : attachment.content_type?.split("/")[1] || "file";
+      ctx += `- ${attachment.file_name} (${sizeStr}, ${typeStr})`;
+      if (attachment.signed_url) {
+        ctx += ` - [Download](${attachment.signed_url})`;
+      }
+      ctx += `\n`;
     }
   }
 
@@ -1124,11 +1173,43 @@ export default async function helmBridgePlugin(ctx) {
               sessions = sessionsError ? [] : sessionsData;
             }
 
+            // Fetch attachments from task_attachments table
+            const { data: attachmentsData, error: attachmentsError } = await supabase
+              .from("task_attachments")
+              .select("id, file_name, content_type, file_size, storage_path, is_image, created_at")
+              .eq("task_id", id)
+              .order("created_at", { ascending: true });
+
+            let attachments = [];
+            if (!attachmentsError && attachmentsData?.length) {
+              // Generate signed URLs for each attachment (1 hour expiry)
+              attachments = await Promise.all(
+                attachmentsData.map(async (attachment) => {
+                  let signedUrl = null;
+                  try {
+                    const { data: urlData, error: urlError } = await supabase.storage
+                      .from("task-attachments")
+                      .createSignedUrl(attachment.storage_path, 3600);
+                    if (!urlError && urlData?.signedUrl) {
+                      signedUrl = urlData.signedUrl;
+                    }
+                  } catch (e) {
+                    console.error(`[helm-bridge] Failed to generate signed URL for ${attachment.file_name}:`, e.message);
+                  }
+                  return {
+                    ...attachment,
+                    signed_url: signedUrl,
+                  };
+                })
+              );
+            }
+
             return JSON.stringify({
               task: taskData,
               comments: commentsData,
               activity: activityData,
               sessions: sessions,
+              attachments: attachments,
             });
           } catch (err) {
             return JSON.stringify({ error: `Failed to get task: ${err.message}` });
@@ -2400,8 +2481,9 @@ export default async function helmBridgePlugin(ctx) {
       if (effectiveSessionId) {
         const isStale = Date.now() - pluginState.lastFetchTime > TASK_CONTEXT_STALE_THRESHOLD;
         const sessionChanged = effectiveSessionId !== pluginState.currentSessionId;
+        const noTasksLoaded = !pluginState.sessionTasks?.length;
 
-        if (isStale || sessionChanged) {
+        if (isStale || sessionChanged || noTasksLoaded) {
           try {
             const result = await fetchSessionTasks(effectiveSessionId);
             if (result) {

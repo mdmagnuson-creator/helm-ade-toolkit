@@ -131,7 +131,7 @@ async function fetchSessionTasks(sessionId) {
     // Fetch linked tasks for this session
     const { data: sessionTasks, error: sessionTasksError } = await supabase
       .from("session_tasks")
-      .select("task_id, role")
+      .select("task_id")
       .eq("session_id", sessionId);
 
     if (sessionTasksError || !sessionTasks?.length) {
@@ -173,10 +173,9 @@ async function fetchSessionTasks(sessionId) {
       }
     }
 
-    // Build role mapping
-    const taskRoles = Object.fromEntries(
-      sessionTasks.map((st) => [st.task_id, st.role])
-    );
+    // Note: role column doesn't exist in session_tasks table
+    // Return empty taskRoles for backward compatibility
+    const taskRoles = {};
 
     return { tasks, taskRoles };
   } catch (e) {
@@ -832,7 +831,7 @@ export default async function helmBridgePlugin(ctx) {
           try {
             const updateData = { updated_at: new Date().toISOString() };
             if (title !== undefined) updateData.title = title;
-            if (description !== undefined) updateData.description_markdown = description;
+            if (description !== undefined) updateData.description = description;
             if (acceptance_criteria !== undefined) updateData.acceptance_criteria = acceptance_criteria;
             if (story_points !== undefined) updateData.story_points = story_points;
             if (status !== undefined) updateData.status = status;
@@ -917,7 +916,7 @@ export default async function helmBridgePlugin(ctx) {
             if (parent_task_id) insertData.parent_task_id = parent_task_id;
             if (parent_story_id) insertData.parent_story_id = parent_story_id;
             if (parent_prd_id) insertData.parent_prd_id = parent_prd_id;
-            if (assignee_ids) insertData.assignee_ids = assignee_ids;
+            // Note: assignee_ids is in task_assignees junction table, not tasks table
             if (repo_id) insertData.repo_id = repo_id;
 
             const { data, error } = await supabase
@@ -966,7 +965,7 @@ export default async function helmBridgePlugin(ctx) {
             if (description !== undefined) updateData.description_markdown = description;
             if (priority !== undefined) updateData.priority = priority;
             if (status !== undefined) updateData.status = status;
-            if (assignee_ids !== undefined) updateData.assignee_ids = assignee_ids;
+            // Note: assignee_ids is in task_assignees junction table, not tasks table
             if (labels !== undefined) updateData.labels = labels;
 
             const { data, error } = await supabase
@@ -1014,7 +1013,7 @@ export default async function helmBridgePlugin(ctx) {
           try {
             let query = supabase
               .from("tasks")
-              .select("id, title, description_markdown, priority, status, parent_task_id, prd_id, assignee_ids, labels, repo_id, created_at, updated_at")
+              .select("id, title, description_markdown, priority, status, parent_task_id, prd_id, labels, repo_id, created_at, updated_at")
               .eq("org_id", effectiveOrgId)
               .order("created_at", { ascending: false });
 
@@ -1033,10 +1032,7 @@ export default async function helmBridgePlugin(ctx) {
             if (label) {
               query = query.contains("labels", [label]);
             }
-            if (assignee_ids && assignee_ids.length > 0) {
-              // Match tasks that have ANY of the provided assignee_ids
-              query = query.overlaps("assignee_ids", assignee_ids);
-            }
+            // Note: assignee_ids filter not implemented - assignees are in task_assignees junction table
 
             const { data, error } = await query;
 

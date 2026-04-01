@@ -192,8 +192,8 @@ function formatTaskContext(task, sessionMode) {
   ctx += `- **Status**: ${task.status}\n`;
   ctx += `- **Priority**: ${task.priority}\n`;
 
-  if (task.description) {
-    ctx += `- **Description**: ${task.description}\n`;
+  if (task.description_markdown) {
+    ctx += `- **Description**: ${task.description_markdown}\n`;
   }
 
   // Mode-specific emphasis
@@ -204,7 +204,7 @@ function formatTaskContext(task, sessionMode) {
   } else if (sessionMode === "planner" || sessionMode === "prdRefine") {
     // Planner sessions: emphasize scoping
     if (task.scope_notes) ctx += `\n**Scope Notes:**\n${task.scope_notes}\n`;
-    if (task.description) ctx += `\n**Full Description:**\n${task.description}\n`;
+    if (task.description_markdown) ctx += `\n**Full Description:**\n${task.description_markdown}\n`;
   } else {
     // Builder/ad-hoc: implementation focus
     if (task.acceptance_criteria) ctx += `\n**Acceptance Criteria:**\n${task.acceptance_criteria}\n`;
@@ -343,7 +343,7 @@ export default async function helmBridgePlugin(ctx) {
           type: z.string().describe(
             "Event type identifier (e.g., 'prd.created', 'prd.updated', 'session.status'). Use dot notation for namespacing."
           ),
-          payload: z.record(z.any()).describe(
+          payload: z.record(z.string(), z.any()).describe(
             "Event payload data. Structure depends on event type."
           ),
         },
@@ -832,7 +832,7 @@ export default async function helmBridgePlugin(ctx) {
           try {
             const updateData = { updated_at: new Date().toISOString() };
             if (title !== undefined) updateData.title = title;
-            if (description !== undefined) updateData.description = description;
+            if (description !== undefined) updateData.description_markdown = description;
             if (acceptance_criteria !== undefined) updateData.acceptance_criteria = acceptance_criteria;
             if (story_points !== undefined) updateData.story_points = story_points;
             if (status !== undefined) updateData.status = status;
@@ -912,7 +912,7 @@ export default async function helmBridgePlugin(ctx) {
               status: status || "new",
               priority: priority || "medium",
             };
-            if (description) insertData.description = description;
+            if (description) insertData.description_markdown = description;
             if (labels) insertData.labels = labels;
             if (parent_task_id) insertData.parent_task_id = parent_task_id;
             if (parent_story_id) insertData.parent_story_id = parent_story_id;
@@ -963,7 +963,7 @@ export default async function helmBridgePlugin(ctx) {
           try {
             const updateData = { updated_at: new Date().toISOString() };
             if (title !== undefined) updateData.title = title;
-            if (description !== undefined) updateData.description = description;
+            if (description !== undefined) updateData.description_markdown = description;
             if (priority !== undefined) updateData.priority = priority;
             if (status !== undefined) updateData.status = status;
             if (assignee_ids !== undefined) updateData.assignee_ids = assignee_ids;
@@ -1014,7 +1014,7 @@ export default async function helmBridgePlugin(ctx) {
           try {
             let query = supabase
               .from("tasks")
-              .select("id, title, description, priority, status, parent_task_id, prd_id, assignee_ids, labels, repo_id, created_at, updated_at")
+              .select("id, title, description_markdown, priority, status, parent_task_id, prd_id, assignee_ids, labels, repo_id, created_at, updated_at")
               .eq("org_id", effectiveOrgId)
               .order("created_at", { ascending: false });
 
@@ -1179,7 +1179,7 @@ export default async function helmBridgePlugin(ctx) {
           task_id: z.string().describe("UUID of the task"),
           activity_type: z.string().describe("Type of activity (e.g., 'status_change', 'assignment', 'comment', 'linked')"),
           description: z.string().describe("Human-readable description of the activity"),
-          metadata: z.record(z.any()).optional().describe("Additional structured data about the activity"),
+          metadata: z.record(z.string(), z.any()).optional().describe("Additional structured data about the activity"),
         },
         async execute({ task_id, activity_type, description, metadata }) {
           if (!supabase) {
@@ -1265,7 +1265,7 @@ export default async function helmBridgePlugin(ctx) {
           "Save agent-managed state to the current session's agent_state column. Use this to persist state that should survive across tool calls or be accessible to other agents.",
         args: {
           session_id: z.string().optional().describe("UUID of the session. Falls back to HELM_SESSION_ID env var"),
-          state: z.record(z.any()).describe("JSON state object to save. Replaces any existing state."),
+          state: z.record(z.string(), z.any()).describe("JSON state object to save. Replaces any existing state."),
         },
         async execute({ session_id, state }) {
           if (!supabase) {

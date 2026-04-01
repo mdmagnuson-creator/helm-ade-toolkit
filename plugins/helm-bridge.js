@@ -6,6 +6,7 @@ const z = tool.schema;
 // Read environment variables at module load
 const HELM_SUPABASE_URL = process.env.HELM_SUPABASE_URL;
 const HELM_SUPABASE_ANON_KEY = process.env.HELM_SUPABASE_ANON_KEY;
+const HELM_SUPABASE_ACCESS_TOKEN = process.env.HELM_SUPABASE_ACCESS_TOKEN;
 const HELM_SESSION_ID = process.env.HELM_SESSION_ID;
 const HELM_DEVICE_ID = process.env.HELM_DEVICE_ID;
 const HELM_ORG_ID = process.env.HELM_ORG_ID;
@@ -101,9 +102,15 @@ const fileChangeTracker = {
 let supabase = null;
 
 if (HELM_SUPABASE_URL && HELM_SUPABASE_ANON_KEY) {
-  supabase = createClient(HELM_SUPABASE_URL, HELM_SUPABASE_ANON_KEY);
+  supabase = createClient(HELM_SUPABASE_URL, HELM_SUPABASE_ANON_KEY, {
+    global: {
+      headers: HELM_SUPABASE_ACCESS_TOKEN
+        ? { Authorization: `Bearer ${HELM_SUPABASE_ACCESS_TOKEN}` }
+        : {},
+    },
+  });
   console.log(
-    `[helm-bridge] Initialized — Supabase connected, session=${HELM_SESSION_ID || "not set"}, device=${HELM_DEVICE_ID || "not set"}, org=${HELM_ORG_ID || "not set"}`
+    `[helm-bridge] Initialized — Supabase connected, session=${HELM_SESSION_ID || "not set"}, device=${HELM_DEVICE_ID || "not set"}, org=${HELM_ORG_ID || "not set"}, authenticated=${!!HELM_SUPABASE_ACCESS_TOKEN}`
   );
 } else {
   console.log(

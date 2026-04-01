@@ -1,0 +1,6 @@
+{
+  "description": "Dependencies required by plugins in this toolkit. ToolkitManager reads this to generate the opencode config-level package.json.",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0"
+  }
+}

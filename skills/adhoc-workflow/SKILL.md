@@ -349,6 +349,8 @@ helm_session_state_save({
 
 > ⛔ **CRITICAL: `todoContent` must be the exact same string passed to `todowrite`.** No trimming, no rewording, no normalization. The macOS app content-matches this to resolve task_id for UI grouping.
 
+> ⛔ **MANDATORY COMPANION CALL: Every `todowrite` call MUST be immediately followed by `helm_session_state_save` with the `todoTaskLinks` array.** Never call `todowrite` alone — always pair it with `helm_session_state_save({ todoTaskLinks: [...] })`.
+
 ### Todo Creation Order (CRITICAL)
 
 > ⛔ **Todos MUST be created in logical execution order, not analysis/thinking order.**
@@ -363,7 +365,7 @@ helm_session_state_save({
 4. **Completion tasks** — Commit, signal done — **ALWAYS last**
 
 **Wrong:** Creating "Commit and complete task" first because you thought of it first.
-**Right:** Reorder todos into execution sequence before creating them via `todowrite`.
+**Right:** Reorder todos into execution sequence before creating them via `todowrite`. Then immediately call `helm_session_state_save` with the `todoTaskLinks` array.
 
 ### State Persistence Example
 

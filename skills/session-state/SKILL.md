@@ -139,9 +139,10 @@ Keep OpenCode right-panel todos and state synchronized for resumability.
 
 ### Required Behavior
 
-1. **On startup:** Restore panel todos from state (`uiTodos.items`) via `todowrite`
+1. **On startup:** Restore panel todos from state (`uiTodos.items`) via `todowrite`, then sync `todoTaskLinks` via `helm_session_state_save`
 2. **On every state change:** Update both stores in one action:
    - Right panel via `todowrite`
+   - Todo-task links via `helm_session_state_save` (mandatory companion call)
    - State file (`uiTodos.items`, `uiTodos.lastSyncedAt`, `uiTodos.flow`)
 3. **One active rule:** Only one todo may be `in_progress` at a time
 4. **Before handoff:** Ensure state is synced so another session can resume

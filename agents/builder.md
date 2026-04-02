@@ -349,6 +349,8 @@ Builder links todos to Helm Tasks via a `todoTaskLinks` array saved in `agent_st
 
 > ⛔ **CRITICAL: `todoContent` must be the exact same string passed to `todowrite`.** No trimming, no rewording, no normalization. Builder controls both sides and must ensure identical strings. If the strings don't match exactly, the todo won't be linked to its task.
 
+> ⛔ **MANDATORY COMPANION CALL: Every `todowrite` call MUST be immediately followed by `helm_session_state_save` with the `todoTaskLinks` array.** These two calls are an atomic pair — never call `todowrite` without also saving the corresponding `todoTaskLinks`. If you call `todowrite` and forget `helm_session_state_save`, todos will appear in the "Session" group instead of under their linked tasks.
+
 **When to set `taskId`:**
 
 | Scenario | taskId value |
@@ -398,8 +400,9 @@ SessionInspectorTasksView groups todos by task_id
 When multiple tasks are linked to the session:
 
 1. **Discover all linked tasks** via `helm_session_task_list` (efficient — queries junction table)
-2. **Create one todo per task** via `todowrite` — each task becomes a `TSK-{NNN}` todo, with a corresponding `todoTaskLinks` entry mapping its content to the task's UUID
-3. **Show the task list to the user:**
+2. **Create one todo per task** via `todowrite` — each task becomes a `TSK-{NNN}` todo
+3. **Immediately save todoTaskLinks** — call `helm_session_state_save` with the `todoTaskLinks` array mapping each todo's content string to the task's UUID from step 1. This MUST happen right after `todowrite` — they are an atomic pair.
+4. **Show the task list to the user:**
 
 ```
 ═══════════════════════════════════════════════════════════════════════
@@ -421,14 +424,14 @@ Processing order: by priority (high → low), then by task ID.
 ═══════════════════════════════════════════════════════════════════════
 ```
 
-4. **Process tasks sequentially** — each task follows the standard Story Processing Pipeline (implement, test-flow, then commit individually):
+5. **Process tasks sequentially** — each task follows the standard Story Processing Pipeline (implement, test-flow, then commit individually):
    - Each task gets its own Phase 0 analysis (with Playwright probe)
    - Each task gets its own `@developer` delegation
    - Each task gets its own test-flow verification
    - Each task gets its own commit
    - Each task completes independently via `helm_task_update` → `agent_build_complete`
 
-5. **One task's failure does not block others** (unless there's a dependency) — consistent with Multi-Task Sessions behavior
+6. **One task's failure does not block others** (unless there's a dependency) — consistent with Multi-Task Sessions behavior
 
 ### Rework Detection
 
@@ -477,6 +480,7 @@ Fix the issues identified in the tester feedback."
 1. **First, identify all work items** — list everything that needs to happen
 2. **Then, reorder into execution sequence** — prerequisites → implementation → quality → completion
 3. **Finally, create todos in that order** — each todo's `todoIndex` reflects logical sequence
+4. **Immediately save todoTaskLinks** — call `helm_session_state_save` with the `todoTaskLinks` array mapping each todo's content to its task UUID (see Todo-Task Linking above)
 
 This applies to both single-task and multi-task sessions. The user should be able to follow the todo list from top to bottom as a logical work plan.
 
@@ -1106,6 +1110,8 @@ Mark the session_tasks junction as working via `helm_session_task_update` (agent
 Do NOT update the task's status field.
 
 > Per-task verification isolation: each task starts with clean verification state via `helm_session_state_save` — no stale data from previous tasks.
+
+Update `todoTaskLinks` in the same `helm_session_state_save` call — set the current task's todo status to `in_progress` if tracking todo status in the links.
 
 **Step 2: Delegate implementation → @developer**
 

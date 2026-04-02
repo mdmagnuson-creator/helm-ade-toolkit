@@ -80,20 +80,24 @@ Planner and toolkit share this core structure:
 }
 ```
 
-> **Builder uses helm-bridge.** Builder reads/writes state via `helm_session_get_state()` and `helm_session_set_state()`. It uses `currentAction` (not `currentTask`) and derives todos from session chunks (no separate `uiTodos`).
+> **Builder uses helm-bridge.** Builder reads/writes state via `helm_session_get_state()` and `helm_session_set_state()`. It uses `currentAction` (not `currentTask`) and links todos to tasks via `todoTaskLinks` (no separate `uiTodos`).
 
-### Builder Chunk Model
+### Todo-Task Linking Model
 
-Builder stores work units as chunks in `session.chunks[]`. Each chunk can optionally link to a Helm Task:
+Builder links todos to Helm Tasks via a `todoTaskLinks` array in `agent_state`. This is the canonical model — other documents reference this definition.
+
+**Schema:**
 
 ```json
 {
-  "chunks": [
+  "todoTaskLinks": [
     {
-      "id": "TSK-001",
-      "title": "Fix header layout",
-      "status": "pending",
-      "helmTaskId": "uuid-of-the-linked-helm-task-or-null"
+      "todoContent": "Fix header layout",
+      "taskId": "e517ce9f-..."
+    },
+    {
+      "todoContent": "Run tests and build",
+      "taskId": null
     }
   ]
 }
@@ -101,35 +105,29 @@ Builder stores work units as chunks in `session.chunks[]`. Each chunk can option
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Chunk identifier (e.g., `TSK-001`, `US-003`) |
-| `title` | string | Short description of the work |
-| `status` | string | `pending`, `in_progress`, `completed`, `failed` |
-| `helmTaskId` | string \| null | UUID of the linked Helm Task, or `null` for session-level chunks |
+| `todoContent` | string | **Exact** content string from `todowrite` — must match character-for-character |
+| `taskId` | string \| null | UUID of the linked Helm Task, or `null` for session-level todos |
 
-**When to set `helmTaskId`:**
-- **Task-linked sessions:** Set `helmTaskId` to the task UUID when creating chunks from `helm_session_task_list()` results
-- **Single-task sessions:** All chunks get that task's UUID
-- **Multi-task sessions:** Each chunk gets its corresponding task's UUID
-- **Session-level chunks:** Use `null` (e.g., "Run tests", "Commit changes")
+> ⛔ **CRITICAL: `todoContent` must be the exact same string passed to `todowrite`.** No trimming, no rewording, no normalization. Builder controls both sides and must ensure identical strings.
 
-> ⛔ **CRITICAL:** Without `helmTaskId`, todos appear in the "Session" section instead of being grouped under their Helm Task.
+**When to set `taskId`:**
 
-The macOS app reads `agent_state.chunks`, matches each chunk to a todo, and uses `helmTaskId` to populate `task_id` in `session_todos` for UI grouping.
+| Scenario | taskId value |
+|----------|-------------|
+| Single-task session | All todos get that task's UUID |
+| Multi-task session | Each todo gets its corresponding task's UUID |
+| Session-level todos (e.g., "Run tests") | `null` |
+| Ad-hoc (no linked tasks yet) | `null` — task auto-created on completion |
 
-### Chunk Creation Order (CRITICAL)
+**How the macOS app uses this:**
 
-> ⛔ **Chunks MUST be created in logical execution order, not analysis order.**
->
-> The order chunks are created determines `todoIndex` in the Helm UI. Users see todos in creation order, so that order must be logical.
+1. `TodoSyncManager.syncTodos()` queries `sessions.agent_state` for `todoTaskLinks`
+2. Builds a lookup dictionary: `todoContent → taskId`
+3. For each todo, resolves `taskId` via exact content-match
+4. Upserts to `session_todos` with resolved `task_id`
+5. `SessionInspectorTasksView` groups todos by `task_id`
 
-**Correct execution order:**
-
-1. **Prerequisites/setup** — Downloads, environment config, dependencies
-2. **Implementation tasks** — Code changes, features, fixes
-3. **Quality checks** — Typecheck, lint, build, tests — **ALWAYS near last**
-4. **Completion tasks** — Commit, signal done — **ALWAYS last**
-
-When Builder analyzes work, it must reorder todos into execution sequence before creating chunks.
+**Backward compatibility:** If `agent_state` is null or `todoTaskLinks` is missing, all `taskId` values resolve to `nil` — todos appear in the "Session" group (same behavior as before).
 
 ---
 
@@ -252,7 +250,7 @@ cat <state-file> 2>/dev/null || echo '{}'
 
 ### 2. Restore Todos
 
-If `uiTodos.items` exists (or session chunks for builder):
+If `uiTodos.items` exists (or todoTaskLinks for builder):
 - Mirror items to right panel via `todowrite`
 - Keep at most one `in_progress` item
 

@@ -151,15 +151,13 @@ When Builder completes a logical unit of work in an ad-hoc session, it auto-crea
    })
    ```
 
-2. **Update chunk with `helmTaskId`:** After task creation, update the chunk's `helmTaskId` with the newly created task's UUID:
+2. **Save todoTaskLinks with the new task's UUID:** After task creation, save the link between the todo content and the created task:
    ```
    helm_session_state_save({
-     chunks: [
+     todoTaskLinks: [
        {
-         id: 'TSK-001',
-         title: 'Add loading spinner to submit button',
-         status: 'completed',
-         helmTaskId: '{created_task_id}'  // link chunk to the auto-created task
+         todoContent: 'Add loading spinner to submit button',
+         taskId: '{created_task_id}'  // link todo to the auto-created task
        }
      ]
    })
@@ -325,42 +323,37 @@ All session state is persisted via helm-bridge tools:
 |-------|------|-----|
 | Quality check results | `helm_task_add_activity` | N/A (activity entry) |
 | Current work status | `helm_session_set_state` | `currentWork` |
-| Session chunks | `helm_session_state_save` | `chunks` array |
+| Todo-task links | `helm_session_state_save` | `todoTaskLinks` array |
 | Design decisions | `helm_task_add_comment` | N/A (comment entry) |
 | Testing notes | `helm_task_update` | `testing_notes_markdown` field |
 
-### Chunk State with Helm Task Linking
+### Todo-Task Linking
 
-When creating chunks for ad-hoc work, include `helmTaskId` to link todos to Helm Tasks in the UI:
+Builder links todos to Helm Tasks via `todoTaskLinks` in `agent_state`:
 
 ```
-// Save chunks with helmTaskId linking
 helm_session_state_save({
-  chunks: [
+  todoTaskLinks: [
     {
-      id: 'TSK-001',
-      title: 'Add loading spinner to submit button',
-      status: 'in_progress',
-      helmTaskId: 'uuid-from-helm_session_task_list-or-null'
+      todoContent: 'Add loading spinner to submit button',
+      taskId: 'uuid-from-helm_session_task_list-or-null'
     }
   ]
 })
 ```
 
-**Setting `helmTaskId`:**
+**Setting `taskId`:**
 - **Task-linked session:** Use the task UUID from `helm_session_task_list()` results
 - **Ad-hoc session (no linked tasks):** Use `null` — the task will be auto-created on completion
-- **Session-level chunks** (e.g., "Run tests"): Use `null`
+- **Session-level todos** (e.g., "Run tests"): Use `null`
 
-> ⛔ **CRITICAL:** Without `helmTaskId`, todos appear in the "Session" section instead of being grouped under their Helm Task.
+> ⛔ **CRITICAL: `todoContent` must be the exact same string passed to `todowrite`.** No trimming, no rewording, no normalization. The macOS app content-matches this to resolve task_id for UI grouping.
 
-The macOS app reads `agent_state.chunks`, matches each chunk to a todo, and uses `helmTaskId` to populate `task_id` in `session_todos` for UI grouping.
+### Todo Creation Order (CRITICAL)
 
-### Chunk Creation Order (CRITICAL)
-
-> ⛔ **Chunks MUST be created in logical execution order, not analysis/thinking order.**
+> ⛔ **Todos MUST be created in logical execution order, not analysis/thinking order.**
 >
-> The order chunks are created determines `todoIndex` in the Helm UI. Users see todos in creation order.
+> The order todos are created (via `todowrite`) determines `todoIndex` in the Helm UI. Users see todos in creation order.
 
 **Correct execution order:**
 
@@ -370,7 +363,7 @@ The macOS app reads `agent_state.chunks`, matches each chunk to a todo, and uses
 4. **Completion tasks** — Commit, signal done — **ALWAYS last**
 
 **Wrong:** Creating "Commit and complete task" first because you thought of it first.
-**Right:** Reorder todos into execution sequence before creating chunks.
+**Right:** Reorder todos into execution sequence before creating them via `todowrite`.
 
 ### State Persistence Example
 

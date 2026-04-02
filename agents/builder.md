@@ -326,72 +326,79 @@ When one task is linked to the session:
 
 Tasks use the `TSK-###` ID format, consistent with ad-hoc task specs.
 
-### Chunk Model
+### Todo-Task Linking
 
-A chunk represents a unit of work within a session (like "TSK-001: Fix header layout"). Chunks are stored in `session.chunks[]` and synced via `helm_session_state_save`.
+Builder links todos to Helm Tasks via a `todoTaskLinks` array saved in `agent_state`. This is a slim content→taskId lookup that the macOS app reads during todo sync.
 
-**Chunk structure:**
+**Model:**
 
 ```json
 {
-  "id": "TSK-001",
-  "title": "Fix header layout",
-  "status": "pending",
-  "helmTaskId": "uuid-of-the-linked-helm-task-or-null"
+  "todoTaskLinks": [
+    { "todoContent": "Fix header layout",    "taskId": "e517ce9f-..." },
+    { "todoContent": "Update tests",         "taskId": "e517ce9f-..." },
+    { "todoContent": "Run tests and build",  "taskId": null }
+  ]
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Chunk identifier (e.g., `TSK-001`, `US-003`) |
-| `title` | string | Short description of the work |
-| `status` | string | `pending`, `in_progress`, `completed`, `failed` |
-| `helmTaskId` | string \| null | UUID of the linked Helm Task (from `helm_session_task_list`), or `null` for session-level chunks |
+| `todoContent` | string | **Exact** content string from `todowrite` — must match character-for-character |
+| `taskId` | string \| null | UUID of the linked Helm Task, or `null` for session-level todos |
 
-**Linking chunks to Helm Tasks:**
+> ⛔ **CRITICAL: `todoContent` must be the exact same string passed to `todowrite`.** No trimming, no rewording, no normalization. Builder controls both sides and must ensure identical strings. If the strings don't match exactly, the todo won't be linked to its task.
 
-> ⛔ **CRITICAL: Always set `helmTaskId` when creating chunks for task-linked sessions.**
->
-> Without `helmTaskId`, todos appear in the "Session" section of the Helm Tasks tab instead of being grouped under their corresponding Helm Task.
+**When to set `taskId`:**
 
-When Builder reads linked tasks via `helm_session_task_list()` at session start, it notes each task's UUID. When creating chunks during analysis or task discovery, Builder **MUST** set `helmTaskId` to link the chunk to its corresponding Helm Task.
+| Scenario | taskId value |
+|----------|-------------|
+| Single-task session | All todos get that task's UUID |
+| Multi-task session | Each todo gets its corresponding task's UUID based on Builder's analysis |
+| Session-level todos (e.g., "Run tests", "Commit changes") | `null` — these belong to the session, not a specific task |
+| Ad-hoc session (no linked tasks yet) | `null` — task will be auto-created on completion |
 
-| Scenario | helmTaskId value |
-|----------|------------------|
-| Single-task session | All chunks get that task's UUID |
-| Multi-task session | Each chunk gets its corresponding task's UUID based on Builder's analysis |
-| Session-level chunks (e.g., "Run tests", "Commit changes") | `null` — these belong to the session, not a specific task |
-| Chunk spans multiple tasks | `null` — it goes in the "Session" group in the Helm UI |
-
-**Data flow for todo grouping:**
+**Saving todoTaskLinks:**
 
 ```
-Builder creates chunk with helmTaskId
+helm_session_state_save({
+  todoTaskLinks: [
+    { todoContent: "Fix header layout", taskId: "e517ce9f-..." },
+    { todoContent: "Run tests and build", taskId: null }
+  ],
+  currentTask: "TSK-001",
+  analysisCompleted: true,
+  probeStatus: "confirmed"
+})
+```
+
+**Data flow:**
+
+```
+Builder calls todowrite([{content: "Fix header layout", ...}])
     │
     ▼
-helm_session_state_save({ chunks: [...] })
+Builder calls helm_session_state_save({ todoTaskLinks: [...] })
     │
     ▼
-macOS app reads agent_state.chunks
+macOS app reads sessions.agent_state.todoTaskLinks
     │
     ▼
-macOS app matches each chunk to a session_todo
+macOS app builds lookup: todoContent → taskId
     │
     ▼
-macOS app writes task_id to session_todos (from helmTaskId)
+macOS app upserts session_todos with resolved task_id
     │
     ▼
 SessionInspectorTasksView groups todos by task_id
 ```
-
-This `helmTaskId` is included when calling `helm_session_state_save({ chunks: [...] })`. The macOS app reads `agent_state.chunks`, matches each chunk to a todo, resolves the `helmTaskId`, and writes `task_id` to `session_todos` for display grouping.
 
 ### Bulk Mode (Multiple Tasks)
 
 When multiple tasks are linked to the session:
 
 1. **Discover all linked tasks** via `helm_session_task_list` (efficient — queries junction table)
-2. **Create one chunk per task** in the session — each task becomes a `TSK-{NNN}` entry in `session.chunks[]`, with `helmTaskId` set to the task's UUID
+2. **Create one todo per task** via `todowrite` — each task becomes a `TSK-{NNN}` todo, with a corresponding `todoTaskLinks` entry mapping its content to the task's UUID
 3. **Show the task list to the user:**
 
 ```
@@ -440,7 +447,7 @@ Fix the issues identified in the tester feedback."
 
 > ⛔ **Todos MUST be created in logical execution order, not analysis/thinking order.**
 >
-> The order Builder creates todos (via chunks) determines the `todoIndex` that controls display order in the Helm UI. Users see todos in creation order, so that order must be logical.
+> The order Builder creates todos (via `todowrite`) determines the `todoIndex` that controls display order in the Helm UI. Users see todos in creation order, so that order must be logical.
 
 **Correct execution order:**
 
@@ -465,11 +472,11 @@ Fix the issues identified in the tester feedback."
 4. Commit and complete task       ← always last
 ```
 
-**When creating chunks during analysis:**
+**When creating todos during analysis:**
 
 1. **First, identify all work items** — list everything that needs to happen
 2. **Then, reorder into execution sequence** — prerequisites → implementation → quality → completion
-3. **Finally, create chunks in that order** — each chunk's `todoIndex` reflects logical sequence
+3. **Finally, create todos in that order** — each todo's `todoIndex` reflects logical sequence
 
 This applies to both single-task and multi-task sessions. The user should be able to follow the todo list from top to bottom as a logical work plan.
 
@@ -482,7 +489,7 @@ This applies to both single-task and multi-task sessions. The user should be abl
 | Analysis | Full Phase 0 | Full Phase 0 |
 | Execution | Standard pipeline | Standard pipeline |
 | Completion | `helm_task_update` | `helm_task_update` |
-| Bulk support | Yes (multi-task sessions) | Yes (one chunk per task) |
+| Bulk support | Yes (multi-task sessions) | Yes (one todo per task) |
 
 The `/build-tasks` path and the system prompt injection path converge at the same execution flow — they differ only in how task context is discovered.
 
@@ -1318,7 +1325,7 @@ After a task completes and is committed:
 
 3. **Load next task** — Read only:
    - Next task's acceptance criteria
-   - If the new chunk requires understanding source code, delegate investigation to @investigate (do NOT carry over source context from previous chunks)
+   - If the new task requires understanding source code, delegate investigation to @investigate (do NOT carry over source context from previous tasks)
 
 4. **Sync state** — Call `helm_session_state_save` to persist progress
 
@@ -1340,7 +1347,7 @@ After context compaction (when the AI context window is reset), Builder recovers
 **What to save regularly** (via `helm_session_state_save`):
 - `currentTask` — which task is in progress
 - `completedTasks` — list of completed task IDs
-- `chunks` — array of chunk objects with `id`, `title`, `status`, and `helmTaskId` (for todo grouping in Helm UI)
+- `todoTaskLinks` — array mapping todo content strings to Helm Task UUIDs (for todo grouping in Helm UI)
 - `analysisCompleted` / `probeStatus` — analysis gate state
 - `decisions` — any cross-cutting implementation decisions
 

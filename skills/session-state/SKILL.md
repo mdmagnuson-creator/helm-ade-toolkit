@@ -82,6 +82,38 @@ Planner and toolkit share this core structure:
 
 > **Builder uses helm-bridge.** Builder reads/writes state via `helm_session_get_state()` and `helm_session_set_state()`. It uses `currentAction` (not `currentTask`) and derives todos from session chunks (no separate `uiTodos`).
 
+### Builder Chunk Model
+
+Builder stores work units as chunks in `session.chunks[]`. Each chunk can optionally link to a Helm Task:
+
+```json
+{
+  "chunks": [
+    {
+      "id": "TSK-001",
+      "title": "Fix header layout",
+      "status": "pending",
+      "helmTaskId": "uuid-of-the-linked-helm-task-or-null"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Chunk identifier (e.g., `TSK-001`, `US-003`) |
+| `title` | string | Short description of the work |
+| `status` | string | `pending`, `in_progress`, `completed`, `failed` |
+| `helmTaskId` | string \| null | UUID of the linked Helm Task, or `null` for session-level chunks |
+
+**When to set `helmTaskId`:**
+- **Task-linked sessions:** Set `helmTaskId` to the task UUID when creating chunks from `helm_session_task_list()` results
+- **Single-task sessions:** All chunks get that task's UUID
+- **Multi-task sessions:** Each chunk gets its corresponding task's UUID
+- **Session-level chunks:** Use `null` (e.g., "Run tests", "Commit changes")
+
+The macOS app reads `agent_state.chunks`, matches each chunk to a todo, and uses `helmTaskId` to populate `task_id` in `session_todos` for UI grouping.
+
 ---
 
 ## Right-Panel Todo Contract

@@ -326,12 +326,47 @@ When one task is linked to the session:
 
 Tasks use the `TSK-###` ID format, consistent with ad-hoc task specs.
 
+### Chunk Model
+
+A chunk represents a unit of work within a session (like "TSK-001: Fix header layout"). Chunks are stored in `session.chunks[]` and synced via `helm_session_state_save`.
+
+**Chunk structure:**
+
+```json
+{
+  "id": "TSK-001",
+  "title": "Fix header layout",
+  "status": "pending",
+  "helmTaskId": "uuid-of-the-linked-helm-task-or-null"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Chunk identifier (e.g., `TSK-001`, `US-003`) |
+| `title` | string | Short description of the work |
+| `status` | string | `pending`, `in_progress`, `completed`, `failed` |
+| `helmTaskId` | string \| null | UUID of the linked Helm Task (from `helm_session_task_list`), or `null` for session-level chunks |
+
+**Linking chunks to Helm Tasks:**
+
+When Builder reads linked tasks via `helm_session_task_list()` at session start, it notes each task's UUID. When creating chunks during analysis or task discovery, Builder sets `helmTaskId` to link the chunk to its corresponding Helm Task.
+
+| Scenario | helmTaskId value |
+|----------|------------------|
+| Single-task session | All chunks get that task's UUID |
+| Multi-task session | Each chunk gets its corresponding task's UUID based on Builder's analysis |
+| Session-level chunks (e.g., "Run tests", "Commit changes") | `null` — these belong to the session, not a specific task |
+| Chunk spans multiple tasks | `null` — it goes in the "Session" group in the Helm UI |
+
+This `helmTaskId` is included when calling `helm_session_state_save({ chunks: [...] })`. The macOS app reads `agent_state.chunks`, matches each chunk to a todo, resolves the `helmTaskId`, and writes `task_id` to `session_todos` for display grouping.
+
 ### Bulk Mode (Multiple Tasks)
 
 When multiple tasks are linked to the session:
 
-1. **Discover all linked tasks** via `helm_task_get` for each
-2. **Create one chunk per task** in the session — each task becomes a `TSK-{NNN}` entry in `session.chunks[]`
+1. **Discover all linked tasks** via `helm_session_task_list` (efficient — queries junction table)
+2. **Create one chunk per task** in the session — each task becomes a `TSK-{NNN}` entry in `session.chunks[]`, with `helmTaskId` set to the task's UUID
 3. **Show the task list to the user:**
 
 ```
@@ -1243,6 +1278,7 @@ After context compaction (when the AI context window is reset), Builder recovers
 **What to save regularly** (via `helm_session_state_save`):
 - `currentTask` — which task is in progress
 - `completedTasks` — list of completed task IDs
+- `chunks` — array of chunk objects with `id`, `title`, `status`, and `helmTaskId` (for todo grouping in Helm UI)
 - `analysisCompleted` / `probeStatus` — analysis gate state
 - `decisions` — any cross-cutting implementation decisions
 

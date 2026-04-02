@@ -151,7 +151,21 @@ When Builder completes a logical unit of work in an ad-hoc session, it auto-crea
    })
    ```
 
-2. **Add original request as activity:**
+2. **Update chunk with `helmTaskId`:** After task creation, update the chunk's `helmTaskId` with the newly created task's UUID:
+   ```
+   helm_session_state_save({
+     chunks: [
+       {
+         id: 'TSK-001',
+         title: 'Add loading spinner to submit button',
+         status: 'completed',
+         helmTaskId: '{created_task_id}'  // link chunk to the auto-created task
+       }
+     ]
+   })
+   ```
+
+3. **Add original request as activity:**
    ```
    helm_task_add_activity({
      task_id: "{created_task_id}",
@@ -160,7 +174,7 @@ When Builder completes a logical unit of work in an ad-hoc session, it auto-crea
    })
    ```
 
-3. **Story assignment** — handled server-side by `helm_task_create`. The plugin performs semantic matching against story embeddings to auto-assign the task to the best-matching story. If no match meets the similarity threshold, a new story is auto-created. Builder does not query embeddings directly for story assignment.
+4. **Story assignment** — handled server-side by `helm_task_create`. The plugin performs semantic matching against story embeddings to auto-assign the task to the best-matching story. If no match meets the similarity threshold, a new story is auto-created. Builder does not query embeddings directly for story assignment.
 
 ### Multiple Units of Work
 
@@ -311,8 +325,34 @@ All session state is persisted via helm-bridge tools:
 |-------|------|-----|
 | Quality check results | `helm_task_add_activity` | N/A (activity entry) |
 | Current work status | `helm_session_set_state` | `currentWork` |
+| Session chunks | `helm_session_state_save` | `chunks` array |
 | Design decisions | `helm_task_add_comment` | N/A (comment entry) |
 | Testing notes | `helm_task_update` | `testing_notes_markdown` field |
+
+### Chunk State with Helm Task Linking
+
+When creating chunks for ad-hoc work, include `helmTaskId` to link todos to Helm Tasks in the UI:
+
+```
+// Save chunks with helmTaskId linking
+helm_session_state_save({
+  chunks: [
+    {
+      id: 'TSK-001',
+      title: 'Add loading spinner to submit button',
+      status: 'in_progress',
+      helmTaskId: 'uuid-from-helm_session_task_list-or-null'
+    }
+  ]
+})
+```
+
+**Setting `helmTaskId`:**
+- **Task-linked session:** Use the task UUID from `helm_session_task_list()` results
+- **Ad-hoc session (no linked tasks):** Use `null` — the task will be auto-created on completion
+- **Session-level chunks** (e.g., "Run tests"): Use `null`
+
+The macOS app reads `agent_state.chunks`, matches each chunk to a todo, and uses `helmTaskId` to populate `task_id` in `session_todos` for UI grouping.
 
 ### State Persistence Example
 

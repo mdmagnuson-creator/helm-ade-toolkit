@@ -112,7 +112,24 @@ Builder stores work units as chunks in `session.chunks[]`. Each chunk can option
 - **Multi-task sessions:** Each chunk gets its corresponding task's UUID
 - **Session-level chunks:** Use `null` (e.g., "Run tests", "Commit changes")
 
+> ⛔ **CRITICAL:** Without `helmTaskId`, todos appear in the "Session" section instead of being grouped under their Helm Task.
+
 The macOS app reads `agent_state.chunks`, matches each chunk to a todo, and uses `helmTaskId` to populate `task_id` in `session_todos` for UI grouping.
+
+### Chunk Creation Order (CRITICAL)
+
+> ⛔ **Chunks MUST be created in logical execution order, not analysis order.**
+>
+> The order chunks are created determines `todoIndex` in the Helm UI. Users see todos in creation order, so that order must be logical.
+
+**Correct execution order:**
+
+1. **Prerequisites/setup** — Downloads, environment config, dependencies
+2. **Implementation tasks** — Code changes, features, fixes
+3. **Quality checks** — Typecheck, lint, build, tests — **ALWAYS near last**
+4. **Completion tasks** — Commit, signal done — **ALWAYS last**
+
+When Builder analyzes work, it must reorder todos into execution sequence before creating chunks.
 
 ---
 

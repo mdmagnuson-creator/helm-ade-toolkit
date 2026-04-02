@@ -350,7 +350,11 @@ A chunk represents a unit of work within a session (like "TSK-001: Fix header la
 
 **Linking chunks to Helm Tasks:**
 
-When Builder reads linked tasks via `helm_session_task_list()` at session start, it notes each task's UUID. When creating chunks during analysis or task discovery, Builder sets `helmTaskId` to link the chunk to its corresponding Helm Task.
+> ⛔ **CRITICAL: Always set `helmTaskId` when creating chunks for task-linked sessions.**
+>
+> Without `helmTaskId`, todos appear in the "Session" section of the Helm Tasks tab instead of being grouped under their corresponding Helm Task.
+
+When Builder reads linked tasks via `helm_session_task_list()` at session start, it notes each task's UUID. When creating chunks during analysis or task discovery, Builder **MUST** set `helmTaskId` to link the chunk to its corresponding Helm Task.
 
 | Scenario | helmTaskId value |
 |----------|------------------|
@@ -358,6 +362,27 @@ When Builder reads linked tasks via `helm_session_task_list()` at session start,
 | Multi-task session | Each chunk gets its corresponding task's UUID based on Builder's analysis |
 | Session-level chunks (e.g., "Run tests", "Commit changes") | `null` — these belong to the session, not a specific task |
 | Chunk spans multiple tasks | `null` — it goes in the "Session" group in the Helm UI |
+
+**Data flow for todo grouping:**
+
+```
+Builder creates chunk with helmTaskId
+    │
+    ▼
+helm_session_state_save({ chunks: [...] })
+    │
+    ▼
+macOS app reads agent_state.chunks
+    │
+    ▼
+macOS app matches each chunk to a session_todo
+    │
+    ▼
+macOS app writes task_id to session_todos (from helmTaskId)
+    │
+    ▼
+SessionInspectorTasksView groups todos by task_id
+```
 
 This `helmTaskId` is included when calling `helm_session_state_save({ chunks: [...] })`. The macOS app reads `agent_state.chunks`, matches each chunk to a todo, resolves the `helmTaskId`, and writes `task_id` to `session_todos` for display grouping.
 
@@ -410,6 +435,43 @@ Pass to @developer: "REWORK — Original task: [task description].
 Tester feedback: [exact feedback text]. 
 Previous implementation: [files changed in prior attempt].
 Fix the issues identified in the tester feedback."
+
+### Todo Creation Order (CRITICAL)
+
+> ⛔ **Todos MUST be created in logical execution order, not analysis/thinking order.**
+>
+> The order Builder creates todos (via chunks) determines the `todoIndex` that controls display order in the Helm UI. Users see todos in creation order, so that order must be logical.
+
+**Correct execution order:**
+
+1. **Prerequisites/setup** — Download files, configure environment, fetch dependencies
+2. **Implementation tasks** — Modify code, add features, fix bugs
+3. **Quality checks** — Typecheck, lint, build, run tests — **ALWAYS near last**
+4. **Completion tasks** — Commit changes, signal done — **ALWAYS last**
+
+**Example — WRONG (analysis order):**
+```
+1. Commit and complete task       ← wrong: this should be last
+2. Download images                ← wrong: this is a prerequisite
+3. Run quality checks             ← wrong: this should be near last
+4. Update LogoCloud.tsx           ← wrong: this is the main work
+```
+
+**Example — CORRECT (execution order):**
+```
+1. Download images                ← prerequisite first
+2. Update LogoCloud.tsx           ← main implementation work
+3. Run quality checks             ← near last
+4. Commit and complete task       ← always last
+```
+
+**When creating chunks during analysis:**
+
+1. **First, identify all work items** — list everything that needs to happen
+2. **Then, reorder into execution sequence** — prerequisites → implementation → quality → completion
+3. **Finally, create chunks in that order** — each chunk's `todoIndex` reflects logical sequence
+
+This applies to both single-task and multi-task sessions. The user should be able to follow the todo list from top to bottom as a logical work plan.
 
 ### Comparison with Existing Paths
 

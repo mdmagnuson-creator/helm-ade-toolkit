@@ -352,7 +352,25 @@ helm_session_state_save({
 - **Ad-hoc session (no linked tasks):** Use `null` — the task will be auto-created on completion
 - **Session-level chunks** (e.g., "Run tests"): Use `null`
 
+> ⛔ **CRITICAL:** Without `helmTaskId`, todos appear in the "Session" section instead of being grouped under their Helm Task.
+
 The macOS app reads `agent_state.chunks`, matches each chunk to a todo, and uses `helmTaskId` to populate `task_id` in `session_todos` for UI grouping.
+
+### Chunk Creation Order (CRITICAL)
+
+> ⛔ **Chunks MUST be created in logical execution order, not analysis/thinking order.**
+>
+> The order chunks are created determines `todoIndex` in the Helm UI. Users see todos in creation order.
+
+**Correct execution order:**
+
+1. **Prerequisites/setup** — Download files, configure environment
+2. **Implementation tasks** — Modify code, add features
+3. **Quality checks** — Typecheck, lint, build — **ALWAYS near last**
+4. **Completion tasks** — Commit, signal done — **ALWAYS last**
+
+**Wrong:** Creating "Commit and complete task" first because you thought of it first.
+**Right:** Reorder todos into execution sequence before creating chunks.
 
 ### State Persistence Example
 

@@ -1385,7 +1385,6 @@ export default async function helmBridgePlugin(ctx) {
               .from("sessions")
               .update({
                 agent_state: state,
-                updated_at: new Date().toISOString(),
               })
               .eq("id", effectiveSessionId)
               .select("id")

@@ -76,15 +76,17 @@ See AGENTS.md. Never truncate test failure output — show complete errors and s
       1. `project.json` → `testBaseUrl` (explicit per-project override)
       2. `project.json` → `agents.verification.testBaseUrl` (explicit project config)
       3. Environment → `VERCEL_URL`, `DEPLOY_URL`, etc. (preview detection)
-      4. `project.json` → `environments.staging.url` (staging config)
-      5. `project.json` → `devPort` → `http://localhost:${devPort}`
-      6. `null` → cannot test
+      4. Environment → `HELM_DEV_PORT` (worktree session override)
+      5. `project.json` → `environments.staging.url` (staging config)
+      6. `project.json` → `devPort` → `http://localhost:${devPort}`
+      7. `null` → cannot test
       
       ```bash
       # Quick resolution (see test-url-resolution skill for full script)
       TEST_URL=$(jq -r '.testBaseUrl // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
       [ -z "$TEST_URL" ] && TEST_URL=$(jq -r '.agents.verification.testBaseUrl // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
       [ -z "$TEST_URL" ] && [ -n "$VERCEL_URL" ] && TEST_URL="https://$VERCEL_URL"
+      [ -z "$TEST_URL" ] && [ -n "$HELM_DEV_PORT" ] && TEST_URL="http://localhost:$HELM_DEV_PORT"
       [ -z "$TEST_URL" ] && TEST_URL=$(jq -r '.environments.staging.url // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
       [ -z "$TEST_URL" ] && DEV_PORT=$(jq -r '.devPort // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null) && [ -n "$DEV_PORT" ] && [ "$DEV_PORT" != "null" ] && TEST_URL="http://localhost:$DEV_PORT"
       ```

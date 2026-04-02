@@ -58,10 +58,15 @@ if [[ ! -f "$PROJECT_JSON" ]]; then
   exit 1
 fi
 
-DEV_PORT="$(jq -r '.devPort // .apps[0].devPort // empty' "$PROJECT_JSON" | head -n 1)"
-if [[ -z "$DEV_PORT" || "$DEV_PORT" == "null" ]]; then
-  echo "startup failed: no devPort in docs/project.json"
-  exit 1
+# Check for session-specific port override (worktree sessions)
+if [[ -n "$HELM_DEV_PORT" ]]; then
+  DEV_PORT="$HELM_DEV_PORT"
+else
+  DEV_PORT="$(jq -r '.devPort // .apps[0].devPort // empty' "$PROJECT_JSON" | head -n 1)"
+  if [[ -z "$DEV_PORT" || "$DEV_PORT" == "null" ]]; then
+    echo "startup failed: no devPort in docs/project.json and HELM_DEV_PORT not set"
+    exit 1
+  fi
 fi
 
 if [[ -z "$START_CMD" ]]; then

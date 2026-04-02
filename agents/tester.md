@@ -65,9 +65,10 @@ Use documentation lookup tools.
       1. `project.json` → `testBaseUrl` (explicit per-project override)
       2. `project.json` → `agents.verification.testBaseUrl` (explicit project config)
       3. Environment → `VERCEL_URL`, `DEPLOY_URL`, etc. (preview detection)
-      4. `project.json` → `environments.staging.url` (staging config)
-      5. `project.json` → `devPort` → `http://localhost:${devPort}`
-      6. `null` → cannot resolve URL (report error, do not silently skip)
+      4. Environment → `HELM_DEV_PORT` (worktree session override)
+      5. `project.json` → `environments.staging.url` (staging config)
+      6. `project.json` → `devPort` → `http://localhost:${devPort}`
+      7. `null` → cannot resolve URL (report error, do not silently skip)
       
       Save the resolved URL for the E2E phase.
    

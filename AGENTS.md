@@ -43,6 +43,7 @@ opencode configuration directory. Key paths:
 > | `HELM_PROJECT_PATH` | Absolute path to the project directory |
 > | `HELM_REPO_ROOT` | Canonical repo clone path (for matching) |
 > | `OPENCODE_CONFIG_DIR` | Path to the opencode config directory |
+> | `HELM_DEV_PORT` | Development server port for this worktree session |
 >
 > **There is no central project registry.** Each project is self-contained with its own `docs/project.json`.
 
@@ -77,10 +78,12 @@ On first response in a session:
 ### Project Configuration Source
 
 All project configuration comes from `docs/project.json` within the project:
-- `devPort` — from `apps[].devPort` or root `devPort`
+- `devPort` — from `HELM_DEV_PORT` env var (if set), otherwise `apps[].devPort` or root `devPort`
 - `stack` — from `stack` field
 - `commands` — from `commands` section
 - `git` — from `git` section (workflow, auto-commit, etc.)
+
+> **Worktree sessions:** When running in a git worktree, `HELM_DEV_PORT` provides a session-specific port that overrides `devPort` from project.json.
 
 ## Protected System Resources
 

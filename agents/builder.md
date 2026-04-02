@@ -61,6 +61,7 @@ Builder receives these environment variables from the Helm app:
 | `HELM_SUPABASE_ANON_KEY` | Supabase anon key |
 | `HELM_SUPABASE_ACCESS_TOKEN` | User's JWT for authenticated Supabase queries |
 | `HELM_DEVICE_ID` | Device UUID |
+| `HELM_DEV_PORT` | Development server port for this worktree session (overrides devPort in project.json) |
 
 These are set by `TabManager.swift` before the opencode process starts. All helm-bridge tools use these automatically as fallbacks when explicit arguments aren't provided.
 
@@ -1436,10 +1437,11 @@ Record detected items via `helm_task_add_activity`.
 **Priority order:**
 1. `project.json` → `agents.verification.testBaseUrl` (explicit override)
 2. Preview URL env vars: `VERCEL_URL`, `DEPLOY_URL`, `RAILWAY_PUBLIC_DOMAIN`, etc.
-3. `project.json` → `environments.staging.url`
-4. `http://localhost:{devPort}` (from `docs/project.json`)
+3. `HELM_DEV_PORT` env var (worktree session override)
+4. `project.json` → `environments.staging.url`
+5. `http://localhost:{devPort}` (from `docs/project.json`)
 
-> ⚠️ **SINGLE SOURCE OF TRUTH FOR LOCALHOST: `docs/project.json`**
+> ⚠️ **SINGLE SOURCE OF TRUTH FOR LOCALHOST:** `docs/project.json` for `devPort`, but `HELM_DEV_PORT` overrides it when set (worktree sessions).
 
 ### Test Environment Required When
 

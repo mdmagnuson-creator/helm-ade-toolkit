@@ -43,9 +43,10 @@ The URL is resolved in this order (first match wins):
 |----------|--------|-------------|
 | 1 | `project.json` → `agents.verification.testBaseUrl` | Explicit override in project config |
 | 2 | Environment variables | Auto-detected preview URLs (Vercel, Netlify, etc.) |
-| 3 | `project.json` → `environments.staging.url` | Configured staging environment |
-| 4 | `project.json` → `devPort` | Local dev server (`http://localhost:${devPort}`) |
-| 5 | null | Cannot resolve — no testable environment |
+| 3 | `HELM_DEV_PORT` env var | Worktree session port override |
+| 4 | `project.json` → `environments.staging.url` | Configured staging environment |
+| 5 | `project.json` → `devPort` | Local dev server (`http://localhost:${devPort}`) |
+| 6 | null | Cannot resolve — no testable environment |
 
 ## Steps
 
@@ -134,6 +135,16 @@ if [ -n "$FLY_APP_NAME" ]; then
   echo "🌐 Test environment: Fly.io"
   echo "   URL: $TEST_URL"
   echo "   Source: FLY_APP_NAME environment variable"
+  export TEST_BASE_URL="$TEST_URL"
+  exit 0
+fi
+
+# Helm ADE worktree session port override
+if [ -n "$HELM_DEV_PORT" ]; then
+  TEST_URL="http://localhost:$HELM_DEV_PORT"
+  echo "🌐 Test environment: Helm session (worktree)"
+  echo "   URL: $TEST_URL"
+  echo "   Source: HELM_DEV_PORT environment variable"
   export TEST_BASE_URL="$TEST_URL"
   exit 0
 fi
@@ -259,6 +270,15 @@ if [ -n "$FLY_APP_NAME" ]; then
   return 0 2>/dev/null || exit 0
 fi
 
+# 3. Helm ADE worktree session port override
+if [ -n "$HELM_DEV_PORT" ]; then
+  TEST_URL="http://localhost:$HELM_DEV_PORT"
+  echo "🌐 Test environment: Helm session (worktree)"
+  echo "   URL: $TEST_URL"
+  export TEST_BASE_URL="$TEST_URL"
+  return 0 2>/dev/null || exit 0
+fi
+
 # 4. Check staging URL
 STAGING_URL=$(jq -r '.environments.staging.url // empty' \
   "$PROJECT_PATH/docs/project.json" 2>/dev/null)
@@ -317,12 +337,17 @@ Before running tests, resolve the test URL:
    [ -z "$TEST_URL" ] && [ -n "$FLY_APP_NAME" ] && TEST_URL="https://${FLY_APP_NAME}.fly.dev"
    ```
 
-3. **Check staging config (if no preview):**
+3. **Check Helm worktree session port (if no preview):**
+   ```bash
+   [ -z "$TEST_URL" ] && [ -n "$HELM_DEV_PORT" ] && TEST_URL="http://localhost:$HELM_DEV_PORT"
+   ```
+
+4. **Check staging config (if no session port):**
    ```bash
    [ -z "$TEST_URL" ] && TEST_URL=$(jq -r '.environments.staging.url // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
    ```
 
-4. **Fall back to localhost:**
+5. **Fall back to localhost:**
    ```bash
    if [ -z "$TEST_URL" ]; then
      DEV_PORT=$(jq -r '.devPort // .apps[0].devPort // empty' "$PROJECT_PATH/docs/project.json" 2>/dev/null)
@@ -330,7 +355,7 @@ Before running tests, resolve the test URL:
    fi
    ```
 
-5. **Handle no URL:**
+6. **Handle no URL:**
    ```bash
    if [ -z "$TEST_URL" ]; then
      echo "❌ Cannot determine test URL — see test-url-resolution skill for options"

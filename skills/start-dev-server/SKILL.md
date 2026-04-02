@@ -62,8 +62,9 @@ cd "$projectPath"
 # Resolution priority:
 # 1. project.json → agents.verification.testBaseUrl (explicit override)
 # 2. Preview URL env vars (Vercel, Netlify, Railway, Render, Fly.io)
-# 3. project.json → environments.staging.url
-# 4. http://localhost:{devPort} (from project.json)
+# 3. HELM_DEV_PORT env var (worktree session override)
+# 4. project.json → environments.staging.url
+# 5. http://localhost:{devPort} (from project.json)
 
 TEST_BASE_URL=""
 
@@ -146,8 +147,12 @@ fi
 Before starting a local server, check if this project can run locally:
 
 ```bash
-# Check if devPort is null in project.json
-DEV_PORT=$(jq -r '.devPort // .apps[0].devPort // empty' "$projectPath/docs/project.json" 2>/dev/null)
+# Check for session-specific port override (worktree sessions)
+DEV_PORT="${HELM_DEV_PORT:-}"
+
+if [ -z "$DEV_PORT" ]; then
+  DEV_PORT=$(jq -r '.devPort // .apps[0].devPort // empty' "$projectPath/docs/project.json" 2>/dev/null)
+fi
 
 if [ -z "$DEV_PORT" ] || [ "$DEV_PORT" = "null" ]; then
   # devPort is not set — check if there's a remote URL we can test against

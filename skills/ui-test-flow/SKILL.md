@@ -151,8 +151,9 @@ Before running any Playwright tests:
 # Resolution priority:
 # 1. project.json → agents.verification.testBaseUrl (explicit override)
 # 2. Preview URL env vars (Vercel, Netlify, Railway, Render, Fly.io)
-# 3. project.json → environments.staging.url
-# 4. http://localhost:{devPort} (from project.json)
+# 3. HELM_DEV_PORT env var (worktree session override)
+# 4. project.json → environments.staging.url
+# 5. http://localhost:{devPort} (from project.json)
 
 TEST_BASE_URL=$(jq -r '.agents.verification.testBaseUrl // empty' docs/project.json)
 
@@ -168,6 +169,11 @@ if [ -z "$TEST_BASE_URL" ]; then
   elif [ -n "$FLY_APP_NAME" ]; then
     TEST_BASE_URL="https://${FLY_APP_NAME}.fly.dev"
   fi
+fi
+
+# Helm ADE worktree session port override
+if [ -z "$TEST_BASE_URL" ] && [ -n "$HELM_DEV_PORT" ]; then
+  TEST_BASE_URL="http://localhost:${HELM_DEV_PORT}"
 fi
 
 if [ -z "$TEST_BASE_URL" ]; then

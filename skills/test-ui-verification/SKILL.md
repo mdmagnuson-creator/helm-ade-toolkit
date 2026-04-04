@@ -9,14 +9,19 @@ description: "Playwright-based UI verification for all projects. Use when verify
 
 ## UI Verification (Automatic for All Projects)
 
-> 🎯 **Playwright browser verification is MANDATORY for all UI changes.**
+> 🎯 **Post-implementation Playwright verification is MANDATORY for all UI changes.**
 >
 > UI verification is **automatic** — no opt-in config required. All projects are treated as
-> having UI that needs verification. Playwright always runs as part of the quality check pipeline.
+> having UI that needs verification. Playwright always runs as part of the quality check pipeline
+> AFTER implementation is complete.
 >
 > - All UI changes must be visually verified in a browser/app before task completion
 > - Verification generates reusable test scripts in `tests/ui-verify/`
 > - Screenshots are captured for visual confirmation
+>
+> **Note:** This is distinct from the *analysis probe* (pre-implementation verification).
+> Analysis probes are opt-in via `testVerifySettings.adHocUIVerify_Analysis` or `prdUIVerify_Analysis`.
+> See "When Probes Run" section below.
 
 ### Configuration
 
@@ -835,31 +840,22 @@ interface ProbeDiscrepancy {
 | MEDIUM | `contradicted` | LOW |
 | LOW | any | LOW (already at minimum) |
 
-### Mandatory Enforcement
+### When Probes Run
 
-> ⛔ **The probe always runs. There are no skip conditions. There is no config opt-out.**
+The analysis probe runs when enabled by project configuration:
+- Check `testVerifySettings.adHocUIVerify_Analysis` (default: false)
+- If true: run probe as part of analysis flow  
+- If false or not set: skip probe, proceed with code analysis only
 
-**Resolution rules for common obstacles:**
+Projects that want automated Playwright probes during analysis can opt in by setting `adHocUIVerify_Analysis: true` in their project.json.
+
+**Resolution rules when probes are enabled:**
 
 | Obstacle | Resolution |
 |----------|------------|
 | Dev server unreachable | Start the dev server using `start-dev-server` skill. If the target is a desktop app, download and install it. There must always be a way to get the target running. |
 | No page assertions generated | Generate assertions. If analysis cannot produce assertions, the analysis is incomplete — re-analyze. |
 | Auth fails | Exhaust all autonomous auth approaches, then ask the user for help. See "Integration with Authentication" below. |
-
-> ⛔ **Common rationalization attempts (Builder MUST reject all of these):**
->
-> | Rationalization | Why It's Wrong |
-> |-----------------|----------------|
-> | Electron/Tauri/desktop app | Desktop apps with `webContent: "remote"` or `"bundled"` have web UI — probe it |
-> | "Code analysis is clear" | Probes verify runtime state, not code correctness |
-> | "UX/flow restructuring" | If the change affects visible pages, probe those pages |
-> | "Screenshot already captured" | Screenshots ≠ probes — probes verify specific assertions |
-> | "Backend/config change only" | If the change has any runtime UI impact, probe the affected pages — don't preemptively decide |
-> | "Auth is not configured" | Ask the user for help configuring auth — do not skip |
->
-> **Rule:** If the app has web content (any `webContent` value or web-based app), the probe MUST run.
-> The probe target URL depends on app type — see "Architecture-Aware Verification" above.
 
 ### Project Configuration
 
@@ -877,7 +873,7 @@ Projects can configure probe timeout in `project.json`:
 |---------|---------|-------------|
 | `analysisProbeTimeoutMs` | `5000` | Timeout per page probe in milliseconds |
 
-> ⛔ **There is no `analysisProbe` toggle.** The probe is mandatory and cannot be disabled via configuration.
+> ℹ️ **Analysis probes are opt-in.** Set `testVerifySettings.adHocUIVerify_Analysis: true` or `prdUIVerify_Analysis: true` in `project.json` to enable automatic probes during analysis.
 
 ### Integration with Authentication
 

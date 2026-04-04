@@ -319,7 +319,7 @@ When one task is linked to the session:
 
 1. **Discover the task** (as above)
 2. **Compose the analysis request** from task title + description + scopeMarkdown
-3. **Run Phase 0 analysis** — full ad-hoc analysis flow including Playwright probe
+3. **Run Phase 0 analysis** — full ad-hoc analysis flow (Playwright probe runs if enabled in project config)
 4. **Show ANALYSIS COMPLETE dashboard** with task context — wait for `[G]`
 5. **On `[G]`** — execute through the standard story processing pipeline
 6. **On completion** — update task via `helm_task_update` to `agent_build_complete` (standard Task Completion Flow)
@@ -369,8 +369,7 @@ helm_session_state_save({
     { todoContent: "Run tests and build", taskId: null }
   ],
   currentTask: "TSK-001",
-  analysisCompleted: true,
-  probeStatus: "confirmed"
+  analysisCompleted: true
 })
 ```
 
@@ -425,7 +424,7 @@ Processing order: by priority (high → low), then by task ID.
 ```
 
 5. **Process tasks sequentially** — each task follows the standard Story Processing Pipeline (implement, test-flow, then commit individually):
-   - Each task gets its own Phase 0 analysis (with Playwright probe)
+   - Each task gets its own Phase 0 analysis (Playwright probe runs if enabled in project config)
    - Each task gets its own `@developer` delegation
    - Each task gets its own test-flow verification
    - Each task gets its own commit
@@ -504,28 +503,20 @@ The `/build-tasks` path and the system prompt injection path converge at the sam
 > Before delegating to @developer, you MUST have:
 >
 > 1. **Shown the "ANALYSIS COMPLETE" dashboard** (from `adhoc-workflow` skill Phase 0)
-> 2. **Confirmed analysis via Playwright probe** — code analysis conclusions verified against live app state (Step 0.1b)
-> 3. **Received explicit user approval** — user responded with `[G] Go ahead`
+> 2. **Received explicit user approval** — user responded with `[G] Go ahead`
 >
-> **This applies to ALL ad-hoc work, no exceptions.** Even if the task seems simple, obvious, or trivial — ALWAYS analyze first, probe with Playwright, and get approval.
+> **This applies to ALL ad-hoc work, no exceptions.** Even if the task seems simple, obvious, or trivial — ALWAYS analyze first and get approval.
 >
 > **Trigger:** Before any @developer delegation.
 >
-> **Check:** "Did I show the ANALYSIS COMPLETE dashboard **with Playwright probe results** and receive [G]?"
+> **Check:** "Did I show the ANALYSIS COMPLETE dashboard and receive [G]?"
 >
-> **Failure behavior:** If you find yourself about to delegate to @developer without having shown the analysis dashboard (with probe results) and received [G] — STOP immediately. Go back and run Phase 0 analysis from `adhoc-workflow` skill first.
+> **Failure behavior:** If you find yourself about to delegate to @developer without having shown the analysis dashboard and received [G] — STOP immediately. Go back and run Phase 0 analysis from `adhoc-workflow` skill first.
 >
 > **Explicit prohibitions (never auto-start):**
 > - Never say "Let me implement that for you" and start coding
 > - Never delegate to @developer without first showing what you're about to do
 > - Never assume "this is quick" justifies skipping analysis
-> - Never skip the Playwright probe — the probe is mandatory, there are no skip conditions, there is no config opt-out
-> - Never skip the Playwright probe because the app is desktop/Electron/Tauri — if it has web content, it MUST be probed
-> - Never skip the probe because "code analysis is clear" or "the analysis is obvious from the code"
-> - Never declare the probe "inapplicable" or "unable to verify this type of change" — every source code change has web-observable effects; if you can't identify them, re-analyze
-> - Never classify a source file modification as `ops-only` to avoid the probe — if you modify a source file, the task is `source-change`
-> - Never rationalize skipping the probe with ANY justification — the only way to skip is explicit user acceptance after Builder exhausts all resolution options
-> - Never use browser-based Playwright (`baseUrl`/`localhost`) to probe a desktop/Electron app — always use `transport: electron` with the project's configured `executablePath` and `launchTarget`
 >
 > **Never do this:**
 > - ❌ "I'll add that button for you" [delegates without analysis]
@@ -533,38 +524,27 @@ The `/build-tasks` path and the system prompt injection path converge at the sam
 > - ❌ "Sure, implementing now..." [delegates to @developer without analysis]
 > - ❌ "Let me implement that for you" [starts without analysis]
 > - ❌ "This is simple, I'll just do it" [skips dashboard]
-> - ❌ "Code analysis looks good, showing dashboard" [skips Playwright probe]
-> - ❌ "Playwright probe not applicable for this type of change" [rationalizes skipping probe]
-> - ❌ "The analysis is clear from the code, no probe needed" [rationalizes skipping probe]
-> - ❌ "This is an IPC/main process change, cannot be verified via Playwright" [rationalizes probe inapplicability]
-> - ❌ "Code analysis is definitive — both bug sites confirmed in source" [declares code analysis sufficient]
-> - ❌ "baseUrl: http://localhost:4005" for an Electron app [uses browser transport for desktop app]
 >
 > **Always do this:**
-> - ✅ "Let me analyze this request..." [shows ANALYZING, runs probe, then ANALYSIS COMPLETE dashboard with probe results, waits for [G]]
+> - ✅ "Let me analyze this request..." [shows ANALYZING, then ANALYSIS COMPLETE dashboard, waits for [G]]
 >
-> See `adhoc-workflow` skill for the full analysis flow (Steps 0.0 through 0.5).
+> See `adhoc-workflow` skill for the full analysis flow.
 
 ### State Checkpoint Enforcement
 
-In addition to the behavioral guardrail above, there are **technical checkpoints** via helm-bridge:
+In addition to the behavioral guardrail above, there is a **technical checkpoint** via helm-bridge:
 
 | Field | Location | Purpose |
 |-------|----------|---------|
 | `analysisCompleted` | `helm_session_state_get('analysisCompleted')` | Must be `true` before delegating to @developer |
-| `probeStatus` | `helm_session_state_get('probeStatus')` | Must be `confirmed`, `partially-confirmed`, or `user-skipped` before delegating |
 
 **Enforcement flow:**
 
-1. When entering ad-hoc mode, set `analysisCompleted: false` and `probeStatus: null` via `helm_session_state_save`
-2. After Playwright probe completes (Step 0.1b), set `probeStatus` to the probe result status
-3. After user responds with [G] Go ahead, set `analysisCompleted: true`
-4. Before ANY @developer delegation, verify BOTH via `helm_session_state_get`:
+1. When entering ad-hoc mode, set `analysisCompleted: false` via `helm_session_state_save`
+2. After user responds with [G] Go ahead, set `analysisCompleted: true`
+3. Before ANY @developer delegation, verify via `helm_session_state_get`:
    - `analysisCompleted === true`
-   - `probeStatus` is one of: `confirmed`, `partially-confirmed`, `user-skipped` — NOTE: `null`, `contradicted`, `skipped`, and `degraded-no-auth` all BLOCK the gate
-5. If either check fails, STOP and show the analysis dashboard first
-
-> **Gate state machine:** `null` → (probe runs) → `confirmed` | `partially-confirmed` | `user-skipped` (pass gate) or `contradicted` (blocks gate — must re-analyze and re-probe). `contradicted` means the re-probe loop did not resolve — analysis is unreliable, cannot proceed.
+4. If the check fails, STOP and show the analysis dashboard first
 
 This checkpoint serves as a technical backstop. Even if you drift or forget the behavioral guardrail, the state check will catch it.
 
@@ -1073,11 +1053,10 @@ your source code findings — do not start your investigation there.
 
 Before ANY @developer delegation:
 1. Verify analysis is completed via `helm_session_state_get('analysisCompleted')`
-2. Verify probe status via `helm_session_state_get('probeStatus')`
-3. Both must pass before delegation proceeds
+2. Must pass before delegation proceeds
 
-- If both pass: proceed with delegation
-- If either fails: STOP — show ANALYSIS COMPLETE dashboard first
+- If passes: proceed with delegation
+- If fails: STOP — show ANALYSIS COMPLETE dashboard first
 - Always log: `Analysis gate check: analysisCompleted=true ✓`
 
 Load `builder-delegation` skill for full context block format and semantic search integration.
@@ -1354,7 +1333,7 @@ After context compaction (when the AI context window is reset), Builder recovers
 - `currentTask` — which task is in progress
 - `completedTasks` — list of completed task IDs
 - `todoTaskLinks` — array mapping todo content strings to Helm Task UUIDs (for todo grouping in Helm UI)
-- `analysisCompleted` / `probeStatus` — analysis gate state
+- `analysisCompleted` — analysis gate state
 - `decisions` — any cross-cutting implementation decisions
 
 ---

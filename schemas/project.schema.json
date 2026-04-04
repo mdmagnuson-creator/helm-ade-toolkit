@@ -569,12 +569,12 @@
         },
         "testVerifySettings": {
           "type": "object",
-          "description": "Controls which automated Playwright invocation points are enabled. All default to true. When true, Playwright runs automatically — no user prompt. When false, that invocation point is skipped silently. Does NOT gate user-invoked workflows (@qa, @ui-test-full-app-auditor) or test file maintenance.",
+          "description": "Controls which automated Playwright invocation points are enabled. Analysis probes default to false (opt-in). When true, Playwright runs automatically — no user prompt. When false, that invocation point is skipped silently. Does NOT gate user-invoked workflows (@qa, @ui-test-full-app-auditor) or test file maintenance.",
           "properties": {
             "adHocUIVerify_Analysis": {
               "type": "boolean",
-              "default": true,
-              "description": "Ad-hoc mode: automatically run Playwright analysis probe after code changes"
+              "default": false,
+              "description": "Ad-hoc mode: automatically run Playwright analysis probe after code changes (opt-in)"
             },
             "adHocUIVerify_StoryTest": {
               "type": "boolean",
@@ -588,8 +588,8 @@
             },
             "prdUIVerify_Analysis": {
               "type": "boolean",
-              "default": true,
-              "description": "PRD mode: automatically run per-story Playwright verification after implementation"
+              "default": false,
+              "description": "PRD mode: automatically run per-story Playwright verification after implementation (opt-in)"
             },
             "prdUIVerify_StoryTest": {
               "type": "boolean",

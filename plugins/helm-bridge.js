@@ -1403,7 +1403,7 @@ export default async function helmBridgePlugin(ctx) {
 
       helm_session_state_get: tool({
         description:
-          "Retrieve the agent_state from a session. Use this to read previously saved state or check what state another session has stored.",
+          "Retrieve the agent_state and source context from a session. Use this to read previously saved state, check session source (e.g., linked PRD/task), or check what state another session has stored.",
         args: {
           session_id: z.string().optional().describe("UUID of the session. Falls back to HELM_SESSION_ID env var"),
         },
@@ -1420,7 +1420,7 @@ export default async function helmBridgePlugin(ctx) {
           try {
             const { data, error } = await supabase
               .from("sessions")
-              .select("id, agent_state")
+              .select("id, agent_state, source_type, source_id, source_title")
               .eq("id", effectiveSessionId)
               .single();
 
@@ -1428,7 +1428,13 @@ export default async function helmBridgePlugin(ctx) {
               return JSON.stringify({ error: `Failed to get session state: ${error.message}` });
             }
 
-            return JSON.stringify({ session_id: data.id, state: data.agent_state });
+            return JSON.stringify({
+              session_id: data.id,
+              state: data.agent_state,
+              source_type: data.source_type || null,
+              source_id: data.source_id || null,
+              source_title: data.source_title || null,
+            });
           } catch (err) {
             return JSON.stringify({ error: `Failed to get session state: ${err.message}` });
           }

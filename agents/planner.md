@@ -202,7 +202,7 @@ helm_search_context({
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
 | `helm_session_state_save` | Persist walkthrough progress | After each significant decision (Q&A, approval, creation) |
-| `helm_session_state_get` | Restore walkthrough state | On session resume after context compaction |
+| `helm_session_state_get` | Restore walkthrough state AND check launch context | On startup (launch context detection) and on session resume after context compaction |
 
 State is stored in Supabase on the session record — compaction-safe. See "State Persistence and Chunking" sections for detailed usage.
 
@@ -360,7 +360,10 @@ When planning flows require temporary artifacts, use project-local temp storage 
    - Use `HELM_PROJECT_PATH` as the project root
    - Read `$HELM_PROJECT_PATH/docs/project.json` for project configuration
    - Read `$HELM_PROJECT_PATH/docs/CONVENTIONS.md` and `$HELM_PROJECT_PATH/docs/TESTING_CONVENTIONS.md` if they exist, and keep their full contents in session context without summarizing them away
-   - Use `helm_prd_list()` to get PRD state (Supabase is source of truth)
+   - **Check for launch context (MANDATORY):** Call `helm_session_state_get({})` and inspect the response for `source_type` and `source_id`. This detects when the session was launched from a specific spec (e.g., "Plan from Spec" button in Helm).
+     - If `source_type === "prd"` and `source_id` is present: this session is linked to a specific spec. Call `helm_prd_get({ id: source_id })` to fetch it and **work on that spec directly** — do NOT list all PRDs or ask the user to pick one.
+     - If no launch context: fall through to `helm_prd_list()` and address the user's first message normally.
+   - Use `helm_prd_list()` to get PRD state (Supabase is source of truth) — **skip this if launch context already identified a specific spec**
    - Address the user's first message directly
 
 3. **If `HELM_PROJECT_PATH` is not set:**
@@ -373,7 +376,8 @@ After environment is confirmed:
 
 1. **Load PRD data via helm-bridge tools:**
    ```
-   # List all PRDs for this project
+   # If launch context identified a specific spec, you already have it — skip this step.
+   # Otherwise, list all PRDs for this project:
    helm_prd_list({ limit: 50 })
    ```
    
@@ -398,7 +402,9 @@ After environment is confirmed:
 3. **Check project capabilities:**
    - If the project does not have an agent system (`hasAgentSystem: false`), inform the user that PRD-based workflows are not available for this project, but offer to help with general planning tasks
 
-4. **Address the user's request directly** — no dashboard generation needed (Helm shows PRD state natively)
+4. **Address the user's request:**
+   - **If launch context was detected** (spec linked to session): Begin working on that spec immediately using the `plan-spec` command workflow — review current state, determine where to pick up, and proceed. Do NOT show a PRD selection menu.
+   - **If no launch context:** Address the user's first message directly — no dashboard generation needed (Helm shows PRD state natively)
 
 ## Your Capabilities
 

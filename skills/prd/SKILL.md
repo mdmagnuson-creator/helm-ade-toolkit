@@ -416,7 +416,7 @@ PRDs are saved to Supabase via `helm_prd_*` tools:
        {
          story_id: "US-001",
          title: "[Story title]",
-         description: "[As a user...]",
+         content_markdown: "[Full story specification in markdown]",
          acceptance_criteria: ["criterion 1", "criterion 2"],
          story_points: 1,
          status: "pending",

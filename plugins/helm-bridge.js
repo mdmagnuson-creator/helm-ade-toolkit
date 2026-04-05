@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { tool } from "@opencode-ai/plugin";
+import fs from "fs";
 
 const z = tool.schema;
 
@@ -7,15 +8,19 @@ const z = tool.schema;
 const HELM_SUPABASE_URL = process.env.HELM_SUPABASE_URL;
 const HELM_SUPABASE_ANON_KEY = process.env.HELM_SUPABASE_ANON_KEY;
 const HELM_SUPABASE_ACCESS_TOKEN = process.env.HELM_SUPABASE_ACCESS_TOKEN;
+const HELM_SUPABASE_TOKEN_FILE = process.env.HELM_SUPABASE_TOKEN_FILE;
 const HELM_SESSION_ID = process.env.HELM_SESSION_ID;
 const HELM_DEVICE_ID = process.env.HELM_DEVICE_ID;
 const HELM_ORG_ID = process.env.HELM_ORG_ID;
 
+// Track the current access token for rebuilding the client
+let currentAccessToken = HELM_SUPABASE_ACCESS_TOKEN;
+
 // TSK-012: Extract user ID from Supabase JWT access token
 function getUserIdFromToken() {
-  if (!HELM_SUPABASE_ACCESS_TOKEN) return null;
+  if (!currentAccessToken) return null;
   try {
-    const payload = HELM_SUPABASE_ACCESS_TOKEN.split('.')[1];
+    const payload = currentAccessToken.split('.')[1];
     const decoded = JSON.parse(Buffer.from(payload, 'base64').toString());
     return decoded.sub || null; // sub claim is the user UUID
   } catch (e) {
@@ -24,11 +29,94 @@ function getUserIdFromToken() {
   }
 }
 
+// ========================================
+// Token Refresh & Client Rebuild (TSK-002)
+// ========================================
+
+/**
+ * Read fresh access token from the token file.
+ * Returns the trimmed token string, or null if file doesn't exist or can't be read.
+ */
+function refreshTokenFromFile() {
+  if (!HELM_SUPABASE_TOKEN_FILE) return null;
+  try {
+    const token = fs.readFileSync(HELM_SUPABASE_TOKEN_FILE, 'utf-8').trim();
+    if (token) {
+      console.log('[helm-bridge] Read fresh token from file');
+      return token;
+    }
+    return null;
+  } catch (e) {
+    console.error('[helm-bridge] Failed to read token file:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Rebuild the Supabase client with a new access token.
+ * Updates the module-level `supabase` and `currentAccessToken` variables.
+ */
+function rebuildSupabaseClient(newToken) {
+  if (!HELM_SUPABASE_URL || !HELM_SUPABASE_ANON_KEY) {
+    console.error('[helm-bridge] Cannot rebuild client: missing URL or anon key');
+    return;
+  }
+  currentAccessToken = newToken;
+  supabase = createClient(HELM_SUPABASE_URL, HELM_SUPABASE_ANON_KEY, {
+    global: {
+      headers: newToken
+        ? { Authorization: `Bearer ${newToken}` }
+        : {},
+    },
+  });
+  console.log('[helm-bridge] Rebuilt Supabase client with fresh token');
+}
+
+/**
+ * Check if an error from Supabase indicates JWT expiry.
+ * Supabase JS returns { data, error } — the error object has `message` and `code` properties.
+ */
+function isJWTExpiredError(error) {
+  if (!error) return false;
+  const message = (error.message || '').toLowerCase();
+  const code = (error.code || '').toLowerCase();
+  // Check for common JWT expiry indicators
+  return (
+    message.includes('jwt expired') ||
+    message.includes('invalid jwt') ||
+    message.includes('token is expired') ||
+    code === 'pgrst301' || // PostgREST JWT error code
+    code === '401' ||
+    error.status === 401
+  );
+}
+
+/**
+ * Wrap a Supabase operation with automatic token refresh on JWT expiry.
+ * The operation should be a function that returns { data, error } (the Supabase pattern).
+ * On JWT expiry, reads fresh token from file, rebuilds client, and retries ONCE.
+ */
+async function withTokenRefresh(operation) {
+  let result = await operation();
+  if (result.error && isJWTExpiredError(result.error) && HELM_SUPABASE_TOKEN_FILE) {
+    console.log('[helm-bridge] JWT expired, attempting token refresh...');
+    const newToken = refreshTokenFromFile();
+    if (newToken) {
+      rebuildSupabaseClient(newToken);
+      console.log('[helm-bridge] Retrying operation with fresh token...');
+      result = await operation(); // retry once with fresh token
+    }
+  }
+  return result;
+}
+
 // Plugin state for task context injection
 const pluginState = {
   sessionTasks: null,
   sessionTaskRoles: {},
+  sessionPRD: null, // PRD context for PRD-linked sessions (source_type = "prd")
   lastFetchTime: 0,
+  lastPRDFetchTime: 0, // Separate staleness tracker for PRD context
   currentSessionId: null,
   heartbeatInterval: null, // US-029: Activity pulse heartbeat
 };
@@ -45,17 +133,19 @@ async function logTaskActivity(taskId, activityType, metadata = {}) {
   if (!supabase) return;
   try {
     const sessionId = pluginState.currentSessionId || process.env.HELM_SESSION_ID;
-    await supabase.from("task_activity").insert({
-      task_id: taskId,
-      actor_id: null, // system event
-      activity_type: activityType,
-      metadata: {
-        ...metadata,
-        session_id: sessionId,
-        automated: true,
-        trigger: "plugin_hook",
-      },
-    });
+    await withTokenRefresh(() =>
+      supabase.from("task_activity").insert({
+        task_id: taskId,
+        actor_id: null, // system event
+        activity_type: activityType,
+        metadata: {
+          ...metadata,
+          session_id: sessionId,
+          automated: true,
+          trigger: "plugin_hook",
+        },
+      })
+    );
   } catch (err) {
     console.error(`[helm-bridge] Failed to log activity for task ${taskId}:`, err.message);
   }
@@ -115,15 +205,24 @@ const fileChangeTracker = {
 let supabase = null;
 
 if (HELM_SUPABASE_URL && HELM_SUPABASE_ANON_KEY) {
+  // TSK-002: Fall back to token file if env var is empty
+  if (!currentAccessToken && HELM_SUPABASE_TOKEN_FILE) {
+    const fileToken = refreshTokenFromFile();
+    if (fileToken) {
+      currentAccessToken = fileToken;
+      console.log('[helm-bridge] Using token from file (env var was empty)');
+    }
+  }
+  
   supabase = createClient(HELM_SUPABASE_URL, HELM_SUPABASE_ANON_KEY, {
     global: {
-      headers: HELM_SUPABASE_ACCESS_TOKEN
-        ? { Authorization: `Bearer ${HELM_SUPABASE_ACCESS_TOKEN}` }
+      headers: currentAccessToken
+        ? { Authorization: `Bearer ${currentAccessToken}` }
         : {},
     },
   });
   console.log(
-    `[helm-bridge] Initialized — Supabase connected, session=${HELM_SESSION_ID || "not set"}, device=${HELM_DEVICE_ID || "not set"}, org=${HELM_ORG_ID || "not set"}, authenticated=${!!HELM_SUPABASE_ACCESS_TOKEN}`
+    `[helm-bridge] Initialized — Supabase connected, session=${HELM_SESSION_ID || "not set"}, device=${HELM_DEVICE_ID || "not set"}, org=${HELM_ORG_ID || "not set"}, authenticated=${!!currentAccessToken}`
   );
 } else {
   console.log(
@@ -133,12 +232,14 @@ if (HELM_SUPABASE_URL && HELM_SUPABASE_ANON_KEY) {
 
 // Helper: Look up PRD UUID from text prd_id
 async function lookupPrdUuid(prdIdText) {
-  const { data, error } = await supabase
-    .from("prds")
-    .select("id")
-    .eq("prd_id", prdIdText)
-    .limit(1)
-    .single();
+  const { data, error } = await withTokenRefresh(() =>
+    supabase
+      .from("prds")
+      .select("id")
+      .eq("prd_id", prdIdText)
+      .limit(1)
+      .single()
+  );
   if (error) return { error: `PRD not found: ${prdIdText}` };
   return { uuid: data.id };
 }
@@ -149,10 +250,12 @@ async function fetchSessionTasks(sessionId) {
 
   try {
     // Fetch linked tasks for this session
-    const { data: sessionTasks, error: sessionTasksError } = await supabase
-      .from("session_tasks")
-      .select("task_id")
-      .eq("session_id", sessionId);
+    const { data: sessionTasks, error: sessionTasksError } = await withTokenRefresh(() =>
+      supabase
+        .from("session_tasks")
+        .select("task_id")
+        .eq("session_id", sessionId)
+    );
 
     if (sessionTasksError || !sessionTasks?.length) {
       return null;
@@ -160,10 +263,12 @@ async function fetchSessionTasks(sessionId) {
 
     // Fetch full task details
     const taskIds = sessionTasks.map((st) => st.task_id);
-    const { data: tasks, error: tasksError } = await supabase
-      .from("tasks")
-      .select("*")
-      .in("id", taskIds);
+    const { data: tasks, error: tasksError } = await withTokenRefresh(() =>
+      supabase
+        .from("tasks")
+        .select("*")
+        .in("id", taskIds)
+    );
 
     if (tasksError || !tasks?.length) {
       return null;
@@ -173,16 +278,18 @@ async function fetchSessionTasks(sessionId) {
     for (const task of tasks) {
       if (task.story_id) {
         try {
-          const { data: story } = await supabase
-            .from("prd_stories")
-            .select("*, prds(*)")
-            .eq("id", task.story_id)
-            .single();
+          const { data: story } = await withTokenRefresh(() =>
+            supabase
+              .from("prd_stories")
+              .select("*, prds(*)")
+              .eq("id", task.story_id)
+              .single()
+          );
 
           if (story) {
             task._storyContext = {
               storyTitle: story.title,
-              storyDescription: story.description,
+              storyDescription: story.content_markdown,
               prdTitle: story.prds?.title,
               prdGoals: story.prds?.goals,
             };
@@ -194,11 +301,13 @@ async function fetchSessionTasks(sessionId) {
 
       // Fetch attachments for this task
       try {
-        const { data: attachmentsData, error: attachmentsError } = await supabase
-          .from("task_attachments")
-          .select("id, file_name, content_type, file_size, storage_path, is_image, created_at")
-          .eq("task_id", task.id)
-          .order("created_at", { ascending: true });
+        const { data: attachmentsData, error: attachmentsError } = await withTokenRefresh(() =>
+          supabase
+            .from("task_attachments")
+            .select("id, file_name, content_type, file_size, storage_path, is_image, created_at")
+            .eq("task_id", task.id)
+            .order("created_at", { ascending: true })
+        );
 
         if (!attachmentsError && attachmentsData?.length) {
           // Generate signed URLs for each attachment (1 hour expiry)
@@ -236,6 +345,158 @@ async function fetchSessionTasks(sessionId) {
     console.error("[helm-bridge] Failed to fetch session tasks:", e.message);
     return null;
   }
+}
+
+/**
+ * Fetch PRD context for PRD-linked sessions.
+ * Called when session has source_type = "prd" and source_id = prd UUID (from Swift app).
+ * Falls back to text identifier lookup for legacy sessions.
+ * Returns PRD details, stories, and related tasks.
+ */
+async function fetchSessionPRD(sessionId) {
+  if (!supabase || !sessionId) return null;
+
+  try {
+    // First, fetch the session to get source_type and source_id
+    const { data: session, error: sessionError } = await withTokenRefresh(() =>
+      supabase
+        .from("sessions")
+        .select("id, source_type, source_id")
+        .eq("id", sessionId)
+        .single()
+    );
+
+    if (sessionError || !session) {
+      return null;
+    }
+
+    // Only process PRD-linked sessions
+    if (session.source_type !== "prd" || !session.source_id) {
+      return null;
+    }
+
+    const sourceId = session.source_id;
+
+    // Try UUID lookup first (Swift app stores prd.id UUID as source_id)
+    let { data: prd, error } = await withTokenRefresh(() =>
+      supabase
+        .from("prds")
+        .select("*")
+        .eq("id", sourceId)
+        .maybeSingle()
+    );
+
+    // Fallback: try text identifier lookup (legacy sessions may store prd_id text)
+    if (!prd && !error) {
+      ({ data: prd, error } = await withTokenRefresh(() =>
+        supabase
+          .from("prds")
+          .select("*")
+          .eq("prd_id", sourceId)
+          .maybeSingle()
+      ));
+    }
+
+    if (!prd) {
+      console.warn(`[helm-bridge] PRD not found for source_id: ${sourceId}`);
+      return null;
+    }
+
+    // Fetch stories linked to this PRD (by UUID)
+    const { data: stories, error: storiesError } = await withTokenRefresh(() =>
+      supabase
+        .from("prd_stories")
+        .select("id, story_id, title, content_markdown, status, priority, sort_order")
+        .eq("prd_id", prd.id)
+        .order("sort_order", { ascending: true })
+    );
+
+    // Fetch tasks linked to this PRD (by parent_prd_id)
+    const { data: tasks, error: tasksError } = await withTokenRefresh(() =>
+      supabase
+        .from("tasks")
+        .select("id, title, description_markdown, status, priority")
+        .eq("parent_prd_id", prd.id)
+        .order("created_at", { ascending: true })
+    );
+
+    return {
+      prd: prd,
+      stories: storiesError ? [] : (stories || []),
+      tasks: tasksError ? [] : (tasks || []),
+    };
+  } catch (e) {
+    console.error("[helm-bridge] Failed to fetch session PRD:", e.message);
+    return null;
+  }
+}
+
+/**
+ * Format PRD context for system prompt injection.
+ * Creates a markdown section with PRD details, stories, and tasks.
+ */
+function formatPRDContext(prdContext, sessionMode) {
+  const { prd, stories, tasks } = prdContext;
+
+  let ctx = `\n\n---\n## 📋 Active Spec Context\n\n`;
+
+  // PRD header
+  ctx += `**Spec:** ${prd.title}\n`;
+  ctx += `**ID:** ${prd.prd_id} (UUID: ${prd.id})\n`;
+  ctx += `**Status:** ${prd.status}\n`;
+  if (prd.goals) {
+    ctx += `**Goals:** ${prd.goals}\n`;
+  }
+  ctx += `\n`;
+
+  // Stories section
+  if (stories.length > 0) {
+    ctx += `### Stories (${stories.length})\n`;
+    for (let i = 0; i < stories.length; i++) {
+      const story = stories[i];
+      const storyNum = story.story_id || `US-${String(i + 1).padStart(3, '0')}`;
+      ctx += `${i + 1}. **${storyNum}: ${story.title}** — ${story.status}\n`;
+      if (story.content_markdown) {
+        // Truncate description to first 100 chars
+        const descSnippet = story.content_markdown.length > 100
+          ? story.content_markdown.substring(0, 100) + "..."
+          : story.content_markdown;
+        ctx += `   _${descSnippet}_\n`;
+      }
+    }
+    ctx += `\n`;
+  } else {
+    ctx += `### Stories\n_No stories defined yet._\n\n`;
+  }
+
+  // Tasks section (if any)
+  if (tasks.length > 0) {
+    ctx += `### Tasks (${tasks.length})\n`;
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i];
+      const priorityStr = task.priority ? ` (${task.priority} priority)` : "";
+      ctx += `${i + 1}. **${task.title}** — ${task.status}${priorityStr}\n`;
+    }
+    ctx += `\n`;
+  }
+
+  // PRD content excerpt (truncate if very long)
+  if (prd.content_markdown) {
+    const maxContentLength = 2000;
+    ctx += `### Spec Content`;
+    if (prd.content_markdown.length > maxContentLength) {
+      ctx += ` (excerpt, ${Math.round(prd.content_markdown.length / 1000)}k chars total)`;
+    }
+    ctx += `\n`;
+
+    const contentExcerpt = prd.content_markdown.length > maxContentLength
+      ? prd.content_markdown.substring(0, maxContentLength) + "\n\n_[Content truncated...]_"
+      : prd.content_markdown;
+    ctx += contentExcerpt;
+    ctx += `\n\n`;
+  }
+
+  return ctx;
 }
 
 // Helper: Format task context for system prompt injection
@@ -311,13 +572,15 @@ function formatServicesContext() {
 async function emitEvent(eventType, payload) {
   if (!supabase || !HELM_ORG_ID) return; // Best effort
   try {
-    await supabase.from("helm_events").insert({
-      session_id: HELM_SESSION_ID || null,
-      device_id: HELM_DEVICE_ID || null,
-      org_id: HELM_ORG_ID,
-      event_type: eventType,
-      payload: payload,
-    });
+    await withTokenRefresh(() =>
+      supabase.from("helm_events").insert({
+        session_id: HELM_SESSION_ID || null,
+        device_id: HELM_DEVICE_ID || null,
+        org_id: HELM_ORG_ID,
+        event_type: eventType,
+        payload: payload,
+      })
+    );
   } catch (e) {
     console.error(`[helm-bridge] Failed to emit event ${eventType}:`, e.message);
   }
@@ -328,16 +591,18 @@ async function handleQAPass(taskId) {
   if (!supabase) return false;
 
   try {
-    await supabase.from("task_activity").insert({
-      task_id: taskId,
-      actor_id: null,
-      activity_type: "test_passed",
-      metadata: {
-        automated: true,
-        trigger: "qa_session",
-        note: "QA tests passed — update task status via dropdown",
-      },
-    });
+    await withTokenRefresh(() =>
+      supabase.from("task_activity").insert({
+        task_id: taskId,
+        actor_id: null,
+        activity_type: "test_passed",
+        metadata: {
+          automated: true,
+          trigger: "qa_session",
+          note: "QA tests passed — update task status via dropdown",
+        },
+      })
+    );
     console.log(`[helm-bridge] Task ${taskId}: test passed recorded`);
     return true;
   } catch (e) {
@@ -351,17 +616,19 @@ async function handleQAFail(taskId, reason) {
   if (!supabase) return false;
 
   try {
-    await supabase.from("task_activity").insert({
-      task_id: taskId,
-      actor_id: null,
-      activity_type: "test_failed",
-      metadata: {
-        automated: true,
-        trigger: "qa_session",
-        reason: reason || "QA tests failed",
-        note: "Update task status via dropdown",
-      },
-    });
+    await withTokenRefresh(() =>
+      supabase.from("task_activity").insert({
+        task_id: taskId,
+        actor_id: null,
+        activity_type: "test_failed",
+        metadata: {
+          automated: true,
+          trigger: "qa_session",
+          reason: reason || "QA tests failed",
+          note: "Update task status via dropdown",
+        },
+      })
+    );
     console.log(`[helm-bridge] Task ${taskId}: test failed recorded`);
     return true;
   } catch (e) {
@@ -381,7 +648,7 @@ const acceptanceCriteriaSchema = z.array(
 const storySchema = z.object({
   story_id: z.string().describe("Unique identifier (e.g., 'US-001')"),
   title: z.string().describe("Story title"),
-  description: z.string().optional().describe("Story description"),
+  content_markdown: z.string().optional().describe("Full story specification in markdown"),
   acceptance_criteria: acceptanceCriteriaSchema.describe("Acceptance criteria array"),
   story_points: z.number().int().optional().describe("Story point estimate"),
   status: z.string().optional().describe("Status (default: pending)"),
@@ -425,17 +692,19 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            const { data, error } = await supabase
-              .from("helm_events")
-              .insert({
-                session_id: HELM_SESSION_ID || null,
-                device_id: HELM_DEVICE_ID || null,
-                org_id: HELM_ORG_ID,
-                event_type: type,
-                payload: payload,
-              })
-              .select("id")
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("helm_events")
+                .insert({
+                  session_id: HELM_SESSION_ID || null,
+                  device_id: HELM_DEVICE_ID || null,
+                  org_id: HELM_ORG_ID,
+                  event_type: type,
+                  payload: payload,
+                })
+                .select("id")
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to emit event: ${error.message}` });
@@ -493,11 +762,13 @@ export default async function helmBridgePlugin(ctx) {
             if (estimated_weeks) insertData.estimated_weeks = estimated_weeks;
             if (repo_id) insertData.repo_id = repo_id;
 
-            const { data, error } = await supabase
-              .from("prds")
-              .insert(insertData)
-              .select("id, prd_id")
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("prds")
+                .insert(insertData)
+                .select("id, prd_id")
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to create PRD: ${error.message}` });
@@ -555,14 +826,15 @@ export default async function helmBridgePlugin(ctx) {
             if (started_at !== undefined) updateData.started_at = started_at;
             if (completed_at !== undefined) updateData.completed_at = completed_at;
 
-            let query = supabase.from("prds").update(updateData);
-            if (id) {
-              query = query.eq("id", id);
-            } else {
-              query = query.eq("prd_id", prd_id);
-            }
-
-            const { data, error } = await query.select().single();
+            const { data, error } = await withTokenRefresh(() => {
+              let query = supabase.from("prds").update(updateData);
+              if (id) {
+                query = query.eq("id", id);
+              } else {
+                query = query.eq("prd_id", prd_id);
+              }
+              return query.select().single();
+            });
 
             if (error) {
               return JSON.stringify({ error: `Failed to update PRD: ${error.message}` });
@@ -599,17 +871,18 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            let query = supabase.from("prds").update({
-              content_markdown,
-              updated_at: new Date().toISOString(),
+            const { data, error } = await withTokenRefresh(() => {
+              let query = supabase.from("prds").update({
+                content_markdown,
+                updated_at: new Date().toISOString(),
+              });
+              if (id) {
+                query = query.eq("id", id);
+              } else {
+                query = query.eq("prd_id", prd_id);
+              }
+              return query.select("id, prd_id").single();
             });
-            if (id) {
-              query = query.eq("id", id);
-            } else {
-              query = query.eq("prd_id", prd_id);
-            }
-
-            const { data, error } = await query.select("id, prd_id").single();
 
             if (error) {
               return JSON.stringify({ error: `Failed to update PRD content: ${error.message}` });
@@ -641,17 +914,18 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            let query = supabase.from("prds").update({
-              status: "abandoned",
-              updated_at: new Date().toISOString(),
+            const { data, error } = await withTokenRefresh(() => {
+              let query = supabase.from("prds").update({
+                status: "abandoned",
+                updated_at: new Date().toISOString(),
+              });
+              if (id) {
+                query = query.eq("id", id);
+              } else {
+                query = query.eq("prd_id", prd_id);
+              }
+              return query.select("id, prd_id").single();
             });
-            if (id) {
-              query = query.eq("id", id);
-            } else {
-              query = query.eq("prd_id", prd_id);
-            }
-
-            const { data, error } = await query.select("id, prd_id").single();
 
             if (error) {
               return JSON.stringify({ error: `Failed to delete PRD: ${error.message}` });
@@ -685,20 +959,21 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            let query = supabase
-              .from("prds")
-              .select("id, prd_id, title, status, phases, current_story, estimated_weeks, stories_completed, total_stories, completed_stories, started_at, completed_at, created_at, updated_at, repo_id, notes")
-              .eq("org_id", effectiveOrgId)
-              .order("created_at", { ascending: false });
+            const { data, error } = await withTokenRefresh(() => {
+              let query = supabase
+                .from("prds")
+                .select("id, prd_id, title, status, phases, current_story, estimated_weeks, stories_completed, total_stories, completed_stories, started_at, completed_at, created_at, updated_at, repo_id, notes")
+                .eq("org_id", effectiveOrgId)
+                .order("created_at", { ascending: false });
 
-            if (status) {
-              query = query.eq("status", status);
-            }
-            if (repo_id) {
-              query = query.eq("repo_id", repo_id);
-            }
-
-            const { data, error } = await query;
+              if (status) {
+                query = query.eq("status", status);
+              }
+              if (repo_id) {
+                query = query.eq("repo_id", repo_id);
+              }
+              return query;
+            });
 
             if (error) {
               return JSON.stringify({ error: `Failed to list PRDs: ${error.message}` });
@@ -729,25 +1004,28 @@ export default async function helmBridgePlugin(ctx) {
 
           try {
             // Fetch the PRD
-            let prdQuery = supabase.from("prds").select("*");
-            if (id) {
-              prdQuery = prdQuery.eq("id", id);
-            } else {
-              prdQuery = prdQuery.eq("prd_id", prd_id);
-            }
-
-            const { data: prdData, error: prdError } = await prdQuery.single();
+            const { data: prdData, error: prdError } = await withTokenRefresh(() => {
+              let prdQuery = supabase.from("prds").select("*");
+              if (id) {
+                prdQuery = prdQuery.eq("id", id);
+              } else {
+                prdQuery = prdQuery.eq("prd_id", prd_id);
+              }
+              return prdQuery.single();
+            });
 
             if (prdError) {
               return JSON.stringify({ error: `Failed to get PRD: ${prdError.message}` });
             }
 
             // Fetch associated stories
-            const { data: storiesData, error: storiesError } = await supabase
-              .from("prd_stories")
-              .select("*")
-              .eq("prd_id", prdData.id)
-              .order("sort_order", { ascending: true });
+            const { data: storiesData, error: storiesError } = await withTokenRefresh(() =>
+              supabase
+                .from("prd_stories")
+                .select("*")
+                .eq("prd_id", prdData.id)
+                .order("sort_order", { ascending: true })
+            );
 
             if (storiesError) {
               return JSON.stringify({ error: `Failed to get PRD stories: ${storiesError.message}` });
@@ -788,11 +1066,13 @@ export default async function helmBridgePlugin(ctx) {
             }
 
             // Fetch stories
-            const { data: storiesData, error: storiesError } = await supabase
-              .from("prd_stories")
-              .select("*")
-              .eq("prd_id", prdUuid)
-              .order("sort_order", { ascending: true });
+            const { data: storiesData, error: storiesError } = await withTokenRefresh(() =>
+              supabase
+                .from("prd_stories")
+                .select("*")
+                .eq("prd_id", prdUuid)
+                .order("sort_order", { ascending: true })
+            );
 
             if (storiesError) {
               return JSON.stringify({ error: `Failed to get PRD stories: ${storiesError.message}` });
@@ -833,7 +1113,7 @@ export default async function helmBridgePlugin(ctx) {
               prd_id: prdLookup.uuid,
               story_id: story.story_id,
               title: story.title,
-              description: story.description || null,
+              content_markdown: story.content_markdown || null,
               acceptance_criteria: story.acceptance_criteria || null,
               story_points: story.story_points || null,
               status: story.status || "pending",
@@ -841,10 +1121,12 @@ export default async function helmBridgePlugin(ctx) {
               sort_order: story.sort_order,
             }));
 
-            const { data, error } = await supabase
-              .from("prd_stories")
-              .insert(insertRows)
-              .select("id, story_id");
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("prd_stories")
+                .insert(insertRows)
+                .select("id, story_id")
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to bulk create stories: ${error.message}` });
@@ -865,24 +1147,23 @@ export default async function helmBridgePlugin(ctx) {
 
       helm_prd_story_update: tool({
         description:
-          "Update an existing story. Identify by 'id' (UUID) or by combination of 'prd_id' + 'story_id'. Use this to update status, notes, or other story metadata.",
+          "Update an existing story. Identify by 'id' (UUID) or by combination of 'prd_id' + 'story_id'. Use this to update status or other story metadata.",
         args: {
           id: z.string().optional().describe("UUID of the story to update"),
           prd_id: z.string().optional().describe("Text identifier of the parent PRD (required if using story_id instead of id)"),
           story_id: z.string().optional().describe("Text identifier of the story (e.g., 'US-001'). Requires prd_id."),
           title: z.string().optional().describe("Updated title"),
-          description: z.string().optional().describe("Updated description"),
+          content_markdown: z.string().optional().describe("Updated story content in markdown"),
           acceptance_criteria: acceptanceCriteriaSchema.describe("Updated acceptance criteria"),
           story_points: z.number().int().optional().describe("Updated story points"),
           status: z.string().optional().describe("Updated status: pending, in_progress, completed, or skipped"),
           phase: z.number().int().optional().describe("Updated phase number"),
           sort_order: z.number().int().optional().describe("Updated sort order"),
-          notes: z.string().optional().describe("Updated notes"),
           started_at: z.string().optional().describe("ISO timestamp when work started"),
           completed_at: z.string().optional().describe("ISO timestamp when completed"),
           session_id: z.string().optional().describe("UUID of the session working on this story"),
         },
-        async execute({ id, prd_id, story_id, title, description, acceptance_criteria, story_points, status, phase, sort_order, notes, started_at, completed_at, session_id }) {
+        async execute({ id, prd_id, story_id, title, content_markdown, acceptance_criteria, story_points, status, phase, sort_order, started_at, completed_at, session_id }) {
           if (!supabase) {
             return JSON.stringify({ error: "Helm bridge not configured: missing HELM_SUPABASE_URL or HELM_SUPABASE_ANON_KEY" });
           }
@@ -894,31 +1175,35 @@ export default async function helmBridgePlugin(ctx) {
           try {
             const updateData = { updated_at: new Date().toISOString() };
             if (title !== undefined) updateData.title = title;
-            if (description !== undefined) updateData.description = description;
+            if (content_markdown !== undefined) updateData.content_markdown = content_markdown;
             if (acceptance_criteria !== undefined) updateData.acceptance_criteria = acceptance_criteria;
             if (story_points !== undefined) updateData.story_points = story_points;
             if (status !== undefined) updateData.status = status;
             if (phase !== undefined) updateData.phase = phase;
             if (sort_order !== undefined) updateData.sort_order = sort_order;
-            if (notes !== undefined) updateData.notes = notes;
             if (started_at !== undefined) updateData.started_at = started_at;
             if (completed_at !== undefined) updateData.completed_at = completed_at;
             if (session_id !== undefined) updateData.session_id = session_id;
 
-            let query = supabase.from("prd_stories").update(updateData);
-
-            if (id) {
-              query = query.eq("id", id);
-            } else {
+            let prdUuid = null;
+            if (!id) {
               // Look up PRD UUID first
               const prdLookup = await lookupPrdUuid(prd_id);
               if (prdLookup.error) {
                 return JSON.stringify({ error: prdLookup.error });
               }
-              query = query.eq("prd_id", prdLookup.uuid).eq("story_id", story_id);
+              prdUuid = prdLookup.uuid;
             }
 
-            const { data, error } = await query.select().single();
+            const { data, error } = await withTokenRefresh(() => {
+              let query = supabase.from("prd_stories").update(updateData);
+              if (id) {
+                query = query.eq("id", id);
+              } else {
+                query = query.eq("prd_id", prdUuid).eq("story_id", story_id);
+              }
+              return query.select().single();
+            });
 
             if (error) {
               return JSON.stringify({ error: `Failed to update story: ${error.message}` });
@@ -980,11 +1265,13 @@ export default async function helmBridgePlugin(ctx) {
             // Note: assignee_ids is in task_assignees junction table, not tasks table
             if (repo_id) insertData.repo_id = repo_id;
 
-            const { data, error } = await supabase
-              .from("tasks")
-              .insert(insertData)
-              .select("id, task_id, title")
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("tasks")
+                .insert(insertData)
+                .select("id, task_id, title")
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to create task: ${error.message}` });
@@ -1032,12 +1319,14 @@ export default async function helmBridgePlugin(ctx) {
             if (testing_notes_markdown !== undefined) updateData.testing_notes_markdown = testing_notes_markdown;
             // Note: assignee_ids is in task_assignees junction table, not tasks table
 
-            const { data, error } = await supabase
-              .from("tasks")
-              .update(updateData)
-              .eq("id", id)
-              .select()
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("tasks")
+                .update(updateData)
+                .eq("id", id)
+                .select()
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to update task: ${error.message}` });
@@ -1074,27 +1363,28 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            let query = supabase
-              .from("tasks")
-              .select("id, title, description_markdown, priority, status, parent_task_id, prd_id, repo_id, created_at, updated_at")
-              .eq("org_id", effectiveOrgId)
-              .order("created_at", { ascending: false });
+            const { data, error } = await withTokenRefresh(() => {
+              let query = supabase
+                .from("tasks")
+                .select("id, title, description_markdown, priority, status, parent_task_id, prd_id, repo_id, created_at, updated_at")
+                .eq("org_id", effectiveOrgId)
+                .order("created_at", { ascending: false });
 
-            if (repo_id) {
-              query = query.eq("repo_id", repo_id);
-            }
-            if (status) {
-              query = query.eq("status", status);
-            }
-            if (prd_id) {
-              query = query.eq("prd_id", prd_id);
-            }
-            if (priority) {
-              query = query.eq("priority", priority);
-            }
-            // Note: assignee_ids filter not implemented - assignees are in task_assignees junction table
-
-            const { data, error } = await query;
+              if (repo_id) {
+                query = query.eq("repo_id", repo_id);
+              }
+              if (status) {
+                query = query.eq("status", status);
+              }
+              if (prd_id) {
+                query = query.eq("prd_id", prd_id);
+              }
+              if (priority) {
+                query = query.eq("priority", priority);
+              }
+              // Note: assignee_ids filter not implemented - assignees are in task_assignees junction table
+              return query;
+            });
 
             if (error) {
               return JSON.stringify({ error: `Failed to list tasks: ${error.message}` });
@@ -1124,61 +1414,73 @@ export default async function helmBridgePlugin(ctx) {
 
           try {
             // Fetch the task
-            const { data: taskData, error: taskError } = await supabase
-              .from("tasks")
-              .select("*")
-              .eq("id", id)
-              .single();
+            const { data: taskData, error: taskError } = await withTokenRefresh(() =>
+              supabase
+                .from("tasks")
+                .select("*")
+                .eq("id", id)
+                .single()
+            );
 
             if (taskError) {
               return JSON.stringify({ error: `Failed to get task: ${taskError.message}` });
             }
 
             // Fetch comments
-            const { data: commentsData, error: commentsError } = await supabase
-              .from("task_comments")
-              .select("*")
-              .eq("task_id", id)
-              .order("created_at", { ascending: true });
+            const { data: commentsData, error: commentsError } = await withTokenRefresh(() =>
+              supabase
+                .from("task_comments")
+                .select("*")
+                .eq("task_id", id)
+                .order("created_at", { ascending: true })
+            );
 
             if (commentsError) {
               return JSON.stringify({ error: `Failed to get task comments: ${commentsError.message}` });
             }
 
             // Fetch activity log
-            const { data: activityData, error: activityError } = await supabase
-              .from("task_activity")
-              .select("*")
-              .eq("task_id", id)
-              .order("created_at", { ascending: false });
+            const { data: activityData, error: activityError } = await withTokenRefresh(() =>
+              supabase
+                .from("task_activity")
+                .select("*")
+                .eq("task_id", id)
+                .order("created_at", { ascending: false })
+            );
 
             if (activityError) {
               return JSON.stringify({ error: `Failed to get task activity: ${activityError.message}` });
             }
 
             // Fetch linked sessions via junction table
-            const { data: sessionTasksData, error: sessionTasksError } = await supabase
-              .from("session_tasks")
-              .select("session_id")
-              .eq("task_id", id);
+            const { data: sessionTasksData, error: sessionTasksError } = await withTokenRefresh(() =>
+              supabase
+                .from("session_tasks")
+                .select("session_id")
+                .eq("task_id", id)
+            );
 
             let sessions = [];
             if (!sessionTasksError && sessionTasksData?.length) {
               const sessionIds = sessionTasksData.map((st) => st.session_id);
-              const { data: sessionsData, error: sessionsError } = await supabase
-                .from("sessions")
-                .select("id, status, started_at, ended_at")
-                .in("id", sessionIds)
-                .order("started_at", { ascending: false });
+              const { data: sessionsData, error: sessionsError } = await withTokenRefresh(() =>
+                supabase
+                  .from("sessions")
+                  .select("id, status, started_at, ended_at")
+                  .in("id", sessionIds)
+                  .order("started_at", { ascending: false })
+              );
               sessions = sessionsError ? [] : sessionsData;
             }
 
             // Fetch attachments from task_attachments table
-            const { data: attachmentsData, error: attachmentsError } = await supabase
-              .from("task_attachments")
-              .select("id, file_name, content_type, file_size, storage_path, is_image, created_at")
-              .eq("task_id", id)
-              .order("created_at", { ascending: true });
+            const { data: attachmentsData, error: attachmentsError } = await withTokenRefresh(() =>
+              supabase
+                .from("task_attachments")
+                .select("id, file_name, content_type, file_size, storage_path, is_image, created_at")
+                .eq("task_id", id)
+                .order("created_at", { ascending: true })
+            );
 
             let attachments = [];
             if (!attachmentsError && attachmentsData?.length) {
@@ -1247,11 +1549,13 @@ export default async function helmBridgePlugin(ctx) {
             };
             if (parent_comment_id) insertData.parent_comment_id = parent_comment_id;
 
-            const { data, error } = await supabase
-              .from("task_comments")
-              .insert(insertData)
-              .select("id, task_id, created_at")
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("task_comments")
+                .insert(insertData)
+                .select("id, task_id, created_at")
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to add comment: ${error.message}` });
@@ -1297,11 +1601,13 @@ export default async function helmBridgePlugin(ctx) {
             };
             if (metadata) insertData.metadata = metadata;
 
-            const { data, error } = await supabase
-              .from("task_activity")
-              .insert(insertData)
-              .select("id, task_id, activity_type, created_at")
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("task_activity")
+                .insert(insertData)
+                .select("id, task_id, activity_type, created_at")
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to add activity: ${error.message}` });
@@ -1381,14 +1687,16 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            const { data, error } = await supabase
-              .from("sessions")
-              .update({
-                agent_state: state,
-              })
-              .eq("id", effectiveSessionId)
-              .select("id")
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("sessions")
+                .update({
+                  agent_state: state,
+                })
+                .eq("id", effectiveSessionId)
+                .select("id")
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to save session state: ${error.message}` });
@@ -1403,7 +1711,7 @@ export default async function helmBridgePlugin(ctx) {
 
       helm_session_state_get: tool({
         description:
-          "Retrieve the agent_state from a session. Use this to read previously saved state or check what state another session has stored.",
+          "Retrieve the agent_state and source context from a session. Use this to read previously saved state, check session source (e.g., linked PRD/task), or check what state another session has stored.",
         args: {
           session_id: z.string().optional().describe("UUID of the session. Falls back to HELM_SESSION_ID env var"),
         },
@@ -1418,17 +1726,25 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            const { data, error } = await supabase
-              .from("sessions")
-              .select("id, agent_state")
-              .eq("id", effectiveSessionId)
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("sessions")
+                .select("id, agent_state, source_type, source_id, source_title")
+                .eq("id", effectiveSessionId)
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to get session state: ${error.message}` });
             }
 
-            return JSON.stringify({ session_id: data.id, state: data.agent_state });
+            return JSON.stringify({ 
+              session_id: data.id, 
+              state: data.agent_state,
+              source_type: data.source_type || null,
+              source_id: data.source_id || null,
+              source_title: data.source_title || null
+            });
           } catch (err) {
             return JSON.stringify({ error: `Failed to get session state: ${err.message}` });
           }
@@ -1500,12 +1816,14 @@ export default async function helmBridgePlugin(ctx) {
             // Note: last_heartbeat is updated automatically
             updateData.last_heartbeat = new Date().toISOString();
 
-            const { data, error } = await supabase
-              .from("sessions")
-              .update(updateData)
-              .eq("id", resolvedSessionId)
-              .select("id, session_name, total_chunks, completed_chunks")
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("sessions")
+                .update(updateData)
+                .eq("id", resolvedSessionId)
+                .select("id, session_name, total_chunks, completed_chunks")
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to update session: ${error.message}` });
@@ -1548,13 +1866,15 @@ export default async function helmBridgePlugin(ctx) {
               updateData.agent_completed_at = new Date().toISOString();
             }
 
-            const { data, error } = await supabase
-              .from("session_tasks")
-              .update(updateData)
-              .eq("session_id", resolvedSessionId)
-              .eq("task_id", task_id)
-              .select("session_id, task_id, agent_status, agent_completed_at")
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("session_tasks")
+                .update(updateData)
+                .eq("session_id", resolvedSessionId)
+                .eq("task_id", task_id)
+                .select("session_id, task_id, agent_status, agent_completed_at")
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to update session task: ${error.message}` });
@@ -1624,11 +1944,13 @@ export default async function helmBridgePlugin(ctx) {
             if (trigger_at) insertData.trigger_at = trigger_at;
             if (trigger_event) insertData.trigger_event = trigger_event;
 
-            const { data, error } = await supabase
-              .from("reminders")
-              .insert(insertData)
-              .select("id, title, trigger_type, trigger_at, trigger_event")
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("reminders")
+                .insert(insertData)
+                .select("id, title, trigger_type, trigger_at, trigger_event")
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to create reminder: ${error.message}` });
@@ -1683,11 +2005,13 @@ export default async function helmBridgePlugin(ctx) {
             };
             if (command) insertData.command = command;
 
-            const { data, error } = await supabase
-              .from("task_tests")
-              .insert(insertData)
-              .select("id, test_type, file_path, framework")
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("task_tests")
+                .insert(insertData)
+                .select("id, test_type, file_path, framework")
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to register test: ${error.message}` });
@@ -1752,11 +2076,13 @@ export default async function helmBridgePlugin(ctx) {
             if (output) insertData.output = output.slice(0, 50000); // Truncate to 50KB
             if (duration_ms !== undefined) insertData.duration_ms = duration_ms;
 
-            const { data: runData, error: runError } = await supabase
-              .from("task_test_runs")
-              .insert(insertData)
-              .select("id, status, duration_ms")
-              .single();
+            const { data: runData, error: runError } = await withTokenRefresh(() =>
+              supabase
+                .from("task_test_runs")
+                .insert(insertData)
+                .select("id, status, duration_ms")
+                .single()
+            );
 
             if (runError) {
               return JSON.stringify({ error: `Failed to record test run: ${runError.message}` });
@@ -1802,10 +2128,12 @@ export default async function helmBridgePlugin(ctx) {
 
           try {
             // Fetch all tests for the task
-            const { data: tests, error: testsError } = await supabase
-              .from("task_tests")
-              .select("id, test_type, file_path, framework")
-              .eq("task_id", task_id);
+            const { data: tests, error: testsError } = await withTokenRefresh(() =>
+              supabase
+                .from("task_tests")
+                .select("id, test_type, file_path, framework")
+                .eq("task_id", task_id)
+            );
 
             if (testsError) {
               return JSON.stringify({ error: `Failed to fetch tests: ${testsError.message}` });
@@ -1824,11 +2152,13 @@ export default async function helmBridgePlugin(ctx) {
 
             // For each test, get the latest run status
             const testIds = tests.map((t) => t.id);
-            const { data: latestRuns, error: runsError } = await supabase
-              .from("task_test_runs")
-              .select("task_test_id, status, created_at")
-              .in("task_test_id", testIds)
-              .order("created_at", { ascending: false });
+            const { data: latestRuns, error: runsError } = await withTokenRefresh(() =>
+              supabase
+                .from("task_test_runs")
+                .select("task_test_id, status, created_at")
+                .in("task_test_id", testIds)
+                .order("created_at", { ascending: false })
+            );
 
             if (runsError) {
               return JSON.stringify({ error: `Failed to fetch test runs: ${runsError.message}` });
@@ -1901,14 +2231,44 @@ export default async function helmBridgePlugin(ctx) {
 
           try {
             // Call the search-embeddings Edge Function
-            const { data, error } = await supabase.functions.invoke("search-embeddings", {
-              body: {
-                query: query,
-                org_id: orgId,
-                match_count: match_count || 5,
-                source_types: source_types || null,
-              },
-            });
+            // Note: Edge Functions throw on auth errors rather than returning { data, error }
+            // We use a custom wrapper that catches and handles JWT expiry
+            let data, error;
+            try {
+              const result = await supabase.functions.invoke("search-embeddings", {
+                body: {
+                  query: query,
+                  org_id: orgId,
+                  match_count: match_count || 5,
+                  source_types: source_types || null,
+                },
+              });
+              data = result.data;
+              error = result.error;
+            } catch (invokeError) {
+              // Check if it's a JWT expiry error and retry
+              if (invokeError.message && (invokeError.message.includes('JWT') || invokeError.message.includes('401')) && HELM_SUPABASE_TOKEN_FILE) {
+                console.log('[helm-bridge] Edge function JWT expired, attempting token refresh...');
+                const newToken = refreshTokenFromFile();
+                if (newToken) {
+                  rebuildSupabaseClient(newToken);
+                  const retryResult = await supabase.functions.invoke("search-embeddings", {
+                    body: {
+                      query: query,
+                      org_id: orgId,
+                      match_count: match_count || 5,
+                      source_types: source_types || null,
+                    },
+                  });
+                  data = retryResult.data;
+                  error = retryResult.error;
+                } else {
+                  throw invokeError;
+                }
+              } else {
+                throw invokeError;
+              }
+            }
 
             if (error) {
               return JSON.stringify({ error: `Search failed: ${error.message}` });
@@ -1955,11 +2315,13 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            const { data, error } = await supabase
-              .from("repos")
-              .select("*")
-              .eq("id", repo_id)
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("repos")
+                .select("*")
+                .eq("id", repo_id)
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to get project settings: ${error.message}` });
@@ -2015,10 +2377,12 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            const { error } = await supabase
-              .from("repos")
-              .update(updateData)
-              .eq("id", repo_id);
+            const { error } = await withTokenRefresh(() =>
+              supabase
+                .from("repos")
+                .update(updateData)
+                .eq("id", repo_id)
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to update project settings: ${error.message}` });
@@ -2051,11 +2415,13 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            const { data, error } = await supabase
-              .from("devices")
-              .select("notification_preferences, notification_sound_enabled")
-              .eq("id", deviceId)
-              .single();
+            const { data, error } = await withTokenRefresh(() =>
+              supabase
+                .from("devices")
+                .select("notification_preferences, notification_sound_enabled")
+                .eq("id", deviceId)
+                .single()
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to get notification preferences: ${error.message}` });
@@ -2103,10 +2469,12 @@ export default async function helmBridgePlugin(ctx) {
           }
 
           try {
-            const { error } = await supabase
-              .from("devices")
-              .update(updateData)
-              .eq("id", deviceId);
+            const { error } = await withTokenRefresh(() =>
+              supabase
+                .from("devices")
+                .update(updateData)
+                .eq("id", deviceId)
+            );
 
             if (error) {
               return JSON.stringify({ error: `Failed to update notification preferences: ${error.message}` });
@@ -2140,11 +2508,13 @@ export default async function helmBridgePlugin(ctx) {
 
           try {
             // First get user_id from device
-            const { data: deviceData, error: deviceError } = await supabase
-              .from("devices")
-              .select("user_id")
-              .eq("id", deviceId)
-              .single();
+            const { data: deviceData, error: deviceError } = await withTokenRefresh(() =>
+              supabase
+                .from("devices")
+                .select("user_id")
+                .eq("id", deviceId)
+                .single()
+            );
 
             if (deviceError) {
               return JSON.stringify({ error: `Failed to get device info: ${deviceError.message}` });
@@ -2156,11 +2526,13 @@ export default async function helmBridgePlugin(ctx) {
             }
 
             // Fetch user's dashboard widgets
-            const { data: widgets, error: widgetsError } = await supabase
-              .from("user_dashboard_widgets")
-              .select("id, widget_type, position, col_span, row_height_pct, view_id")
-              .eq("user_id", userId)
-              .order("position", { ascending: true });
+            const { data: widgets, error: widgetsError } = await withTokenRefresh(() =>
+              supabase
+                .from("user_dashboard_widgets")
+                .select("id, widget_type, position, col_span, row_height_pct, view_id")
+                .eq("user_id", userId)
+                .order("position", { ascending: true })
+            );
 
             if (widgetsError) {
               return JSON.stringify({ error: `Failed to get dashboard widgets: ${widgetsError.message}` });
@@ -2206,11 +2578,13 @@ export default async function helmBridgePlugin(ctx) {
 
           try {
             // First get user_id from device
-            const { data: deviceData, error: deviceError } = await supabase
-              .from("devices")
-              .select("user_id")
-              .eq("id", deviceId)
-              .single();
+            const { data: deviceData, error: deviceError } = await withTokenRefresh(() =>
+              supabase
+                .from("devices")
+                .select("user_id")
+                .eq("id", deviceId)
+                .single()
+            );
 
             if (deviceError) {
               return JSON.stringify({ error: `Failed to get device info: ${deviceError.message}` });
@@ -2222,10 +2596,12 @@ export default async function helmBridgePlugin(ctx) {
             }
 
             // Delete existing widgets for this user
-            const { error: deleteError } = await supabase
-              .from("user_dashboard_widgets")
-              .delete()
-              .eq("user_id", userId);
+            const { error: deleteError } = await withTokenRefresh(() =>
+              supabase
+                .from("user_dashboard_widgets")
+                .delete()
+                .eq("user_id", userId)
+            );
 
             if (deleteError) {
               return JSON.stringify({ error: `Failed to clear existing widgets: ${deleteError.message}` });
@@ -2242,9 +2618,11 @@ export default async function helmBridgePlugin(ctx) {
                 view_id: w.view_id || null,
               }));
 
-              const { error: insertError } = await supabase
-                .from("user_dashboard_widgets")
-                .insert(insertData);
+              const { error: insertError } = await withTokenRefresh(() =>
+                supabase
+                  .from("user_dashboard_widgets")
+                  .insert(insertData)
+              );
 
               if (insertError) {
                 return JSON.stringify({ error: `Failed to insert widgets: ${insertError.message}` });
@@ -2330,18 +2708,22 @@ export default async function helmBridgePlugin(ctx) {
             let testSummary = null;
             if (supabase) {
               try {
-                const { data: tests } = await supabase
-                  .from("task_tests")
-                  .select("id")
-                  .eq("task_id", task.id);
+                const { data: tests } = await withTokenRefresh(() =>
+                  supabase
+                    .from("task_tests")
+                    .select("id")
+                    .eq("task_id", task.id)
+                );
 
                 if (tests && tests.length > 0) {
                   const testIds = tests.map((t) => t.id);
-                  const { data: latestRuns } = await supabase
-                    .from("task_test_runs")
-                    .select("task_test_id, status")
-                    .in("task_test_id", testIds)
-                    .order("created_at", { ascending: false });
+                  const { data: latestRuns } = await withTokenRefresh(() =>
+                    supabase
+                      .from("task_test_runs")
+                      .select("task_test_id, status")
+                      .in("task_test_id", testIds)
+                      .order("created_at", { ascending: false })
+                  );
 
                   // Build status map
                   const statusMap = {};
@@ -2462,11 +2844,24 @@ export default async function helmBridgePlugin(ctx) {
         } else {
           pluginState.sessionTasks = null;
           pluginState.sessionTaskRoles = {};
+
+          // No tasks linked — check if this is a PRD-linked session
+          const prdResult = await fetchSessionPRD(effectiveSessionId);
+          if (prdResult) {
+            pluginState.sessionPRD = prdResult;
+            pluginState.lastPRDFetchTime = Date.now();
+            console.log(
+              `[helm-bridge] Loaded PRD context for session ${effectiveSessionId}: ${prdResult.prd.title} (${prdResult.stories.length} stories, ${prdResult.tasks.length} tasks)`
+            );
+          } else {
+            pluginState.sessionPRD = null;
+          }
         }
       } catch (e) {
         console.error("[helm-bridge] Error in session.start hook:", e.message);
         pluginState.sessionTasks = null;
         pluginState.sessionTaskRoles = {};
+        pluginState.sessionPRD = null;
       }
     },
 
@@ -2498,36 +2893,76 @@ export default async function helmBridgePlugin(ctx) {
         }
       }
 
-      // If no tasks, return prompt unchanged
-      if (!pluginState.sessionTasks?.length) {
-        return prompt;
-      }
+      // If we have tasks, inject task context
+      if (pluginState.sessionTasks?.length) {
+        const tasks = pluginState.sessionTasks;
 
-      const tasks = pluginState.sessionTasks;
+        let context = "\n\n---\n## 🎯 Active Task Context\n\n";
 
-      let context = "\n\n---\n## 🎯 Active Task Context\n\n";
-
-      for (const task of tasks) {
-        // Add role indicator if available
-        const role = pluginState.sessionTaskRoles[task.id];
-        if (role && role !== "primary") {
-          context += `*[Role: ${role}]*\n`;
+        for (const task of tasks) {
+          // Add role indicator if available
+          const role = pluginState.sessionTaskRoles[task.id];
+          if (role && role !== "primary") {
+            context += `*[Role: ${role}]*\n`;
+          }
+          context += formatTaskContext(task, sessionMode);
         }
-        context += formatTaskContext(task, sessionMode);
+
+        // Add project services context
+        context += formatServicesContext();
+
+        // Add Helm Context Search instructions (US-034)
+        context += formatHelmContextSearchInstructions();
+
+        // US-NEW-A: Add automated testing instructions for builder sessions
+        if (sessionMode === "builder" || sessionMode === "build" || sessionMode === "adHoc") {
+          context += formatAutomatedTestingInstructions();
+        }
+
+        return prompt + context;
       }
 
-      // Add project services context
-      context += formatServicesContext();
+      // No tasks linked — check for PRD context
+      // First, refresh PRD data if stale or not loaded
+      if (effectiveSessionId) {
+        const isPRDStale = Date.now() - pluginState.lastPRDFetchTime > TASK_CONTEXT_STALE_THRESHOLD;
+        const sessionChanged = effectiveSessionId !== pluginState.currentSessionId;
+        const noPRDLoaded = !pluginState.sessionPRD;
 
-      // Add Helm Context Search instructions (US-034)
-      context += formatHelmContextSearchInstructions();
-
-      // US-NEW-A: Add automated testing instructions for builder sessions
-      if (sessionMode === "builder" || sessionMode === "build" || sessionMode === "adHoc") {
-        context += formatAutomatedTestingInstructions();
+        if (isPRDStale || sessionChanged || noPRDLoaded) {
+          try {
+            const prdResult = await fetchSessionPRD(effectiveSessionId);
+            if (prdResult) {
+              pluginState.sessionPRD = prdResult;
+              pluginState.lastPRDFetchTime = Date.now();
+              pluginState.currentSessionId = effectiveSessionId;
+            }
+          } catch (e) {
+            console.error("[helm-bridge] Failed to refresh PRD context:", e.message);
+          }
+        }
       }
 
-      return prompt + context;
+      // If we have PRD context, inject it
+      if (pluginState.sessionPRD) {
+        let context = formatPRDContext(pluginState.sessionPRD, sessionMode);
+
+        // Add project services context
+        context += formatServicesContext();
+
+        // Add Helm Context Search instructions (US-034)
+        context += formatHelmContextSearchInstructions();
+
+        // US-NEW-A: Add automated testing instructions for builder/planner sessions working on specs
+        if (sessionMode === "builder" || sessionMode === "build" || sessionMode === "planner" || sessionMode === "prdRefine") {
+          context += formatAutomatedTestingInstructions();
+        }
+
+        return prompt + context;
+      }
+
+      // No tasks and no PRD — return prompt unchanged
+      return prompt;
     },
   };
 }

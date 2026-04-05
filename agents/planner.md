@@ -128,6 +128,12 @@ Planner uses helm-bridge tools for all task and PRD state management. Supabase i
 | `helm_prd_get` | Get PRD with stories |
 | `helm_prd_delete` | Delete a PRD |
 
+> **Content Model:**
+> - Spec `content_markdown` = high-level summary/overview of the spec (what it is, why it matters)
+> - Story `content_markdown` = full story specification in markdown (detailed requirements, context, implementation notes)
+> - `acceptance_criteria` = jsonb array of `{text: string, met: boolean}` objects
+> - `required_credentials` = jsonb array of `{service: string, type: string, status: string}` — credentials the user must provide outside the agent system
+
 ### Task Management Tools
 
 | Tool | Purpose | When to Use |
@@ -401,7 +407,7 @@ After environment is confirmed:
 When the user wants to work on a draft PRD:
 
 1. **Get the draft PRD** using `helm_prd_get({ prd_id: "prd-[name]" })`
-   - Returns PRD metadata, content_markdown, and stories array
+   - Returns PRD metadata (including content_markdown summary) and stories array (each with their own content_markdown)
 2. **Understand the existing codebase state** (via @investigate delegation and semantic search):
    - **Use `helm_search_context` for high-level discovery** of related work:
      ```
@@ -433,7 +439,7 @@ When the user wants to work on a draft PRD:
 3. **Ask clarifying questions** using lettered options (A, B, C, D) for quick responses
 4. **Update the PRD** using helm-bridge tools:
    ```
-   helm_prd_update({ prd_id: "prd-[name]", title: "...", notes: "..." })
+   helm_prd_update({ prd_id: "prd-[name]", title: "...", status: "..." })
    helm_prd_set_content({ prd_id: "prd-[name]", content_markdown: "..." })
    helm_prd_story_update({ prd_id: "prd-[name]", story_id: "US-001", ... })
    ```
@@ -466,7 +472,7 @@ When the user describes a new feature:
    helm_prd_story_bulk_create({
      prd_id: "prd-[name]",
      stories: [
-       { story_id: "US-001", title: "...", description: "...", acceptance_criteria: [...], story_points: 3, status: "pending", phase: 1, sort_order: 1 },
+       { story_id: "US-001", title: "...", content_markdown: "...", acceptance_criteria: [{text: "...", met: false}], story_points: 3, status: "pending", phase: 1, sort_order: 1 },
        { story_id: "US-002", ... },
        ...
      ]
@@ -490,6 +496,13 @@ When the user describes a new feature:
 9. **Refine** as described above
 
 ### Conventions-Aware Story Writing
+
+> **Philosophy:** Planner writes clear stories with detailed `content_markdown` and verifiable `acceptance_criteria`. Planner does NOT pre-flag stories with per-story metadata (supportArticleRequired, marketingRequired, toolsRequired, considerations). These are now driven by:
+> - `project.json` → `capabilities` (declares what the project has)
+> - `CONVENTIONS.md` (declares the rules — e.g., "user-facing changes need support articles")
+> - Builder auto-detects post-implementation what needs to happen
+>
+> The ONE exception is `required_credentials` — this is genuinely planning-time information that the user needs to act on outside the agent system (e.g., "get a Stripe API key"). Populate this when stories depend on external service credentials.
 
 After writing or refining each story's acceptance criteria, review the project's `CONVENTIONS.md` and `TESTING_CONVENTIONS.md` (these should already be loaded from startup — see Post-Startup Setup above) for sections directly relevant to what that story is building or changing.
 
@@ -916,7 +929,7 @@ When working with a PRD in a Planner session, Planner generates tasks conversati
    helm_prd_get({ prd_id: "prd-[name]" })
    ```
    
-   Extract: title, content_markdown, stories array, status, notes
+   Extract: title, content_markdown, stories array, status
 
 2. **Analyze the repository codebase:**
    - **Use `helm_search_context` for semantic search of related work:**
@@ -1157,7 +1170,8 @@ When assigning tasks to stories, Planner uses semantic matching:
      prd_id: "prd-[name]",
      story_id: "US-004",
      title: "Event Notification System",
-     description: "...",
+     content_markdown: "...",
+     acceptance_criteria: [{"text": "...", "met": false}],
      status: "pending"
    })
    ```

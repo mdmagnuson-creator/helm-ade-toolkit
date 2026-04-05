@@ -19,19 +19,36 @@
     "acceptanceCriterion": {
       "type": "object",
       "description": "Single acceptance criterion within a story",
+      "required": ["text"],
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Criterion identifier (e.g., 'AC-001')"
-        },
-        "description": {
+        "text": {
           "type": "string",
           "description": "What must be true for this criterion to pass"
         },
-        "passed": {
+        "met": {
           "type": "boolean",
           "default": false,
           "description": "Whether this criterion has been verified"
+        }
+      }
+    },
+    "credentialRequirement": {
+      "type": "object",
+      "description": "A credential the user must provide outside the agent system",
+      "required": ["service", "type", "status"],
+      "properties": {
+        "service": {
+          "type": "string",
+          "description": "Provider or API name (e.g., 'stripe', 'supabase', 'sendgrid')"
+        },
+        "type": {
+          "type": "string",
+          "description": "Credential type (e.g., 'apiKey', 'oauthClient', 'serviceAccount', 'token')"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "provided", "deferred"],
+          "description": "Whether the credential has been provided"
         }
       }
     },
@@ -117,11 +134,18 @@
         },
         "content_markdown": {
           "type": ["string", "null"],
-          "description": "Full PRD content in Markdown format. This is the source of truth for PRD content."
+          "description": "High-level summary/overview of the spec (what it is, why it matters). Detailed story content lives in prd_stories.content_markdown."
         },
         "notes": {
           "type": ["string", "null"],
           "description": "Additional notes or context for this PRD"
+        },
+        "required_credentials": {
+          "type": ["array", "null"],
+          "description": "Credentials the user must provide outside the agent system. Spec-level: all credentials needed across all stories.",
+          "items": {
+            "$ref": "#/definitions/credentialRequirement"
+          }
         },
         "phases": {
           "type": "integer",
@@ -161,6 +185,11 @@
           "format": "uuid",
           "description": "Foreign key to prds.id (CASCADE delete — stories are deleted when PRD is deleted)"
         },
+        "org_id": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "Foreign key to organizations.id — denormalized from parent PRD for RLS"
+        },
         "session_id": {
           "type": ["string", "null"],
           "format": "uuid",
@@ -175,13 +204,13 @@
           "type": "string",
           "description": "Human-readable title of the story"
         },
-        "description": {
+        "content_markdown": {
           "type": ["string", "null"],
-          "description": "Detailed description of what this story accomplishes"
+          "description": "Full story specification in markdown (detailed requirements, context, implementation notes). This is the primary content field for stories."
         },
         "acceptance_criteria": {
-          "type": "array",
-          "description": "JSONB array of acceptance criteria objects",
+          "type": ["array", "null"],
+          "description": "JSONB array of acceptance criteria objects with {text, met} structure",
           "items": {
             "$ref": "#/definitions/acceptanceCriterion"
           }
@@ -204,9 +233,28 @@
           "type": ["integer", "null"],
           "description": "Order of this story within the PRD for execution sequencing"
         },
-        "notes": {
+        "priority": {
+          "type": ["integer", "null"],
+          "description": "Story priority (lower number = higher priority)"
+        },
+        "estimated_hours": {
+          "type": ["number", "null"],
+          "description": "Estimated hours to complete this story"
+        },
+        "actual_hours": {
+          "type": ["number", "null"],
+          "description": "Actual hours spent on this story"
+        },
+        "assigned_to": {
           "type": ["string", "null"],
-          "description": "Implementation notes or context for this story"
+          "description": "Assignee identifier (user or agent)"
+        },
+        "required_credentials": {
+          "type": ["array", "null"],
+          "description": "Credentials this specific story depends on. Surfaced in Helm UI so user can act on them.",
+          "items": {
+            "$ref": "#/definitions/credentialRequirement"
+          }
         },
         "started_at": {
           "type": ["string", "null"],

@@ -11,14 +11,14 @@ Create detailed Product Requirements Documents that are clear, actionable, and s
 
 ## Prerequisites
 
-> ⛔ **CRITICAL: This skill requires the `helm-bridge` plugin.**
+> ⛔ **CRITICAL: This skill requires MCP connection to Helm.**
 >
-> Before performing any PRD operations, verify the `helm_prd_*` tools are available.
+> Before performing any PRD operations, verify the MCP `prd_*` tools are available.
 > If tools are not available, STOP and report:
 > ```
-> ⛔ helm-bridge plugin tools not available. Cannot perform PRD operations 
-> without Supabase connection. Ensure helm-bridge plugin is installed and 
-> HELM_SUPABASE_URL is set.
+> ⛔ MCP tools not available. Cannot perform PRD operations 
+> without Helm connection. Ensure Helm ADE is running and 
+> MCP server is connected.
 > ```
 >
 > **Do NOT fall back to file I/O** — if the tools fail, stop.
@@ -32,7 +32,7 @@ Create detailed Product Requirements Documents that are clear, actionable, and s
 3. Ask 3-5 essential clarifying questions (with lettered options)
 4. Identify external service dependencies and credential timing needs
 5. Generate a structured PRD based on answers
-6. Save PRD via `helm_prd_create` + `helm_prd_set_content` + `helm_prd_story_bulk_create`
+6. Save PRD via `prd_create` + `prd_updateContent` + `prd_story_bulk_create`
 
 **Important:** Do NOT start implementing. Just create the PRD.
 
@@ -393,11 +393,11 @@ The PRD reader may be a junior developer or AI agent. Therefore:
 
 ## Output
 
-PRDs are saved to Supabase via `helm_prd_*` tools:
+PRDs are saved to Supabase via MCP `prd_*` tools:
 
 1. **Create the PRD record:**
    ```
-   helm_prd_create({
+   prd_create({
      prd_id: "prd-[feature-name]",    // kebab-case
      title: "[Feature Title]",
      status: "draft",
@@ -410,7 +410,7 @@ PRDs are saved to Supabase via `helm_prd_*` tools:
 
 2. **Create stories in bulk:**
    ```
-   helm_prd_story_bulk_create({
+   prd_story_bulk_create({
      prd_id: "prd-[feature-name]",
      stories: [
        {
@@ -582,7 +582,7 @@ Before saving the PRD:
 - [ ] PRD includes `## Scope Considerations` section when considerations exist
 - [ ] Relevant stories include `Considerations` field with mapped ids
 - [ ] Credential dependencies are captured with request timing (`upfront` or `after-initial-build`)
-- [ ] Saved via `helm_prd_create` + `helm_prd_story_bulk_create`
+- [ ] Saved via `prd_create` + `prd_story_bulk_create`
 
 ## Automatic Post-Completion Tasks
 

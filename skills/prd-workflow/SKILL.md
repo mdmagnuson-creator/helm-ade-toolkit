@@ -9,14 +9,14 @@ description: "PRD mode workflow for Builder. Use when building features from PRD
 
 ## Prerequisites
 
-> ⛔ **CRITICAL: This skill requires the `helm-bridge` plugin.**
+> ⛔ **CRITICAL: This skill requires MCP connection to Helm.**
 >
-> Before performing any PRD operations, verify the `helm_prd_*` and `helm_task_*` tools are available.
+> Before performing any PRD operations, verify the MCP `prd_*` and task tools are available.
 > If tools are not available, STOP and report:
 > ```
-> ⛔ helm-bridge plugin tools not available. Cannot perform PRD operations 
-> without Supabase connection. Ensure helm-bridge plugin is installed and 
-> HELM_SUPABASE_URL is set.
+> ⛔ MCP tools not available. Cannot perform PRD operations 
+> without Helm connection. Ensure Helm ADE is running and 
+> MCP server is connected.
 > ```
 >
 > **Do NOT fall back to file I/O** — if the tools fail, stop.
@@ -35,21 +35,21 @@ PRD mode implements features from PRDs stored in Supabase. Each PRD story maps t
 └─────────────────────┘     └─────────────────────┘     └─────────────────────┘
 ```
 
-## Helm-Bridge Tools Reference
+## MCP Tools Reference
 
 | Tool | Purpose |
 |------|---------|
-| `helm_prd_get` | Fetch PRD content and stories from Supabase |
-| `helm_prd_list` | List PRDs with filters (status, limit) |
-| `helm_prd_update` | Update PRD progress (status, current_story, completed_stories) |
-| `helm_prd_story_update` | Update story status after completion |
-| `helm_task_get` | Fetch task state (each story maps to a task) |
-| `helm_task_update` | Update task status, fields, testing notes |
-| `helm_task_add_activity` | Record activity entries (test results, critic results, fix attempts) |
-| `helm_task_add_comment` | Leave notes/questions on a task |
-| `helm_session_set_state(key, value)` | Persist session state (fix loop counts, verification state) |
-| `helm_session_get_state(key)` | Read session state |
-| `helm_session_sync()` | Flush state to Supabase |
+| `query_prd` | Fetch PRD content and stories from Supabase |
+| `query_prds` | List PRDs with filters (status, limit) |
+| `prd_changeStatus` | Update PRD status |
+| `prd_updateProgress` | Update PRD progress (current_story, completed_stories) |
+| `prd_story_update` | Update story status after completion |
+| `query_tasks` | Query tasks (each story maps to a task) |
+| `task_changeStatus` | Update task status |
+| `task_editDescription` | Update task fields, testing notes |
+| `task_saveComment` | Leave notes/questions on a task |
+| `session_saveState` | Persist session state (fix loop counts, verification state) |
+| `query_session_state` | Read session state |
 
 ---
 
@@ -82,7 +82,7 @@ When user selects a PRD to build:
 Fetch the PRD and its stories:
 
 ```
-helm_prd_get({ prd_id: "prd-[name]" })
+query_prd({ prd_id: "prd-[name]" })
 ```
 
 The response includes:
@@ -94,7 +94,7 @@ The response includes:
 List active PRDs to check for conflicts:
 
 ```
-helm_prd_list({ status: "in_progress" })
+query_prds({ status: "in_progress" })
 ```
 
 - If HIGH conflict risk with an active session, warn and get confirmation
@@ -105,9 +105,12 @@ helm_prd_list({ status: "in_progress" })
 Update the PRD to claim it:
 
 ```
-helm_prd_update({
+prd_changeStatus({
   prd_id: "prd-[name]",
-  status: "in_progress",
+  status: "in_progress"
+})
+prd_updateProgress({
+  prd_id: "prd-[name]",
   started_at: "<ISO timestamp>",
   current_story: "US-001"
 })
@@ -199,15 +202,7 @@ Requirements:
 > **Failure behavior:** Steps 1-4 (typecheck/lint/test/critic): max 3 attempts, then STOP.
 > Step 5 (Playwright): max 5 attempts, then skip and log, continue to next story.
 
-Record quality check results via `helm_task_add_activity`:
-
-```
-helm_task_add_activity({
-  task_id: "{story_task_id}",
-  activity_type: "quality_check",
-  content: "typecheck: passed, lint: passed, tests: 12 passed, critic: passed"
-})
-```
+Record quality check results — activity logging is handled automatically by Helm's CommandLogSubscriber. No manual activity recording needed.
 
 #### Step 2.3: Track Fix Loop (if needed)
 
@@ -215,10 +210,14 @@ If quality checks fail, track fix attempts via session state:
 
 ```
 // Track fix loop for story
-helm_session_set_state("fixLoop.US-001", {
-  attempts: 2,
-  lastError: "typecheck failed: Property 'foo' does not exist",
-  lastAttempt: "<ISO timestamp>"
+session_saveState({
+  fixLoop: {
+    "US-001": {
+      attempts: 2,
+      lastError: "typecheck failed: Property 'foo' does not exist",
+      lastAttempt: "<ISO timestamp>"
+    }
+  }
 })
 ```
 
@@ -231,7 +230,7 @@ After story completes and quality checks pass:
 **Update the story in Supabase:**
 
 ```
-helm_prd_story_update({
+prd_story_update({
   prd_id: "prd-[name]",
   story_id: "US-001",
   status: "completed",
@@ -243,7 +242,7 @@ helm_prd_story_update({
 **Update PRD progress:**
 
 ```
-helm_prd_update({
+prd_updateProgress({
   prd_id: "prd-[name]",
   current_story: "US-002",  // next pending story
   completed_stories: 1
@@ -253,7 +252,7 @@ helm_prd_update({
 **Update task status:**
 
 ```
-helm_task_update({
+task_changeStatus({
   task_id: "{story_task_id}",
   status: "agent_build_complete"
 })
@@ -287,15 +286,7 @@ When to run @critic depends on configured `criticMode`:
 2. Project: `project.json` → `agents.criticMode`
 3. Fallback: `balanced`
 
-Record critic results via `helm_task_add_activity`:
-
-```
-helm_task_add_activity({
-  task_id: "{story_task_id}",
-  activity_type: "critic_review",
-  content: "critic: passed, security: no issues, edge-cases: 2 suggestions (addressed)"
-})
-```
+Record critic results — activity logging is handled automatically by Helm's CommandLogSubscriber. No manual activity recording needed.
 
 ### Step 3: Repeat for All Stories
 
@@ -324,12 +315,13 @@ If any Playwright tests were deferred to PRD completion, run them now using `tes
 Mark PRD ready for completion:
 
 ```
-helm_prd_update({
+prd_updateProgress({
   prd_id: "prd-[name]",
-  status: "in_progress",  // still in_progress until PR is merged
   completed_stories: {total}
 })
 ```
+
+Note: PRD remains `in_progress` until PR is merged.
 
 ### Step 4: Hand Off to Builder Completion Flow
 
@@ -380,28 +372,33 @@ If user makes an ad-hoc request while a PRD is active:
 
 ## Session State Management
 
-All session state is persisted via helm-bridge tools:
+All session state is persisted via MCP tools:
 
 | State | Tool | Key |
 |-------|------|-----|
-| Current story | `helm_prd_update` | `current_story` field |
-| Quality check results | `helm_task_add_activity` | activity entry |
-| Fix loop tracking | `helm_session_set_state` | `fixLoop.{storyId}` |
-| Critic results | `helm_task_add_activity` | activity entry |
+| Current story | `prd_updateProgress` | `current_story` field |
+| Quality check results | (auto-logged) | N/A (activity auto-captured) |
+| Fix loop tracking | `session_saveState` | `fixLoop.{storyId}` |
+| Critic results | (auto-logged) | N/A (activity auto-captured) |
 
 ### State Persistence Example
 
 ```
 // Track verification state for story
-helm_session_set_state("verification.US-001", {
-  typecheck: "passed",
-  lint: "passed",
-  tests: "passed",
-  playwright: "deferred"
+session_saveState({
+  verification: {
+    "US-001": {
+      typecheck: "passed",
+      lint: "passed",
+      tests: "passed",
+      playwright: "deferred"
+    }
+  }
 })
 
 // Read state on resume
-const verificationState = helm_session_get_state("verification.US-001")
+const state = await query_session_state()
+const verificationState = state.verification?.["US-001"]
 ```
 
 ---
@@ -414,10 +411,10 @@ Users can request PRD history with "show PRD history" or similar phrases.
 
 ```
 // List recent completed PRDs
-helm_prd_list({ status: "completed", limit: 5 })
+query_prds({ status: "completed", limit: 5 })
 
 // Get details for a specific PRD
-helm_prd_get({ prd_id: "prd-[name]" })
+query_prd({ prd_id: "prd-[name]" })
 ```
 
 ---

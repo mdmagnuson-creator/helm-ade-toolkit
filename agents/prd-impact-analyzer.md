@@ -14,10 +14,10 @@ tools:
 
 # PRD Impact Analyzer
 
-> ⛔ **CRITICAL: This agent requires helm-bridge plugin tools.**
+> ⛔ **CRITICAL: This agent requires MCP PRD tools.**
 >
-> If any `helm_prd_*` tool returns "unknown tool" error, STOP and report:
-> "⛔ helm-bridge plugin tools not available. Cannot perform PRD operations without Supabase connection. Ensure helm-bridge plugin is installed and HELM_SUPABASE_URL is set."
+> If any `prd_*` or `query_prds` tool returns "unknown tool" error, STOP and report:
+> "⛔ MCP PRD tools not available. Cannot perform PRD operations without Supabase connection. Ensure the MCP server is running and HELM_SUPABASE_URL is set."
 > Do NOT fall back to reading `docs/prd-registry.json` — Supabase is the source of truth.
 
 > ⛔ **CRITICAL: Check `git.autoCommit` before committing changes**
@@ -145,20 +145,22 @@ You will receive:
    find docs/completed -name "*[prdId]*" -type f
    ```
    
-   Or use helm-bridge if the PRD was recently completed:
+   Or use MCP tools if the PRD was recently completed:
    ```
-   helm_prd_get({ prd_id: "[prdId]" })
+   query_prds({ prdId: "[prdId]" })
+   query_prd_stories({ prdId: "[prdId]" })
    ```
 
-2. **List all PRDs** using helm-bridge:
+2. **List all PRDs** using MCP tools:
    ```
    # Get all PRDs with their status and metadata
-   helm_prd_list({ limit: 100 })
+   query_prds({ limit: 100 })
    ```
 
 3. **For each PRD that needs detailed analysis**, get full details:
    ```
-   helm_prd_get({ prd_id: "[prd-id]" })
+   query_prds({ prdId: "[prd-id]" })
+   query_prd_stories({ prdId: "[prd-id]" })
    ```
 
 4. **Get the list of changed files** from the completed PRD:
@@ -234,26 +236,26 @@ prd-route-optimization had story:
 
 ### Step 5: Update PRD Data
 
-Update PRD data in Supabase using helm-bridge tools:
+Update PRD data in Supabase using MCP tools:
 
 1. **Update dependency status** for PRDs that depended on completed PRD:
    ```
-   helm_prd_update({
-     prd_id: "[affected-prd-id]",
+   prd_updateContent({
+     prdId: "[affected-prd-id]",
      notes: "Dependency on [completedPrd] now satisfied. [additional notes]"
    })
    ```
 
 2. **Update story notes** for affected stories:
    ```
-   helm_prd_story_update({
-     prd_id: "[affected-prd-id]",
-     story_id: "US-XXX",
-     notes: "Can reuse [component] from [completedPrd]"
+   story_editDescription({
+     prdId: "[affected-prd-id]",
+     storyId: "US-XXX",
+     description: "[updated description noting reuse from completedPrd]"
    })
    ```
 
-> **Note:** `docs/prd-registry.json` is deprecated. PRD state is now managed via `helm_prd_*` tools backed by Supabase.
+> **Note:** `docs/prd-registry.json` is deprecated. PRD state is now managed via MCP tools backed by Supabase.
 
 ### Step 6: Generate Impact Report
 
@@ -317,7 +319,7 @@ git add docs/prd-impact-report.md
 git commit -m "docs: analyze impact of [prdId] completion"
 ```
 
-> **Note:** PRD updates are stored in Supabase via helm-bridge tools and don't need to be committed. Only the local impact report needs to be committed.
+> **Note:** PRD updates are stored in Supabase via MCP tools and don't need to be committed. Only the local impact report needs to be committed.
 
 ## Output
 
@@ -329,7 +331,7 @@ PRD Impact Analysis Complete
 Completed: [prdId] - [name]
 
 Changes made:
-- Updated PRD data in Supabase via helm-bridge
+- Updated PRD data in Supabase via MCP tools
 - Created docs/prd-impact-report.md
 
 Key findings:

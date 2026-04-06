@@ -9,13 +9,13 @@ When a PRD affects multiple projects, use `relatedProjects` from `project.json` 
 
 ## Prerequisites
 
-> ⛔ **CRITICAL: This skill requires the `helm-bridge` plugin.**
+> ⛔ **CRITICAL: This skill requires MCP PRD tools.**
 >
-> Before performing any PRD operations, verify the `helm_prd_*` tools are available.
+> Before performing any PRD operations, verify the `prd_*` and `query_prds` tools are available.
 > If tools are not available, STOP and report:
 > ```
-> ⛔ helm-bridge plugin tools not available. Cannot perform PRD operations 
-> without Supabase connection. Ensure helm-bridge plugin is installed and 
+> ⛔ MCP PRD tools not available. Cannot perform PRD operations 
+> without Supabase connection. Ensure the MCP server is running and 
 > HELM_SUPABASE_URL is set.
 > ```
 >
@@ -43,10 +43,11 @@ Since Supabase is the single source of truth, you can query PRDs across all proj
 
 ```
 # List all PRDs (spans all projects in org)
-helm_prd_list({ limit: 100 })
+query_prds({ limit: 100 })
 
 # Get a specific PRD from any project
-helm_prd_get({ prd_id: "prd-[name]" })
+query_prds({ prdId: "prd-[name]" })
+query_prd_stories({ prdId: "prd-[name]" })
 ```
 
 This eliminates the need to read PRD files from related project directories.
@@ -57,19 +58,19 @@ When a feature in project A requires work in related project B:
 
 1. **Create a dependent PRD** in Supabase for the related project:
    ```
-   helm_prd_create({
-     prd_id: "prd-[related-feature-name]",
+   prd_create({
+     prdId: "prd-[related-feature-name]",
      title: "[Title]",
      status: "draft",
-     content_markdown: "...",
+     contentMarkdown: "...",
      notes: "{\"sourceProject\": \"[project-a-id]\", \"sourcePrd\": \"prd-[name]\", \"dependency\": true}"
    })
    ```
 
 2. **Link the PRDs** by updating the source PRD:
    ```
-   helm_prd_update({
-     prd_id: "prd-[name]",
+   prd_updateContent({
+     prdId: "prd-[name]",
      notes: "{\"relatedPrds\": [\"prd-[related-feature-name]\"]}"
    })
    ```
@@ -93,5 +94,5 @@ When a feature in project A requires work in related project B:
 
 - ❌ Do NOT modify source code in related projects — only create dependent PRDs
 - ❌ Do NOT assume related project structure — verify via `project.json` first
-- ✅ You may create dependent PRDs via `helm_prd_create`
+- ✅ You may create dependent PRDs via `prd_create`
 - ✅ You may commit planning configuration to related projects

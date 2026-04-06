@@ -226,13 +226,14 @@ currentWork:
 
 > ⛔ **MANDATORY CHECK BEFORE EVERY @developer DELEGATION**
 >
-> This check survives context compaction because it reads from session state (via helm-bridge), not from conversation memory.
+> This check survives context compaction because it reads from session state (via MCP), not from conversation memory.
 
 **Before delegating to @developer, ALWAYS run this check:**
 
 ```typescript
 // Read analysis gate status from session state
-const analysisCompleted = helm_session_get_state("currentAction.analysisCompleted") ?? false;
+const state = await query_session_state();
+const analysisCompleted = state?.currentAction?.analysisCompleted ?? false;
 console.log(`Analysis gate check: analysisCompleted=${analysisCompleted}`);
 ```
 
@@ -248,7 +249,7 @@ console.log(`Analysis gate check: analysisCompleted=${analysisCompleted}`);
 1. Do NOT proceed with delegation
 2. Output: `"⛔ Analysis gate not passed. Must show ANALYSIS COMPLETE dashboard and receive [G] before delegating."`
 3. Run Phase 0 from `adhoc-workflow` skill
-4. After receiving [G], update state: `helm_session_set_state("currentAction.analysisCompleted", true)`
+4. After receiving [G], update state: `session_saveState({ currentAction: { analysisCompleted: true } })`
 5. Re-run the check (should now pass)
 
 **Logging requirement:**

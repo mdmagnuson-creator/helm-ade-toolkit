@@ -630,11 +630,11 @@ generatePRD: true|false
    ...
    ```
    
-   Register the PRD in Supabase using `helm_prd_create`:
-   - `prd_id`: "prd-e2e-fixes-YYYY-MM-DD"
+   Register the PRD in Supabase using `prd_create`:
+   - `prdId`: "prd-e2e-fixes-YYYY-MM-DD"
    - `title`: "E2E Test Fixes - YYYY-MM-DD"
    - `status`: "draft"
-   - `content_markdown`: (the draft content)
+   - `contentMarkdown`: (the draft content)
 
 8. **Output summary**
    

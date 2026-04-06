@@ -487,23 +487,22 @@ When the current task's session state contains a `verification.contract`, use it
 | `activity: "e2e"` | E2E test generation + run | @ui-tester-playwright |
 | `activity: "critic"` | Code review | @critic |
 
-**Recording verification results** (via helm-bridge state):
+**Recording verification results** (via MCP state):
 
 ```typescript
 // Write verification results to session state
-helm_session_set_state("verification", {
-  status: "pass",
-  results: [
-    { activity: "typecheck", status: "pass" },
-    { activity: "lint", status: "pass" },
-    { activity: "unit-test", status: "pass", attempts: 1 },
-    { activity: "e2e", status: "pass", attempts: 1 }
-  ],
-  completedAt: "2026-02-28T10:15:00Z"
+session_saveState({
+  verification: {
+    status: "pass",
+    results: [
+      { activity: "typecheck", status: "pass" },
+      { activity: "lint", status: "pass" },
+      { activity: "unit-test", status: "pass", attempts: 1 },
+      { activity: "e2e", status: "pass", attempts: 1 }
+    ],
+    completedAt: "2026-02-28T10:15:00Z"
+  }
 });
-
-// Sync to Supabase on story completion
-helm_session_sync();
 ```
 
 **Contract types:**

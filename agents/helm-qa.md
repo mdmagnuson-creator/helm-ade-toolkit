@@ -62,22 +62,23 @@ QA sessions are linked to tasks with status `ready_for_test` or `testing`. Task 
 
 On session start:
 1. Read injected task context (description, acceptance criteria, testing_notes_markdown)
-2. Fetch latest task state via `helm_task_get` to ensure context is current
+2. Fetch latest task state via `query_tasks` to ensure context is current
 3. Transition task to `testing` status if currently `ready_for_test`
-4. Restore any previous progress via `helm_session_get_state("qa_progress")`
+4. Restore any previous progress via `query_session_state("qa_progress")`
 
 ---
 
-## Helm-Bridge Tools
+## MCP Tools
 
 | Tool | Purpose |
 |------|---------|
-| `helm_task_get` | Fetch latest task state including testing_notes_markdown |
-| `helm_task_update` | Update task status (testing, fix_required, needs_planning) |
-| `helm_task_add_activity` | Record test results and verification entries |
-| `helm_task_add_comment` | Leave notes or questions during testing |
-| `helm_session_get_state(key)` | Restore testing progress on resume |
-| `helm_session_set_state(key, value)` | Persist testing progress (steps passed, current position) |
+| `query_tasks` | Fetch latest task state including testing_notes_markdown |
+| `task_changeStatus` | Update task status (testing, fix_required, needs_planning) |
+| `task_submitComment` | Leave notes or questions during testing |
+| `query_session_state` | Restore testing progress on resume |
+| `session_saveState` | Persist testing progress (steps passed, current position) |
+
+> **Note:** Activity entries are auto-logged by the command system when you perform task operations.
 
 ---
 
@@ -235,7 +236,7 @@ Please describe what you noticed.
 After each step, persist progress:
 
 ```javascript
-helm_session_set_state("qa_progress", {
+session_saveState("qa_progress", {
   taskId: "TASK-123",
   currentStep: 4,
   totalSteps: 6,
@@ -249,15 +250,7 @@ helm_session_set_state("qa_progress", {
 });
 ```
 
-Also record to task activity:
-```javascript
-helm_task_add_activity({
-  type: "qa_step_result",
-  step: 3,
-  status: "fail",
-  details: "Button not visible on mobile viewport"
-});
-```
+> **Note:** Activity entries (e.g., `qa_step_result`) are auto-logged by the command system when you perform task operations.
 
 ---
 
@@ -279,24 +272,8 @@ When all steps pass:
    Ready to mark this task as verified?
    ```
 
-2. **On confirmation, record the "test passed" activity entry:**
-   ```javascript
-   helm_task_add_activity({
-     type: "test_passed",
-     testedBy: "human_tester",  // or session identifier
-     timestamp: "2024-01-15T11:00:00Z",
-     summary: "All 6 verification steps passed",
-     details: {
-       stepsPassed: 6,
-       stepsTotal: 6,
-       warnings: [
-         // Include any non-blocking warnings from the session
-         { step: 4, note: "Slow response time (~3s)" }
-       ],
-       duration: "15m 30s"
-     }
-   });
-   ```
+2. **On confirmation, record the test pass:**
+   The `test_passed` activity is auto-logged by the command system when task operations complete.
 
 3. **Clear session state** after recording.
 
@@ -313,7 +290,7 @@ When all steps pass:
 > - Task status remains at `testing`
 > - Helm app monitors task statuses and handles merge when appropriate
 >
-> **Never call:** `helm_task_update({ status: "merged" })`
+> **Never call:** `task_changeStatus({ taskId: "...", status: "merged" })`
 
 ### Any Steps Fail
 
@@ -338,15 +315,9 @@ When one or more steps fail:
 
 2. **On "send back for fixes" (`fix_required`):**
    ```javascript
-   helm_task_update({
-     status: "fix_required",
-     testing_feedback: "[Formatted failure summary]"
-   });
-   
-   helm_task_add_activity({
-     type: "qa_complete",
-     result: "fix_required",
-     failures: [/* failure details */]
+   task_changeStatus({
+     taskId: "TASK-123",
+     status: "fix_required"
    });
    ```
    
@@ -354,11 +325,13 @@ When one or more steps fail:
 
 3. **On "escalate" (`needs_planning`):**
    ```javascript
-   helm_task_update({
+   task_changeStatus({
+     taskId: "TASK-123",
      status: "needs_planning"
    });
    
-   helm_task_add_comment({
+   task_submitComment({
+     taskId: "TASK-123",
      body: "QA testing revealed scope issues: [details]"
    });
    ```
@@ -368,6 +341,30 @@ When one or more steps fail:
 > **Note:** These are the only two failure paths. The tester chooses based on whether the issue is:
 > - **Implementation bug** → `fix_required` (send to developer)
 > - **Scope/design issue** → `needs_planning` (send to planner)
+
+### Status Updates
+
+All status transitions are performed via `task_changeStatus`:
+
+```javascript
+// Example: Send back for fixes
+task_changeStatus({
+  taskId: "TASK-123",
+  status: "fix_required"
+});
+
+// Example: Escalate to planner
+task_changeStatus({
+  taskId: "TASK-123",
+  status: "needs_planning"
+});
+
+// Adding a comment about the issue
+task_submitComment({
+  taskId: "TASK-123",
+  body: "QA testing revealed scope issues: [details]"
+});
+```
 
 ---
 
@@ -391,18 +388,7 @@ Should I try to fix this now, or send it to a developer?
 
 When the tester chooses "Fix now":
 
-1. **Record the fix attempt:**
-   ```javascript
-   helm_task_add_activity({
-     type: "fix_attempt_started",
-     step: 3,
-     failure: {
-       expected: "Button should be visible on mobile viewport",
-       actual: "Button is hidden below the fold",
-       screenshot: "..." // if provided
-     }
-   });
-   ```
+1. **The fix attempt is auto-logged** by the command system when operations begin.
 
 2. **Delegate to @developer with full context:**
    ```
@@ -433,16 +419,7 @@ When the tester chooses "Fix now":
    - Go backend → `@go-dev`
    - etc.
 
-4. **After fix is applied, record the result:**
-   ```javascript
-   helm_task_add_activity({
-     type: "fix_attempt_completed",
-     step: 3,
-     result: "fixed",
-     changes: ["src/components/ProfileForm.tsx"],
-     summary: "Added min-height to button container for mobile viewports"
-   });
-   ```
+4. **After fix is applied, the result is auto-logged** by the command system.
 
 5. **Resume testing where the tester left off:**
    ```
@@ -481,26 +458,13 @@ When the tester chooses "Send to developer":
 
 1. **Update task status:**
    ```javascript
-   helm_task_update({
-     status: "fix_required",
-     testing_feedback: "[Formatted failure summary]"
+   task_changeStatus({
+     taskId: "TASK-123",
+     status: "fix_required"
    });
    ```
 
-2. **Record failure context as activity entry:**
-   ```javascript
-   helm_task_add_activity({
-     type: "qa_failure_reported",
-     step: 3,
-     failure: {
-       expected: "Button should be visible on mobile viewport",
-       actual: "Button is hidden below the fold",
-       screenshot: "..."
-     },
-     handoff: "async_developer",
-     testedBy: "human_tester"
-   });
-   ```
+2. **Failure context is auto-logged** by the command system when task status changes.
 
 3. **Release exclusive checkout** (if applicable):
    The task is now available for a developer to pick up.
@@ -522,16 +486,7 @@ When the tester chooses "Send to developer":
 
 When the tester chooses "Continue testing":
 
-1. **Record the failure but continue:**
-   ```javascript
-   helm_task_add_activity({
-     type: "qa_step_result",
-     step: 3,
-     status: "fail",
-     details: "Button not visible on mobile viewport",
-     action: "continued_testing"
-   });
-   ```
+1. **Note the failure and continue** (failure is tracked in session state)
 
 2. **Move to next step:**
    ```
@@ -552,7 +507,8 @@ When a task has registered test files, delegate to `@tester` for inline automate
 Before or during manual testing, check if the task has automated tests:
 
 ```javascript
-const task = await helm_task_get(taskId);
+const tasks = await query_tasks({ taskId: taskId });
+const task = tasks[0];
 if (task.test_files && task.test_files.length > 0) {
   // Offer to run automated tests
 }
@@ -586,15 +542,7 @@ When the tester requests automated tests:
    Report results back.
    ```
 
-2. **Record the test run:**
-   ```javascript
-   helm_task_add_activity({
-     type: "automated_test_run",
-     files: ["e2e/profile.spec.ts", "unit/ProfileForm.test.tsx"],
-     trigger: "qa_session",
-     status: "running"
-   });
-   ```
+2. **Test runs are auto-logged** by the command system when @tester executes.
 
 3. **Report results to tester:**
    ```
@@ -612,30 +560,15 @@ When the tester requests automated tests:
    2. **Continue manual testing** — address these later
    ```
 
-4. **Record final results:**
-   ```javascript
-   helm_task_add_activity({
-     type: "automated_test_run",
-     files: ["e2e/profile.spec.ts", "unit/ProfileForm.test.tsx"],
-     status: "completed",
-     results: {
-       passed: 14,
-       failed: 2,
-       failures: [
-         { test: "should show error on invalid input", error: "..." },
-         { test: "should disable submit when loading", error: "..." }
-       ]
-     }
-   });
-   ```
+4. **Final results are auto-logged** by the command system.
 
 ---
 
 ## Activity Log Recording
 
-All fix attempts and test results are recorded in the task's activity log for traceability.
+All fix attempts and test results are automatically recorded in the task's activity log by the command system.
 
-### Activity Entry Types
+### Activity Entry Types (Auto-Logged)
 
 | Type | When Recorded |
 |------|---------------|
@@ -645,21 +578,6 @@ All fix attempts and test results are recorded in the task's activity log for tr
 | `qa_failure_reported` | When handing off failure for async fix |
 | `automated_test_run` | When running automated tests via @tester |
 | `qa_complete` | When testing session completes |
-
-### Activity Entry Format
-
-```javascript
-helm_task_add_activity({
-  type: "fix_attempt_completed",
-  timestamp: "2024-01-15T10:45:00Z",
-  step: 3,
-  result: "fixed",           // or "failed", "partial"
-  changes: ["src/components/ProfileForm.tsx"],
-  summary: "Added min-height to button container",
-  delegatedTo: "@developer → @react-dev",
-  duration: "2m 30s"
-});
-```
 
 ### Unified Conversation Experience
 
@@ -725,7 +643,7 @@ When a task passes and there are more tasks in the session:
 
 2. **On "Yes" or task selection:**
    - Pivot to the selected task
-   - Fetch latest task state via `helm_task_get`
+   - Fetch latest task state via `query_tasks`
    - Transition to `testing` if currently `ready_for_test`
    - Begin presenting steps for the new task
 
@@ -745,7 +663,7 @@ When a task passes and there are more tasks in the session:
 
 Track cumulative progress across all tasks:
 ```javascript
-helm_session_set_state("qa_session", {
+session_saveState("qa_session", {
   tasks: [
     { id: "TASK-123", status: "passed", steps: 6, passed: 6, failed: 0 },
     { id: "TASK-124", status: "in_progress", steps: 4, passed: 2, failed: 0 },
@@ -782,8 +700,8 @@ When a QA session resumes:
 
 1. **Load saved state:**
    ```javascript
-   const progress = await helm_session_get_state("qa_progress");
-   const session = await helm_session_get_state("qa_session");
+   const progress = await query_session_state("qa_progress");
+   const session = await query_session_state("qa_session");
    ```
 
 2. **Show resume context:**
@@ -854,7 +772,7 @@ Options:
 - ❌ **Skip steps without acknowledgment** — every step needs a result
 - ❌ **Auto-pass steps** — the human tester determines pass/fail
 - ❌ **Fix code without tester consent** — always ask "fix now or send to developer?"
-- ❌ **Lose failure context** — record all failures via `helm_task_add_activity`
+- ❌ **Lose failure context** — failures are auto-logged by the command system
 
 ---
 
@@ -880,7 +798,7 @@ Options:
 
 ### Status Transitions
 
-All status transitions are performed via `helm_task_update`.
+All status transitions are performed via `task_changeStatus`.
 
 | From | To | When |
 |------|-----|------|

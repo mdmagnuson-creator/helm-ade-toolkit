@@ -5,7 +5,7 @@ description: "Shared session management for agents with state persistence. Use w
 
 # Session State Skill
 
-> Shared session management for agents with state persistence via helm-bridge.
+> Shared session management for agents with state persistence via MCP.
 >
 > This skill provides common patterns for right-panel todos, rate limit handling, and compaction recovery that are shared across builder, planner, and toolkit agents.
 
@@ -18,22 +18,20 @@ description: "Shared session management for agents with state persistence. Use w
 
 ## Applicable Agents
 
-- **builder** — uses helm-bridge for session state (backed by Supabase)
+- **builder** — uses MCP for session state (backed by Supabase)
 - **planner** — uses `docs/planner-state.json`
 - **toolkit** — uses `$OPENCODE_CONFIG/.tmp/toolkit-state.json`
 
 ---
 
-## State Management via helm-bridge
+## State Management via MCP
 
-Builder and other Helm-integrated agents use helm-bridge tools for state management:
+Builder and other Helm-integrated agents use MCP tools for state management:
 
 | Tool | Purpose |
 |------|---------|
-| `helm_session_get_state(key)` | Read state from local memory cache |
-| `helm_session_set_state(key, value)` | Write state to local memory, queues Supabase sync |
-| `helm_session_sync()` | Flush state to Supabase (on transitions: story completion, fix loop, pause) |
-| `helm_session_load()` | Load state from Supabase on session resume |
+| `query_session_state` | Query state from Supabase |
+| `session_saveState` | Write state to Supabase |
 
 > **Note:** Helm manages sessions natively — there are no local session files or directories.
 
@@ -41,11 +39,11 @@ Builder and other Helm-integrated agents use helm-bridge tools for state managem
 
 ## State File Location (Non-Helm Agents)
 
-Agents not using helm-bridge use local state files:
+Agents not using MCP use local state files:
 
 | Agent | State File |
 |-------|------------|
-| builder | **helm-bridge** (Supabase-backed, no local files) |
+| builder | **MCP** (Supabase-backed, no local files) |
 | planner | `<project>/docs/planner-state.json` |
 | toolkit | `$OPENCODE_CONFIG/.tmp/toolkit-state.json` |
 
@@ -80,7 +78,7 @@ Planner and toolkit share this core structure:
 }
 ```
 
-> **Builder uses helm-bridge.** Builder reads/writes state via `helm_session_get_state()` and `helm_session_set_state()`. It uses `currentAction` (not `currentTask`) and links todos to tasks via `todoTaskLinks` (no separate `uiTodos`).
+> **Builder uses MCP.** Builder reads/writes state via `query_session_state` and `session_saveState`. It uses `currentAction` (not `currentTask`) and links todos to tasks via `todoTaskLinks` (no separate `uiTodos`).
 
 ### Todo-Task Linking Model
 
@@ -135,14 +133,14 @@ Builder links todos to Helm Tasks via a `todoTaskLinks` array in `agent_state`. 
 
 Keep OpenCode right-panel todos and state synchronized for resumability.
 
-> **Builder exception:** Builder derives todos from session state via helm-bridge instead of a separate `uiTodos` store. The contract below applies to planner and toolkit; Builder uses helm-bridge tools.
+> **Builder exception:** Builder derives todos from session state via MCP instead of a separate `uiTodos` store. The contract below applies to planner and toolkit; Builder uses MCP tools.
 
 ### Required Behavior
 
-1. **On startup:** Restore panel todos from state (`uiTodos.items`) via `todowrite`, then sync `todoTaskLinks` via `helm_session_state_save`
+1. **On startup:** Restore panel todos from state (`uiTodos.items`) via `todowrite`, then sync `todoTaskLinks` via `session_saveState`
 2. **On every state change:** Update both stores in one action:
    - Right panel via `todowrite`
-   - Todo-task links via `helm_session_state_save` (mandatory companion call)
+   - Todo-task links via `session_saveState` (mandatory companion call)
    - State file (`uiTodos.items`, `uiTodos.lastSyncedAt`, `uiTodos.flow`)
 3. **One active rule:** Only one todo may be `in_progress` at a time
 4. **Before handoff:** Ensure state is synced so another session can resume
@@ -176,7 +174,7 @@ Rate limit detected when error contains:
 1. **Write state immediately:**
    - Update `currentTask.lastAction` and `contextAnchor`
    - Set `currentTask.rateLimitDetectedAt` (ISO timestamp)
-   - For builder: `helm_session_set_state("currentAction.rateLimitDetectedAt", new Date().toISOString())`
+   - For builder: use `session_saveState` to persist rate limit detection
 
 2. **Show clear message and stop:**
 
@@ -203,7 +201,7 @@ Rate limit detected at: [currentTask.rateLimitDetectedAt]
 
 Track `currentTask` so work can resume after context compaction or rate limiting.
 
-> **Builder uses `currentAction`** (via helm-bridge) instead of `currentTask`. Same purpose, different field name.
+> **Builder uses `currentAction`** (via MCP) instead of `currentTask`. Same purpose, different field name.
 
 ### Required Behavior
 
@@ -218,7 +216,7 @@ Track `currentTask` so work can resume after context compaction or rate limiting
 
 - **After rate limit:** If user responds with intent to continue, resume from `currentTask.lastAction`
 - **New session:** If `currentTask` exists, output: `Resuming: [currentTask.description]`
-- **Builder:** Use `helm_session_load()` to restore state from Supabase on session resume
+- **Builder:** Use `query_session_state` to restore state from Supabase on session resume
 
 ### What Qualifies as Significant Step
 
@@ -236,11 +234,11 @@ Each agent integrates this skill at startup:
 
 ### 1. Load State
 
-**For builder (helm-bridge):**
+**For builder (MCP):**
 ```typescript
-// Load state from Supabase
-await helm_session_load();
-const currentAction = helm_session_get_state("currentAction");
+// Load state from Supabase via MCP
+const state = await query_session_state();
+const currentAction = state.currentAction;
 ```
 
 **For planner/toolkit (local files):**
@@ -272,7 +270,7 @@ If no `currentTask`, proceed to normal welcome/menu flow.
 
 ### Builder Flows
 
-> Builder todos are derived from session state via helm-bridge. Each task = one todo.
+> Builder todos are derived from session state via MCP. Each task = one todo.
 
 | Flow | Todo Granularity | Completion Condition |
 |------|------------------|----------------------|

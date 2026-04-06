@@ -11,14 +11,14 @@ Converts existing PRDs to structured stories that Developer uses for autonomous 
 
 ## Prerequisites
 
-> ⛔ **CRITICAL: This skill requires the `helm-bridge` plugin.**
+> ⛔ **CRITICAL: This skill requires MCP connection to Helm.**
 >
-> Before performing any PRD operations, verify the `helm_prd_*` tools are available.
+> Before performing any PRD operations, verify the MCP `prd_*` tools are available.
 > If tools are not available, STOP and report:
 > ```
-> ⛔ helm-bridge plugin tools not available. Cannot perform PRD operations 
-> without Supabase connection. Ensure helm-bridge plugin is installed and 
-> HELM_SUPABASE_URL is set.
+> ⛔ MCP tools not available. Cannot perform PRD operations 
+> without Helm connection. Ensure Helm ADE is running and 
+> MCP server is connected.
 > ```
 >
 > **Do NOT fall back to file I/O** — if the tools fail, stop.
@@ -30,7 +30,7 @@ Converts existing PRDs to structured stories that Developer uses for autonomous 
 1. **Read project context** from `docs/project.json` (if exists)
 2. Take a PRD (markdown file or text)
 3. Add stack-specific acceptance criteria
-4. Create PRD and stories via `helm_prd_create` + `helm_prd_story_bulk_create`
+4. Create PRD and stories via `prd_create` + `prd_story_bulk_create`
 
 ---
 
@@ -65,7 +65,7 @@ If no `project.json` exists, note this and use defaults:
 
 ## Output Format
 
-Stories are created via `helm_prd_story_bulk_create`. The tool expects this structure:
+Stories are created via `prd_story_bulk_create`. The tool expects this structure:
 
 ```json
 {
@@ -153,7 +153,7 @@ Create the PRD and stories:
 
 1. **Create the PRD record:**
    ```
-   helm_prd_create({
+   prd_create({
      prd_id: "prd-[feature-name]",
      title: "[PRD title]",
      status: "ready",
@@ -166,7 +166,7 @@ Create the PRD and stories:
 
 2. **Create all stories in bulk:**
    ```
-   helm_prd_story_bulk_create({
+   prd_story_bulk_create({
      prd_id: "prd-[feature-name]",
      stories: [
        {
@@ -289,7 +289,7 @@ Each criterion must be something Developer can CHECK, not something vague.
 
 ## Conversion Rules
 
-1. **Each user story becomes one story record** via `helm_prd_story_bulk_create`
+1. **Each user story becomes one story record** via `prd_story_bulk_create`
 2. **IDs**: Sequential (US-001, US-002, etc.)
 3. **Priority**: Mapped to `sort_order` based on dependency order, then document order
 4. **All stories**: Start with `status: "pending"`
@@ -323,7 +323,7 @@ Each is one focused change that can be completed and verified independently.
 
 **Before creating a new PRD, check if there is an existing one with the same ID:**
 
-1. Check for existing PRD: `helm_prd_get({ prd_id: "prd-[name]" })`
+1. Check for existing PRD: `query_prd({ prd_id: "prd-[name]" })`
 2. If PRD exists with different content or completed status:
    - The existing PRD data is already in Supabase history
    - Create the new PRD with a unique ID (e.g., `prd-[name]-v2`) if needed
@@ -348,5 +348,5 @@ Before creating PRD and stories, verify:
 - [ ] Credential dependencies captured via `required_credentials` when needed
 - [ ] Acceptance criteria are verifiable (not vague)
 - [ ] No story depends on a later story
-- [ ] **PRD created via `helm_prd_create`**
-- [ ] **Stories created via `helm_prd_story_bulk_create`**
+- [ ] **PRD created via `prd_create`**
+- [ ] **Stories created via `prd_story_bulk_create`**

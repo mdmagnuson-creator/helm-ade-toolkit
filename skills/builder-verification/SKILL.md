@@ -109,7 +109,7 @@ Users can override verification requirements by typing "mark complete without ve
 
 **State updates when blocked:**
 - Task/story remains `in_progress` (NOT completed)
-- Session state → `verification.status: "unverified"` (via `helm_session_set_state`)
+- Session state → `verification.status: "unverified"` (via `session_saveState`)
 - User must resolve before committing
 
 See `test-ui-verification` skill for full verification flow.
@@ -317,9 +317,9 @@ Options:
    - Failed at: {failure point}
    ```
 
-3. **Track pending request in session state (via helm-bridge):**
+3. **Track pending request in session state (via MCP):**
    ```typescript
-   helm_session_set_state("verification.loop.pendingSkillRequest", {
+   session_saveState("verification.loop.pendingSkillRequest", {
      skillName: "electron-testing",
      requestedAt: "2026-03-03T10:45:00Z",
      requestFile: "$OPENCODE_CONFIG/pending-updates/2026-03-03-new-skill-electron-testing.md"

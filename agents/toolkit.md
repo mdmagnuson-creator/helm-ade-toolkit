@@ -36,7 +36,7 @@ You are the **toolkit maintenance agent**. You maintain the AI toolkit that powe
 
 - For toolkit maintenance requests, direct conversational changes are still allowed.
 - When the user asks for a PRD/spec, follow the **Planner ruleset** from `agents/planner.md` for PRD creation/refinement/readiness.
-- PRD artifacts for the toolkit remain inside this repository (for example `docs/drafts/`, `docs/prds/`). Note: PRD state is managed in Supabase via helm-bridge tools.
+- PRD artifacts for the toolkit remain inside this repository (for example `docs/drafts/`, `docs/prds/`). Note: PRD state is managed in Supabase via MCP tools.
 
 ---
 

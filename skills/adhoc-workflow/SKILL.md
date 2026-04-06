@@ -9,21 +9,21 @@ description: "Ad-hoc mode workflow for Builder. Use when handling direct request
 
 ## Prerequisites
 
-> ⛔ **CRITICAL: This skill requires the `helm-bridge` plugin.**
+> ⛔ **CRITICAL: This skill requires MCP connection to Helm.**
 >
-> Before performing any ad-hoc task operations, verify the `helm_task_*` tools are available.
+> Before performing any ad-hoc task operations, verify the MCP task tools are available.
 > If tools are not available, STOP and report:
 > ```
-> ⛔ helm-bridge plugin tools not available. Cannot perform task operations 
-> without Supabase connection. Ensure helm-bridge plugin is installed and 
-> HELM_SUPABASE_URL is set.
+> ⛔ MCP tools not available. Cannot perform task operations 
+> without Helm connection. Ensure Helm ADE is running and 
+> MCP server is connected.
 > ```
 >
 > **Do NOT fall back to file I/O** — if the tools fail, stop.
 
 ## Overview
 
-Ad-hoc mode handles direct user requests without requiring a PRD. Work is tracked through Helm's native task system via `helm_task_*` tools.
+Ad-hoc mode handles direct user requests without requiring a PRD. Work is tracked through Helm's native task system via MCP tools.
 
 ```
 ┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
@@ -35,17 +35,18 @@ Ad-hoc mode handles direct user requests without requiring a PRD. Work is tracke
 └─────────────────────┘     └─────────────────────┘     └─────────────────────┘
 ```
 
-## Helm-Bridge Tools Reference
+## MCP Tools Reference
 
 | Tool | Purpose |
 |------|---------|
-| `helm_task_create` | Create a new task in Supabase |
-| `helm_task_get` | Fetch latest task state |
-| `helm_task_update` | Update task status, fields, testing notes |
-| `helm_task_add_comment` | Leave notes/questions on a task |
-| `helm_task_add_activity` | Record activity entries (test results, progress, etc.) |
-| `helm_session_set_state(key, value)` | Persist session state to Supabase |
-| `helm_session_get_state(key)` | Read session state from Supabase |
+| `task_create` | Create a new task in Supabase |
+| `query_tasks` | Query tasks (fetch task state) |
+| `task_changeStatus` | Update task status |
+| `task_editTitle` | Update task title |
+| `task_editDescription` | Update task description or testing notes |
+| `task_saveComment` | Leave notes/questions on a task |
+| `session_saveState` | Persist session state to Supabase |
+| `query_session_state` | Read session state from Supabase |
 
 ---
 
@@ -123,15 +124,7 @@ Requirements:
 >
 > **Failure behavior:** If any check fails after 3 fix attempts, STOP and report to user.
 
-After `@developer` completes work, run the quality check pipeline. Record results via `helm_task_add_activity`:
-
-```
-helm_task_add_activity({
-  task_id: "{task_id}",  // from auto-created task
-  activity_type: "quality_check",
-  content: "typecheck: passed, lint: passed, tests: 12 passed"
-})
-```
+After `@developer` completes work, run the quality check pipeline. Activity logging is handled automatically by Helm's CommandLogSubscriber — no manual activity recording needed.
 
 ---
 
@@ -141,9 +134,9 @@ When Builder completes a logical unit of work in an ad-hoc session, it auto-crea
 
 ### Auto-Creation Flow
 
-1. **Create task via `helm_task_create`:**
+1. **Create task via `task_create`:**
    ```
-   helm_task_create({
+   task_create({
      title: "Add loading spinner to submit button",  // derived from work done
      description: "Added visual loading feedback during form submission with spinner icon and disabled state to prevent double-submit",
      labels: ["frontend", "ui"],  // inferred from file types touched
@@ -153,7 +146,7 @@ When Builder completes a logical unit of work in an ad-hoc session, it auto-crea
 
 2. **Save todoTaskLinks with the new task's UUID:** After task creation, save the link between the todo content and the created task:
    ```
-   helm_session_state_save({
+   session_saveState({
      todoTaskLinks: [
        {
          todoContent: 'Add loading spinner to submit button',
@@ -163,16 +156,9 @@ When Builder completes a logical unit of work in an ad-hoc session, it auto-crea
    })
    ```
 
-3. **Add original request as activity:**
-   ```
-   helm_task_add_activity({
-     task_id: "{created_task_id}",
-     activity_type: "original_request",
-     content: "{user's original prompt}"
-   })
-   ```
+3. **Activity logging** — handled automatically by Helm's CommandLogSubscriber. No manual activity recording needed.
 
-4. **Story assignment** — handled server-side by `helm_task_create`. The plugin performs semantic matching against story embeddings to auto-assign the task to the best-matching story. If no match meets the similarity threshold, a new story is auto-created. Builder does not query embeddings directly for story assignment.
+4. **Story assignment** — handled server-side by `task_create`. The MCP server performs semantic matching against story embeddings to auto-assign the task to the best-matching story. If no match meets the similarity threshold, a new story is auto-created. Builder does not query embeddings directly for story assignment.
 
 ### Multiple Units of Work
 
@@ -215,10 +201,10 @@ Suggestions:
 [2] Break remaining work into a new task
 ```
 
-If user chooses [2], create additional task via `helm_task_create`:
+If user chooses [2], create additional task via `task_create`:
 
 ```
-helm_task_create({
+task_create({
   title: "Add accessibility improvements to loading states",
   description: "Follow-up from loading spinner work. Add aria labels, keyboard navigation, and screen reader announcements.",
   labels: ["frontend", "a11y"],
@@ -241,10 +227,10 @@ Record significant design decisions as task comments for future reference.
 | Non-obvious approaches | Standard patterns |
 | User-specified preferences | Default behaviors |
 
-### Capture via `helm_task_add_comment`
+### Capture via `task_saveComment`
 
 ```
-helm_task_add_comment({
+task_saveComment({
   task_id: "{task_id}",
   comment: "Design decision: Used localStorage for wizard state persistence (user requested simpler approach over server-side storage). Trade-off: state lost if user clears browser data."
 })
@@ -258,10 +244,10 @@ When all work is complete and quality checks pass:
 
 ### Step 1: Write Testing Notes
 
-Write structured testing notes to the task via `helm_task_update`:
+Write structured testing notes to the task via `task_editDescription`:
 
 ```
-helm_task_update({
+task_editDescription({
   task_id: "{task_id}",
   testing_notes_markdown: "## What to Test\n\n- Submit button shows loading spinner during form submission\n- Button is disabled while loading (prevents double-submit)\n- Loading state clears on success or error\n\n## How to Verify\n\n1. Navigate to checkout page\n2. Fill form and click Submit\n3. Observe spinner appears immediately\n4. Verify button cannot be clicked again during loading\n\n## Edge Cases\n\n- Network timeout: spinner should clear after timeout\n- Rapid clicks: only one submission should occur"
 })
@@ -272,21 +258,15 @@ helm_task_update({
 Transition the task to `agent_build_complete`:
 
 ```
-helm_task_update({
+task_changeStatus({
   task_id: "{task_id}",
   status: "agent_build_complete"
 })
 ```
 
-### Step 3: Record Completion Activity
+### Step 3: Record Completion
 
-```
-helm_task_add_activity({
-  task_id: "{task_id}",
-  activity_type: "build_complete",
-  content: "Implementation complete. 2 files modified, 3 tests added. Ready for QA review."
-})
-```
+Activity logging is handled automatically by Helm's CommandLogSubscriber. No manual activity recording needed.
 
 ### Step 4: Git Completion
 
@@ -317,39 +297,39 @@ Builder handles git operations per the project's git configuration. See the main
 
 ## Session State Management
 
-All session state is persisted via helm-bridge tools:
+All session state is persisted via MCP tools:
 
 | State | Tool | Key |
 |-------|------|-----|
-| Quality check results | `helm_task_add_activity` | N/A (activity entry) |
-| Current work status | `helm_session_set_state` | `currentWork` |
-| Todo-task links | `helm_session_state_save` | `todoTaskLinks` array |
-| Design decisions | `helm_task_add_comment` | N/A (comment entry) |
-| Testing notes | `helm_task_update` | `testing_notes_markdown` field |
+| Quality check results | (auto-logged) | N/A (activity auto-captured) |
+| Current work status | `session_saveState` | `currentWork` |
+| Todo-task links | `session_saveState` | `todoTaskLinks` array |
+| Design decisions | `task_saveComment` | N/A (comment entry) |
+| Testing notes | `task_editDescription` | `testing_notes_markdown` field |
 
 ### Todo-Task Linking
 
 Builder links todos to Helm Tasks via `todoTaskLinks` in `agent_state`:
 
 ```
-helm_session_state_save({
+session_saveState({
   todoTaskLinks: [
     {
       todoContent: 'Add loading spinner to submit button',
-      taskId: 'uuid-from-helm_session_task_list-or-null'
+      taskId: 'uuid-from-query_session_tasks-or-null'
     }
   ]
 })
 ```
 
 **Setting `taskId`:**
-- **Task-linked session:** Use the task UUID from `helm_session_task_list()` results
+- **Task-linked session:** Use the task UUID from `query_session_tasks` results
 - **Ad-hoc session (no linked tasks):** Use `null` — the task will be auto-created on completion
 - **Session-level todos** (e.g., "Run tests"): Use `null`
 
 > ⛔ **CRITICAL: `todoContent` must be the exact same string passed to `todowrite`.** No trimming, no rewording, no normalization. The macOS app content-matches this to resolve task_id for UI grouping.
 
-> ⛔ **MANDATORY COMPANION CALL: Every `todowrite` call MUST be immediately followed by `helm_session_state_save` with the `todoTaskLinks` array.** Never call `todowrite` alone — always pair it with `helm_session_state_save({ todoTaskLinks: [...] })`.
+> ⛔ **MANDATORY COMPANION CALL: Every `todowrite` call MUST be immediately followed by `session_saveState` with the `todoTaskLinks` array.** Never call `todowrite` alone — always pair it with `session_saveState({ todoTaskLinks: [...] })`.
 
 ### Todo Creation Order (CRITICAL)
 
@@ -365,21 +345,23 @@ helm_session_state_save({
 4. **Completion tasks** — Commit, signal done — **ALWAYS last**
 
 **Wrong:** Creating "Commit and complete task" first because you thought of it first.
-**Right:** Reorder todos into execution sequence before creating them via `todowrite`. Then immediately call `helm_session_state_save` with the `todoTaskLinks` array.
+**Right:** Reorder todos into execution sequence before creating them via `todowrite`. Then immediately call `session_saveState` with the `todoTaskLinks` array.
 
 ### State Persistence Example
 
 ```
 // Save current work state
-helm_session_set_state('currentWork', {
-  mode: 'adhoc',
-  taskId: 'task-abc123',
-  filesModified: ['src/components/Button.tsx', 'src/components/Button.test.tsx'],
-  qualityChecks: { typecheck: 'passed', lint: 'passed', tests: 'passed' }
+session_saveState({
+  currentWork: {
+    mode: 'adhoc',
+    taskId: 'task-abc123',
+    filesModified: ['src/components/Button.tsx', 'src/components/Button.test.tsx'],
+    qualityChecks: { typecheck: 'passed', lint: 'passed', tests: 'passed' }
+  }
 })
 
 // Read state on resume
-const state = helm_session_get_state('currentWork')
+const state = await query_session_state()
 ```
 
 ---
@@ -403,15 +385,13 @@ Running quality checks...
 ✅ Lint: passed  
 ✅ Unit tests: passed (3 new tests)
 
-[Records results via helm_task_add_activity]
-
 Creating task record...
 
-[Calls helm_task_create with title, description, labels]
+[Calls task_create with title, description, labels]
 
 Writing testing notes...
 
-[Calls helm_task_update with testing_notes_markdown]
+[Calls task_editDescription with testing_notes_markdown]
 
 ✅ Implementation complete!
 

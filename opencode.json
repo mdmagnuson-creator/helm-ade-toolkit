@@ -1,7 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "./plugins/helm-bridge.js",
     "./plugins/shell-history.js"
   ],
   "compaction": {

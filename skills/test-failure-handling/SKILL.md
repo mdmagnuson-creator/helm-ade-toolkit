@@ -213,7 +213,7 @@ When user selects [A]:
 
 2. **On confirm:**
    - Revert story changes (git checkout)
-   - Update task status to `abandoned` via `helm_session_set_state("currentTask.status", "abandoned")`
+   - Update task status to `abandoned` via `session_saveState("currentTask.status", "abandoned")`
    - Log to verification-failures.json: `"resolution": "abandoned"`
 
 3. **Display result:**

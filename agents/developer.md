@@ -116,7 +116,7 @@ If no context block was provided:
 
 2. **Get task context from:**
    - The parent agent's prompt (Builder/QA passes task details)
-   - System prompt injection from helm-bridge
+   - System prompt and context from MCP server
    - Context block at start of prompt (see Phase 0A)
 
 3. **Understand the task requirements** from the provided context before proceeding.

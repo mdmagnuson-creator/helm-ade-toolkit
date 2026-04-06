@@ -64,11 +64,11 @@ Verification test PASSES
 
 ### State Tracking
 
-Track stability verification state via helm-bridge:
+Track stability verification state via MCP:
 
 ```typescript
 // Write stability check state
-helm_session_set_state("verification.loop.stabilityCheck", {
+session_saveState("verification.loop.stabilityCheck", {
   testPath: "tests/ui-verify/profile-dropdown.spec.ts",
   feature: "Add Settings option to profile dropdown",
   requiredPasses: 3,
@@ -78,7 +78,7 @@ helm_session_set_state("verification.loop.stabilityCheck", {
 });
 
 // Read current state
-const stabilityCheck = helm_session_get_state("verification.loop.stabilityCheck");
+const stabilityCheck = query_session_state("verification.loop.stabilityCheck");
 ```
 
 ### Stability Progress Display
@@ -243,11 +243,11 @@ Verification test FAILS
 
 ### State Tracking
 
-State is tracked via helm-bridge session state:
+State is tracked via MCP session state:
 
 ```typescript
 // Write fix loop state
-helm_session_set_state("verification.loop", {
+session_saveState("verification.loop", {
   originalFeature: "tests/ui-verify/profile-dropdown-settings.spec.ts",
   startedAt: "2026-03-03T10:30:00Z",
   totalIterations: 3,
@@ -273,7 +273,7 @@ helm_session_set_state("verification.loop", {
 });
 
 // Read current state
-const loopState = helm_session_get_state("verification.loop");
+const loopState = query_session_state("verification.loop");
 ```
 
 ### Stop Conditions

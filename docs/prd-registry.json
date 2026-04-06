@@ -17,6 +17,18 @@
       "completedAt": "2026-03-16T00:03:00Z"
     },
     {
+      "id": "prd-codemode",
+      "title": "Codemode — Composable Tool Execution for Helm Agents",
+      "status": "draft",
+      "filePath": "docs/drafts/prd-codemode.md",
+      "createdAt": "2026-04-05T00:00:00Z",
+      "updatedAt": "2026-04-05T00:00:00Z",
+      "stories": 11,
+      "phases": 3,
+      "notes": "Additive codemode plugin for helm-ade-toolkit. All 3 phases ship back-to-back: Phase 1 (helm_* tools), Phase 2 (opencode built-ins: read/grep/glob/bash + isolated-vm sandbox upgrade), Phase 3 (agent instruction updates for Builder, test-flow, Planner). Zero changes to helm-bridge.js. US-001 is a spike to verify Zod schema compatibility before building type generation.",
+      "storiesCompleted": 0
+    },
+    {
       "id": "prd-agent-updates",
       "title": "Agent & Toolkit Updates for Helm Task Management",
       "status": "completed",

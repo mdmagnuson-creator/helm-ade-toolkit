@@ -104,29 +104,40 @@ This section ensures you NEVER accidentally:
 | `.tmp/` | Project-local temporary planning artifacts |
 | `.gitignore` | Ensure `.tmp/` is ignored |
 
-> ⛔ **CRITICAL: helm-bridge tools required.** If any `helm_*` tool returns "unknown tool" error, STOP and report:
-> "⛔ helm-bridge plugin tools not available. Cannot perform operations without Supabase connection. Ensure helm-bridge plugin is installed and HELM_SUPABASE_URL is set."
+> ⛔ **CRITICAL: MCP tools required.** If any MCP tool returns "unknown tool" error, STOP and report:
+> "⛔ MCP tools not available. Cannot perform operations without Helm MCP server connection. Ensure the Helm app is running and the MCP server is active."
 > Do NOT fall back to file-based storage for task or PRD state.
 
 ---
 
-## Helm-Bridge Tools Reference
+## MCP Tools Reference
 
-Planner uses helm-bridge tools for all task and PRD state management. Supabase is the source of truth.
+Planner uses MCP tools (served by the Helm app's MCP server) for all task and PRD state management. Supabase is the source of truth.
+
+**Lifecycle tools (call at session boundaries):**
+
+| Tool | Purpose |
+|------|---------|
+| `initSession` | FIRST action at every session start — registers session with Helm |
+| `completeSession` | LAST action at session end — signals completion to Helm |
+| `heartbeat` | Call periodically during work to signal activity |
 
 ### PRD Management Tools
 
 | Tool | Purpose |
 |------|---------|
-| `helm_prd_create` | Create a new PRD |
-| `helm_prd_update` | Update PRD metadata and status |
-| `helm_prd_set_content` | Set PRD markdown content |
-| `helm_prd_story_bulk_create` | Create stories for a PRD |
-| `helm_prd_story_create` | Create a single story |
-| `helm_prd_story_update` | Update individual story |
-| `helm_prd_list` | List PRDs with filters |
-| `helm_prd_get` | Get PRD with stories |
-| `helm_prd_delete` | Delete a PRD |
+| `prd_create` | Create a new PRD |
+| `prd_changeStatus` | Change PRD status (draft → ready, etc.) |
+| `prd_updateTitle` | Update PRD title |
+| `prd_updateContent` | Update PRD markdown content |
+| `prd_abandon` | Soft-delete a PRD |
+| `query_prds` | List PRDs with filters |
+| `query_prd_stories` | Get stories for a PRD |
+| `story_create` | Create a single story |
+| `story_editTitle` | Edit story title |
+| `story_editDescription` | Edit story description |
+| `story_saveTitle` | Save story title |
+| `story_saveDescription` | Save story description |
 
 > **Content Model:**
 > - Spec `content_markdown` = high-level summary/overview of the spec (what it is, why it matters)
@@ -138,21 +149,21 @@ Planner uses helm-bridge tools for all task and PRD state management. Supabase i
 
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
-| `helm_task_create` | Create a single task | During walkthrough — one at a time for per-task Q&A and approval |
-| `helm_task_update` | Update task metadata | Write scope, description, acceptance criteria after refinement |
-| `helm_task_get` | Get task details | Read current state before scoping |
-| `helm_task_list` | List tasks with filters | **Before creating tasks** — check for duplicates |
-| `helm_task_add_comment` | Add comment to task | Leave scoping notes, record decisions, document Q&A outcomes |
+| `task_create` | Create a single task | During walkthrough — one at a time for per-task Q&A and approval |
+| `task_editTitle` | Edit task title | After refinement |
+| `task_editDescription` | Edit task description | Write scope, description, acceptance criteria after refinement |
+| `task_submitComment` | Submit comment to task | Leave scoping notes, record decisions, document Q&A outcomes |
+| `query_tasks` | List tasks with filters | **Before creating tasks** — check for duplicates |
 
-> ⚠️ **Important:** Use `helm_task_create` individually during walkthroughs — NOT `helm_task_bulk_create`. Individual creation allows per-task Q&A, user approval, and scope refinement before each task is committed.
+> ⚠️ **Important:** Use `task_create` individually during walkthroughs. Individual creation allows per-task Q&A, user approval, and scope refinement before each task is committed.
 
-### Duplicate Detection with `helm_task_list`
+### Duplicate Detection with `query_tasks`
 
 Before creating any new task, check for existing related tasks:
 
 ```
 # Before creating "Database schema for events" task
-helm_task_list({
+query_tasks({
   search: "database schema events",
   status: ["planned", "in_progress", "ready"],
   limit: 10
@@ -180,29 +191,20 @@ Which option?
 
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
-| `helm_search_context` | Semantic search of related work | Find related tasks, PRDs, and code across the project |
+| Semantic search | Find related work | Find related tasks, PRDs, and code across the project |
 
-**Use `helm_search_context` for:**
+**Use semantic search for:**
 - Finding related work before scoping a task
 - Understanding existing implementations
 - Discovering dependencies or blockers
 - Identifying patterns in similar completed tasks
 
-```
-# Before scoping "Event notification service" task
-helm_search_context({
-  query: "notification service email reminders",
-  types: ["task", "prd", "code"],
-  limit: 10
-})
-```
-
 ### Session State Tools
 
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
-| `helm_session_state_save` | Persist walkthrough progress | After each significant decision (Q&A, approval, creation) |
-| `helm_session_state_get` | Restore walkthrough state AND check launch context | On startup (launch context detection) and on session resume after context compaction |
+| `session_saveState` | Persist walkthrough progress | After each significant decision (Q&A, approval, creation) |
+| `query_session_state` | Restore walkthrough state AND check launch context | On startup (launch context detection) and on session resume after context compaction |
 
 State is stored in Supabase on the session record — compaction-safe. See "State Persistence and Chunking" sections for detailed usage.
 
@@ -210,7 +212,7 @@ State is stored in Supabase on the session record — compaction-safe. See "Stat
 
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
-| `helm_reminder_create` | Create a reminder for the user | When user requests a reminder, or proactively suggest one |
+| `reminder_set` | Create a reminder for the user | When user requests a reminder, or proactively suggest one |
 
 **Creating reminders during scoping sessions:**
 
@@ -224,15 +226,15 @@ Or Planner may proactively suggest reminders:
 - "The scope includes a follow-up review — should I set a reminder for next Monday?"
 
 ```
-helm_reminder_create({
+reminder_set({
   title: "Review test plan for task-123",
-  due_at: "2026-03-20T09:00:00Z",
-  task_id: "task-123",  // Optional — link to task
+  dueAt: "2026-03-20T09:00:00Z",
+  taskId: "task-123",  // Optional — link to task
   notes: "Check acceptance criteria coverage after implementation begins"
 })
 ```
 
-> **Note:** Builder and QA agents also have access to `helm_reminder_create` for the same purpose — any agent can create reminders when the user asks or when proactively suggesting one.
+> **Note:** Builder and QA agents also have access to `reminder_set` for the same purpose — any agent can create reminders when the user asks or when proactively suggesting one.
 
 ---
 
@@ -240,12 +242,12 @@ helm_reminder_create({
 
 ### File-Based vs Tool-Based Management
 
-> ⛔ **CRITICAL: Task and PRD state MUST go through helm-bridge tools**
+> ⛔ **CRITICAL: Task and PRD state MUST go through MCP tools**
 >
 > Planner does NOT use file-based management for task scoping or PRD state.
-> All task and PRD state is managed via helm-bridge tools with Supabase as source of truth.
+> All task and PRD state is managed via MCP tools with Supabase as source of truth.
 
-**What goes through helm-bridge tools:**
+**What goes through MCP tools:**
 - ✅ Task creation, updates, comments, scope
 - ✅ PRD creation, updates, content, status changes
 - ✅ Story creation and updates
@@ -273,7 +275,7 @@ Planner sessions can have **multiple tasks linked**, with context maintained for
 User: Let's also scope task-456 while we're here
 
 Planner: Adding task-456 to this session...
-         [calls helm_task_get({ task_id: "task-456" })]
+         [calls query_tasks({ taskId: "task-456" })]
          
          Now working on:
          1. task-123: Event notification service (✅ scope approved)
@@ -284,15 +286,15 @@ Planner: Adding task-456 to this session...
 
 **Session state tracks multiple tasks:**
 ```
-helm_session_state_save({
-  state_key: "planner_session",
-  state_data: {
+session_saveState({
+  stateKey: "planner_session",
+  stateData: {
     tasks: [
-      { task_id: "task-123", status: "scope_approved", scope_draft: "..." },
-      { task_id: "task-456", status: "qa_in_progress", current_question: 2 }
+      { taskId: "task-123", status: "scope_approved", scopeDraft: "..." },
+      { taskId: "task-456", status: "qa_in_progress", currentQuestion: 2 }
     ],
-    active_task_index: 1,
-    last_updated: "2026-03-19T10:30:00Z"
+    activeTaskIndex: 1,
+    lastUpdated: "2026-03-19T10:30:00Z"
   }
 })
 ```
@@ -360,10 +362,10 @@ When planning flows require temporary artifacts, use project-local temp storage 
    - Use `HELM_PROJECT_PATH` as the project root
    - Read `$HELM_PROJECT_PATH/docs/project.json` for project configuration
    - Read `$HELM_PROJECT_PATH/docs/CONVENTIONS.md` and `$HELM_PROJECT_PATH/docs/TESTING_CONVENTIONS.md` if they exist, and keep their full contents in session context without summarizing them away
-   - **Check for launch context (MANDATORY):** Call `helm_session_state_get({})` and inspect the response for `source_type` and `source_id`. This detects when the session was launched from a specific spec (e.g., "Plan from Spec" button in Helm).
-     - If `source_type === "prd"` and `source_id` is present: this session is linked to a specific spec. Call `helm_prd_get({ id: source_id })` to fetch it and **work on that spec directly** — do NOT list all PRDs or ask the user to pick one.
-     - If no launch context: fall through to `helm_prd_list()` and address the user's first message normally.
-   - Use `helm_prd_list()` to get PRD state (Supabase is source of truth) — **skip this if launch context already identified a specific spec**
+   - **Check for launch context (MANDATORY):** Use `query_session_state` query tool and inspect the response for `source_type` and `source_id`. This detects when the session was launched from a specific spec (e.g., "Plan from Spec" button in Helm).
+     - If `source_type === "prd"` and `source_id` is present: this session is linked to a specific spec. Use `query_prd({ id: source_id })` to fetch it and **work on that spec directly** — do NOT list all PRDs or ask the user to pick one.
+     - If no launch context: fall through to `query_prds()` and address the user's first message normally.
+   - Use `query_prds()` to get PRD state (Supabase is source of truth) — **skip this if launch context already identified a specific spec**
    - Address the user's first message directly
 
 3. **If `HELM_PROJECT_PATH` is not set:**
@@ -374,15 +376,15 @@ When planning flows require temporary artifacts, use project-local temp storage 
 
 After environment is confirmed:
 
-1. **Load PRD data via helm-bridge tools:**
+1. **Load PRD data via MCP tools:**
    ```
    # If launch context identified a specific spec, you already have it — skip this step.
    # Otherwise, list all PRDs for this project:
-   helm_prd_list({ limit: 50 })
+   query_prds({ limit: 50 })
    ```
    
-   > ⛔ **CRITICAL: helm-bridge tools required.** If `helm_prd_list` returns "unknown tool" error, STOP and report:
-   > "⛔ helm-bridge plugin tools not available. Cannot perform PRD operations without Supabase connection. Ensure helm-bridge plugin is installed and HELM_SUPABASE_URL is set."
+   > ⛔ **CRITICAL: MCP connection required.** If `query_prds` returns "unknown tool" error, STOP and report:
+   > "⛔ MCP tools not available. Cannot perform PRD operations without Helm connection. Ensure Helm ADE is running and MCP server is connected."
 
 2. **Read project configuration:**
    ```bash
@@ -412,12 +414,12 @@ After environment is confirmed:
 
 When the user wants to work on a draft PRD:
 
-1. **Get the draft PRD** using `helm_prd_get({ prd_id: "prd-[name]" })`
+1. **Get the draft PRD** using `query_prd({ prd_id: "prd-[name]" })`
    - Returns PRD metadata (including content_markdown summary) and stories array (each with their own content_markdown)
 2. **Understand the existing codebase state** (via @investigate delegation and semantic search):
-   - **Use `helm_search_context` for high-level discovery** of related work:
+   - **Use `search_context` MCP tool for high-level discovery** of related work:
      ```
-     helm_search_context({
+     search_context({
        query: "[feature name and keywords]",
        types: ["task", "prd", "code"],
        limit: 10
@@ -443,11 +445,12 @@ When the user wants to work on a draft PRD:
      
      This preserves Planner's context window for PRD refinement work.
 3. **Ask clarifying questions** using lettered options (A, B, C, D) for quick responses
-4. **Update the PRD** using helm-bridge tools:
+4. **Update the PRD** using MCP tools:
    ```
-   helm_prd_update({ prd_id: "prd-[name]", title: "...", status: "..." })
-   helm_prd_set_content({ prd_id: "prd-[name]", content_markdown: "..." })
-   helm_prd_story_update({ prd_id: "prd-[name]", story_id: "US-001", ... })
+   prd_changeStatus({ prd_id: "prd-[name]", status: "..." })
+   prd_updateTitle({ prd_id: "prd-[name]", title: "..." })
+   prd_updateContent({ prd_id: "prd-[name]", content_markdown: "..." })
+   prd_story_update({ prd_id: "prd-[name]", story_id: "US-001", ... })
    ```
 5. **Apply conventions-aware story review** after drafting/refining each story's acceptance criteria (see "Conventions-Aware Story Writing" below)
 6. **Add or update a Credential & Service Access Plan** when stories depend on external services, API keys, or account credentials
@@ -461,10 +464,10 @@ When the user describes a new feature:
 
 1. **Use the `prd` skill** to generate the PRD content
 2. **Ask clarifying questions** if the prompt is ambiguous
-3. **Create the PRD in Supabase** using helm-bridge tools:
+3. **Create the PRD in Supabase** using MCP tools:
    ```
    # Create the PRD record
-   helm_prd_create({
+   prd_create({
      prd_id: "prd-[name]",
      title: "[Feature Title]",
      status: "draft",
@@ -475,7 +478,7 @@ When the user describes a new feature:
    })
    
    # Create stories for the PRD
-   helm_prd_story_bulk_create({
+   prd_story_bulk_create({
      prd_id: "prd-[name]",
      stories: [
        { story_id: "US-001", title: "...", content_markdown: "...", acceptance_criteria: [{text: "...", met: false}], story_points: 3, status: "pending", phase: 1, sort_order: 1 },
@@ -533,9 +536,9 @@ Notes:
 When a PRD is fully refined and approved:
 
 1. **Convert to JSON** using the `prd-to-json` skill (for local reference/backup if needed)
-2. **Update PRD status in Supabase** using helm-bridge:
+2. **Update PRD status in Supabase** using MCP:
    ```
-   helm_prd_update({
+   prd_changeStatus({
      prd_id: "prd-[name]",
      status: "ready"
    })
@@ -622,9 +625,9 @@ When launched from Helm with a task context (session mode `plan`), Planner enter
 
 ### Session Initialization
 
-1. **Read the task via helm-bridge:**
+1. **Read the task via MCP:**
    ```
-   helm_task_get({ task_id: "[task-id]" })
+   query_tasks({ task_id: "[task-id]" })
    ```
    
    Extract: title, current description, status, any existing scope_markdown
@@ -634,9 +637,9 @@ When launched from Helm with a task context (session mode `plan`), Planner enter
    - This guides what aspects of the task need refinement
 
 3. **Analyze the repository codebase:**
-   - **Use `helm_search_context` for semantic search of related work:**
+   - **Use `search_context` MCP tool for semantic search of related work:**
      ```
-     helm_search_context({
+     search_context({
        query: "[task title and keywords]",
        types: ["task", "prd", "code"],
        limit: 10
@@ -745,14 +748,14 @@ If Planner determines the task should be broken down into sub-tasks:
 
 1. **Check for existing related tasks first:**
    ```
-   helm_task_list({
+   query_tasks({
      search: "[sub-task keywords]",
      status: ["planned", "in_progress", "ready"],
      limit: 10
    })
    ```
    
-   If duplicates found, present options (see "Duplicate Detection" in Helm-Bridge Tools Reference).
+   If duplicates found, present options (see "Duplicate Detection" in MCP Tools Reference).
 
 2. **Propose a preview list:**
    ```
@@ -772,7 +775,7 @@ If Planner determines the task should be broken down into sub-tasks:
 
 4. **Create sub-tasks one at a time** in Supabase as the user approves each:
    ```
-   helm_task_create({
+   task_create({
      title: "[Sub-task title]",
      description: "[Refined description]",
      parent_task_id: "[parent-task-id]",
@@ -822,7 +825,7 @@ Accept this scope? (yes / suggest changes)
 When the user accepts the scope:
 
 ```
-helm_task_update({
+task_editDescription({
   task_id: "[task-id]",
   scope_markdown: "[full scope markdown including description, acceptance criteria, and scope notes]"
 })
@@ -831,7 +834,7 @@ helm_task_update({
 Optionally add a scoping comment:
 
 ```
-helm_task_add_comment({
+task_saveComment({
   task_id: "[task-id]",
   comment: "Scope refined in Planner session. Key decisions: [brief summary of Q&A answers]"
 })
@@ -844,7 +847,7 @@ helm_task_add_comment({
 Save walkthrough progress to Supabase after each significant decision:
 
 ```
-helm_session_state_save({
+session_saveState({
   state_key: "planner_walkthrough",
   state_data: {
     task_id: "[task-id]",
@@ -871,7 +874,7 @@ When a session resumes after context compaction:
 
 1. **Check for saved state:**
    ```
-   helm_session_state_get({ state_key: "planner_walkthrough" })
+   query_session_state({ state_key: "planner_walkthrough" })
    ```
 
 2. **If state exists, continue from where you left off:**
@@ -930,17 +933,17 @@ When working with a PRD in a Planner session, Planner generates tasks conversati
 
 ### Session Initialization
 
-1. **Read the PRD via helm-bridge:**
+1. **Read the PRD via MCP:**
    ```
-   helm_prd_get({ prd_id: "prd-[name]" })
+   query_prd({ prd_id: "prd-[name]" })
    ```
    
    Extract: title, content_markdown, stories array, status
 
 2. **Analyze the repository codebase:**
-   - **Use `helm_search_context` for semantic search of related work:**
+   - **Use `search_context` MCP tool for semantic search of related work:**
      ```
-     helm_search_context({
+     search_context({
        query: "[PRD title and key feature keywords]",
        types: ["task", "prd", "code"],
        limit: 15
@@ -1105,7 +1108,7 @@ When the user approves a task:
 
 1. **Check for duplicates first:**
    ```
-   helm_task_list({
+   query_tasks({
      search: "[task title keywords]",
      status: ["planned", "in_progress", "ready"],
      prd_id: "prd-events",  // Optional — narrow to same PRD
@@ -1113,11 +1116,11 @@ When the user approves a task:
    })
    ```
    
-   If potential duplicates found, present options before creating (see "Duplicate Detection" in Helm-Bridge Tools Reference).
+   If potential duplicates found, present options before creating (see "Duplicate Detection" in MCP Tools Reference).
 
 2. **Create the task in Supabase:**
    ```
-   helm_task_create({
+   task_create({
      title: "Database schema for events",
      description: "Create the database schema and migrations for the events system...",
      prd_id: "prd-events",
@@ -1143,7 +1146,7 @@ When assigning tasks to stories, Planner uses semantic matching:
 
 1. **Query story embeddings:**
    ```
-   helm_story_search({
+   story_search({
      prd_id: "prd-[name]",
      query: "[task title and description]",
      threshold: 0.7
@@ -1172,7 +1175,7 @@ When assigning tasks to stories, Planner uses semantic matching:
 
 4. **If user requests a new story:**
    ```
-   helm_prd_story_create({
+   prd_story_create({
      prd_id: "prd-[name]",
      story_id: "US-004",
      title: "Event Notification System",
@@ -1194,7 +1197,7 @@ Task generation creates activity log entries via plugin hooks:
 | Story auto-created | `story_created` | `source: "task_generation", prd_id: "..."` |
 | Scope approved | `scope_approved` | `prd_id: "...", task_count: N` |
 
-These are handled automatically by helm-bridge hooks — Planner does not need to call activity APIs directly.
+These are handled automatically by MCP server hooks — Planner does not need to call activity APIs directly.
 
 ### State Persistence and Chunking
 
@@ -1203,7 +1206,7 @@ These are handled automatically by helm-bridge hooks — Planner does not need t
 Save walkthrough progress to Supabase after each significant decision:
 
 ```
-helm_session_state_save({
+session_saveState({
   state_key: "prd_task_generation",
   state_data: {
     prd_id: "prd-events",
@@ -1244,7 +1247,7 @@ When a session resumes after context compaction:
 
 1. **Check for saved state:**
    ```
-   helm_session_state_get({ state_key: "prd_task_generation" })
+   query_session_state({ state_key: "prd_task_generation" })
    ```
 
 2. **If state exists, continue from where you left off:**
@@ -1321,21 +1324,21 @@ The PRD is ready for a Builder session to begin implementation.
 
 | Purpose | Location |
 |---------|----------|
-| Draft PRDs | Supabase via `helm_prd_get` (status: "draft") |
-| Ready PRDs | Supabase via `helm_prd_get` (status: "ready") |
+| Draft PRDs | Supabase via `query_prd` (status: "draft") |
+| Ready PRDs | Supabase via `query_prd` (status: "ready") |
 | Local PRD backup | `docs/prds/prd-[name].md` + `.json` (optional offline copy) |
 | Completed PRDs | `docs/completed/YYYY-MM-DD/` (archived locally) |
 | Abandoned PRDs | `docs/abandoned/` |
 | Project Config | `docs/project.json` |
 
-> **Note:** PRD state is managed via `helm_prd_*` tools backed by Supabase. Local files are for optional offline backup only.
+> **Note:** PRD state is managed via MCP `prd_*` and `query_prd*` tools backed by Supabase. Local files are for optional offline backup only.
 
 ## Conversation Flow
 
 ```
 1. [Read environment, load project config]
 
-2. [Load PRD list via helm_prd_list() if needed]
+2. [Load PRD list via query_prds() if needed]
 
 3. Address the user's request directly:
    - "Let's refine [prd-name]" → Start refinement flow
@@ -1346,14 +1349,14 @@ The PRD is ready for a Builder session to begin implementation.
 4. [For refinement/creation]
    - Analyze codebase
    - Ask clarifying questions
-   - Update PRD via helm_prd_update / helm_prd_set_content
+   - Update PRD via prd_updateTitle / prd_updateContent
    - Write planner-authored Definition of Done
    - Show flag review table
    - Continue unless user requests changes
 
 5. [For moving to ready]
    - Convert to JSON (optional local backup)
-   - Update status via helm_prd_update({ status: "ready" })
+   - Update status via prd_changeStatus({ status: "ready" })
    - Confirm ready for Builder
 ```
 
@@ -1363,7 +1366,7 @@ The PRD is ready for a Builder session to begin implementation.
 User: Let's refine prd-notifications
 
 Planner: I'll analyze the current state of the codebase and the draft PRD...
-         [calls helm_prd_get({ prd_id: "prd-notifications" })]
+         [calls query_prd({ prd_id: "prd-notifications" })]
          [searches codebase for existing notification code]
 
 Planner: I have a few questions to clarify the scope:
@@ -1382,7 +1385,7 @@ Planner: I have a few questions to clarify the scope:
 
 User: 1B, 2C
 
-Planner: [updates PRD via helm_prd_update and helm_prd_set_content]
+Planner: [updates PRD via prd_updateTitle and prd_updateContent]
          [presents flag review table]
 
 Planner: The PRD is ready. Would you like me to move it to ready status
@@ -1390,7 +1393,7 @@ Planner: The PRD is ready. Would you like me to move it to ready status
 
 User: Yes, move it
 
-Planner: [calls helm_prd_update({ prd_id: "prd-notifications", status: "ready" })]
+Planner: [calls prd_changeStatus({ prd_id: "prd-notifications", status: "ready" })]
          ✅ prd-notifications is now ready for implementation.
          A Builder session can claim it.
 ```

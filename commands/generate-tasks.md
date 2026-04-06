@@ -13,7 +13,7 @@ This session is linked to a PRD that needs implementation tasks generated.
    - Description of what needs to be done
    - Priority (urgent/high/medium/low)
    - Which story it belongs to
-5. For each approved task, use `helm_task_create` with:
+5. For each approved task, use `task_create` with:
    - Status: "planned"
    - `parent_prd_id` set to link the task to this PRD
 

@@ -343,6 +343,50 @@ When planning flows require temporary artifacts, use project-local temp storage 
 - Use `<project>/.tmp/` for temporary artifacts
 - Ensure `<project>/.gitignore` contains `.tmp/` before writing temp files
 
+## Helm Environment Variables
+
+Planner receives these environment variables from the Helm app:
+
+| Variable | Description |
+|----------|-------------|
+| `HELM_PROJECT_PATH` | Absolute path to the project worktree |
+| `HELM_SESSION_ID` | Supabase UUID of the current session |
+| `HELM_ORG_ID` | Organization UUID |
+| `HELM_DEV_PORT` | Development server port for this worktree session |
+
+These are set by `TabManager.swift` before the opencode process starts. All MCP tools use these automatically as fallbacks when explicit arguments aren't provided.
+
+## Session Lifecycle Protocol
+
+> ⛔ **MANDATORY: Every Planner session MUST follow this lifecycle protocol.**
+
+### Session Start
+
+**FIRST action** — before any other work:
+```
+initSession(sessionId: HELM_SESSION_ID, agentType: "planner")
+```
+
+This registers the session with Helm and returns project context AND launch context (`sourceType`, `sourceId`, `sourceTitle`).
+
+### During Work
+
+Call `heartbeat` periodically to signal activity:
+```
+heartbeat(sessionId: HELM_SESSION_ID, currentAction: "Refining PRD user stories")
+```
+
+Call every few minutes of active work, or when transitioning between major planning activities.
+
+### Session End
+
+**LAST action** — before the session ends:
+```
+completeSession(sessionId: HELM_SESSION_ID, summary: "Refined PRD and moved to ready status")
+```
+
+This signals to Helm that the session is complete.
+
 ## Startup
 
 > ⚓ **AGENTS.md: Helm ADE Startup Pattern**
@@ -360,10 +404,11 @@ When planning flows require temporary artifacts, use project-local temp storage 
 
 2. **If `HELM_PROJECT_PATH` is set:**
    - Use `HELM_PROJECT_PATH` as the project root
+   - **Call `initSession` (MANDATORY FIRST ACTION):** Call `initSession(sessionId: HELM_SESSION_ID, agentType: "planner")`. The response includes project context AND launch context (`sourceType`, `sourceId`, `sourceTitle`).
    - Read `$HELM_PROJECT_PATH/docs/project.json` for project configuration
    - Read `$HELM_PROJECT_PATH/docs/CONVENTIONS.md` and `$HELM_PROJECT_PATH/docs/TESTING_CONVENTIONS.md` if they exist, and keep their full contents in session context without summarizing them away
-   - **Check for launch context (MANDATORY):** Use `query_session_state` query tool and inspect the response for `source_type` and `source_id`. This detects when the session was launched from a specific spec (e.g., "Plan from Spec" button in Helm).
-     - If `source_type === "prd"` and `source_id` is present: this session is linked to a specific spec. Use `query_prd({ id: source_id })` to fetch it and **work on that spec directly** — do NOT list all PRDs or ask the user to pick one.
+   - **Check launch context from initSession response:** Inspect `sourceType` and `sourceId` from the `initSession` response. This detects when the session was launched from a specific spec (e.g., "Plan from Spec" button in Helm).
+     - If `sourceType === "prd"` and `sourceId` is present: this session is linked to a specific spec. Use `query_prd({ id: sourceId })` to fetch it and **work on that spec directly** — do NOT list all PRDs or ask the user to pick one.
      - If no launch context: fall through to `query_prds()` and address the user's first message normally.
    - Use `query_prds()` to get PRD state (Supabase is source of truth) — **skip this if launch context already identified a specific spec**
    - Address the user's first message directly

@@ -128,12 +128,14 @@ Planner uses MCP tools (served by the Helm app's MCP server) for all task and PR
 |------|---------|
 | `prd_create` | Create a new PRD |
 | `prd_changeStatus` | Change PRD status (draft → ready, etc.) |
+| `prd_update` | Update PRD fields (title, status, content, notes, **planner_state**, etc.) |
 | `prd_updateTitle` | Update PRD title |
 | `prd_updateContent` | Update PRD markdown content |
 | `prd_abandon` | Soft-delete a PRD |
 | `query_prds` | List PRDs with filters |
 | `query_prd_stories` | Get stories for a PRD |
 | `story_create` | Create a single story |
+| `story_update` | Update story fields (title, content, status, **planner_reviewed_at**, etc.) |
 | `story_editTitle` | Edit story title |
 | `story_editDescription` | Edit story description |
 | `story_saveTitle` | Save story title |
@@ -693,7 +695,39 @@ On approval:
    })
    ```
 2. Apply conventions-aware story review (add callout blocks if applicable)
-3. Move to the next story
+3. **Mark story as reviewed and persist planner state:**
+
+   ```
+   story_update({
+     prd_id: "prd-[name]",
+     story_id: "US-001",
+     planner_reviewed_at: new Date().toISOString()
+   })
+   ```
+
+   ```
+   prd_update({
+     prd_id: "prd-[name]",
+     planner_state: {
+       phase: "story_walkthrough",
+       storyProgress: {
+         reviewed: ["US-001"],
+         current: "US-002",
+         pending: ["US-003", "US-004", "US-005"]
+       },
+       gapAnalysis: { completed: false },
+       qaDecisions: {
+         "US-001": { "1": "A", "2": "C" }
+       },
+       lastSessionId: "<current-session-id>",
+       lastUpdatedAt: new Date().toISOString()
+     }
+   })
+   ```
+
+   These calls persist planner progress ON the PRD itself, so any future session can resume.
+
+4. Move to the next story
 
 Repeat Steps 1-5 for each story in the PRD.
 
@@ -743,6 +777,30 @@ If no issues are found:
 ✅ Gap analysis complete — no issues found across all stories.
 ```
 
+**After gap analysis completes, update planner state:**
+
+```
+prd_update({
+  prd_id: "prd-[name]",
+  planner_state: {
+    phase: "gap_analysis_complete",
+    storyProgress: {
+      reviewed: ["US-001", "US-002", "US-003", "US-004", "US-005"],
+      current: null,
+      pending: []
+    },
+    gapAnalysis: {
+      completed: true,
+      findings: ["Finding 1 description", "Finding 2 description"],
+      resolutions: ["Resolution 1", "Resolution 2"]
+    },
+    qaDecisions: { ... },
+    lastSessionId: "<current-session-id>",
+    lastUpdatedAt: new Date().toISOString()
+  }
+})
+```
+
 ### 3. Move PRD to Ready
 
 After gap analysis is complete, present the final state:
@@ -781,8 +839,26 @@ On approval:
      status: "ready"
    })
    ```
-2. **Optionally save local backup** to `docs/prds/prd-[name].md` and `.json` for offline reference
-3. **Include project context in ready confirmation:**
+2. **Update planner state to complete**:
+   ```
+   prd_update({
+     prd_id: "prd-[name]",
+     planner_state: {
+       phase: "complete",
+       storyProgress: {
+         reviewed: ["US-001", "US-002", "US-003"],
+         current: null,
+         pending: []
+       },
+       gapAnalysis: { completed: true, findings: [], resolutions: [] },
+       qaDecisions: { ... },
+       lastSessionId: "<current-session-id>",
+       lastUpdatedAt: new Date().toISOString()
+     }
+   })
+   ```
+3. **Optionally save local backup** to `docs/prds/prd-[name].md` and `.json` for offline reference
+4. **Include project context in ready confirmation:**
    ```
    ✅ prd-[name] is now ready for implementation.
 
@@ -791,8 +867,8 @@ On approval:
    - Protected branches: [requiresHumanApproval list]
    - Related projects: [list if cross-project work needed]
    ```
-4. **If cross-project work identified**, note any pending PRDs created in related projects
-5. **Offer to open a Builder session:**
+5. **If cross-project work identified**, note any pending PRDs created in related projects
+6. **Offer to open a Builder session:**
    ```
    Would you like me to open a Builder session with this spec loaded?
    [Y] Yes — start a Builder session
@@ -800,7 +876,7 @@ On approval:
 
    > _
    ```
-6. **If the user says yes**, open a Builder session with the spec context. Use whatever mechanism is available to launch @builder with the PRD ID pre-loaded.
+7. **If the user says yes**, open a Builder session with the spec context. Use whatever mechanism is available to launch @builder with the PRD ID pre-loaded.
 
 ## Credential & Service Access Planning
 
@@ -1081,14 +1157,23 @@ session_saveState({
 
 #### Restoring State on Resume
 
-When a session resumes after context compaction:
+When a session resumes after context compaction or when a NEW session picks up this work:
 
-1. **Check for saved state:**
+1. **Check for PRD-level planner state (cross-session):**
+   ```
+   query_prds({ prd_id: "prd-[name]" })
+   ```
+   → If `planner_state` exists on the PRD, use it to restore walkthrough progress.
+   This works even if this is a completely new session.
+
+2. **Check for session state (same-session, more detailed):**
    ```
    query_session_state({ state_key: "planner_walkthrough" })
    ```
+   → If both exist, prefer session state (more granular) but validate against PRD state.
+   → If only PRD state exists (new session), use it.
 
-2. **If state exists, continue from where you left off:**
+3. **If state exists, continue from where the last session left off:**
    - Read the saved phase, answers, and progress
    - Do NOT restart the walkthrough from the beginning
    - Summarize progress so far and continue:
@@ -1104,7 +1189,7 @@ When a session resumes after context compaction:
      Let's continue with sub-task #3: [title]...
      ```
 
-3. **If no state exists:** Start fresh with the structured walkthrough
+4. **If no state exists:** Start fresh with the structured walkthrough
 
 #### Chunking Large Scoping Sessions
 
@@ -1454,14 +1539,23 @@ session_saveState({
 
 #### Restoring State on Resume
 
-When a session resumes after context compaction:
+When a session resumes after context compaction or when a NEW session picks up this work:
 
-1. **Check for saved state:**
+1. **Check for PRD-level planner state (cross-session):**
+   ```
+   query_prds({ prd_id: "prd-[name]" })
+   ```
+   → If `planner_state` exists on the PRD, use it to restore task generation progress.
+   This works even if this is a completely new session.
+
+2. **Check for session state (same-session, more detailed):**
    ```
    query_session_state({ state_key: "prd_task_generation" })
    ```
+   → If both exist, prefer session state (more granular) but validate against PRD state.
+   → If only PRD state exists (new session), use it.
 
-2. **If state exists, continue from where you left off:**
+3. **If state exists, continue from where the last session left off:**
    - Read the saved phase, approvals, and progress
    - Do NOT restart from the beginning
    - Summarize progress and continue:
@@ -1477,7 +1571,7 @@ When a session resumes after context compaction:
      Let's continue with task #3: Event list component...
      ```
 
-3. **If no state exists:** Start fresh with PRD scope review
+4. **If no state exists:** Start fresh with PRD scope review
 
 #### Chunking Protocol
 
@@ -1516,6 +1610,82 @@ After all tasks are created, present a completion summary:
 
 All tasks are in `planned` status and linked to their PRD stories.
 The PRD is ready for a Builder session to begin implementation.
+```
+
+---
+
+## Cross-Session Recovery via planner_state
+
+The `planner_state` JSONB column on the `prds` table enables planner progress recovery across sessions. Unlike `session_saveState` (which is scoped to a single session), `planner_state` lives on the PRD itself and is accessible to ANY session.
+
+### When planner_state is Written
+
+| Event | Phase Value | What's Updated |
+|-------|-------------|----------------|
+| Story walkthrough approved | `story_walkthrough` | `storyProgress`, `qaDecisions` for that story |
+| Gap analysis completes | `gap_analysis_complete` | `gapAnalysis.completed = true`, findings/resolutions |
+| PRD moved to ready | `complete` | Final state snapshot |
+
+### planner_state Schema
+
+```json
+{
+  "phase": "story_walkthrough | gap_analysis | gap_analysis_complete | final_review | complete",
+  "storyProgress": {
+    "reviewed": ["US-001", "US-002"],
+    "current": "US-003",
+    "pending": ["US-004", "US-005"]
+  },
+  "gapAnalysis": {
+    "completed": false,
+    "findings": [],
+    "resolutions": []
+  },
+  "qaDecisions": {
+    "US-001": { "1": "A", "2": "C" },
+    "US-002": { "1": "B" }
+  },
+  "lastSessionId": "sess-abc123",
+  "lastUpdatedAt": "2026-04-06T12:00:00Z"
+}
+```
+
+### Two-Tier Recovery Strategy
+
+Recovery checks two sources in order:
+
+| Tier | Source | Scope | When Available |
+|------|--------|-------|----------------|
+| 1 | `query_session_state()` | Current session only | Same session (compaction recovery) |
+| 2 | `prds.planner_state` via `query_prds()` | Any session | Always (cross-session recovery) |
+
+**Recovery logic:**
+1. Try `query_session_state({ state_key: "planner_walkthrough" })` — if found, this is the most detailed state (same session)
+2. Try `query_prds({ prd_id: "..." })` → read `planner_state` — if found, this is the cross-session anchor
+3. If both exist, prefer session state but validate against PRD state
+4. If neither exists, start fresh
+
+**Per-story reviewed status:**
+Individual stories also have `planner_reviewed_at` timestamps. On resume, you can quickly check which stories have been walked through:
+```
+query_prd_stories({ prd_id: "prd-[name]" })
+→ stories with planner_reviewed_at !== null have been reviewed
+```
+
+### Resume Presentation
+
+When resuming from planner_state, show the user:
+
+```
+Welcome back! This PRD was previously being refined.
+
+Progress so far:
+- ✅ US-001: [title] — reviewed (Q&A: 1A, 2C)
+- ✅ US-002: [title] — reviewed (Q&A: 1B)
+- ⏳ US-003: [title] — not yet reviewed
+- ⏳ US-004: [title] — not yet reviewed
+
+Continuing with US-003...
 ```
 
 ---

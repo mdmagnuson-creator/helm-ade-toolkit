@@ -167,6 +167,74 @@
           "minimum": 0,
           "default": 0,
           "description": "DEPRECATED: Use completed_stories instead. Kept for backward compatibility."
+        },
+        "planner_state": {
+          "type": ["object", "null"],
+          "description": "JSONB blob tracking planner agent workflow progress for cross-session recovery. Contains phase, storyProgress, gapAnalysis, qaDecisions, lastSessionId, and lastUpdatedAt.",
+          "properties": {
+            "phase": {
+              "type": "string",
+              "enum": ["story_walkthrough", "gap_analysis", "gap_analysis_complete", "final_review", "complete"],
+              "description": "Current phase of the planner walkthrough"
+            },
+            "storyProgress": {
+              "type": "object",
+              "description": "Tracks which stories have been reviewed",
+              "properties": {
+                "reviewed": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Story IDs that have been reviewed (e.g., ['US-001', 'US-002'])"
+                },
+                "current": {
+                  "type": ["string", "null"],
+                  "description": "Story ID currently being reviewed"
+                },
+                "pending": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Story IDs not yet reviewed"
+                }
+              }
+            },
+            "gapAnalysis": {
+              "type": "object",
+              "description": "Gap analysis pass state",
+              "properties": {
+                "completed": {
+                  "type": "boolean",
+                  "description": "Whether gap analysis has been completed"
+                },
+                "findings": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Gap analysis findings"
+                },
+                "resolutions": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Gap analysis resolutions"
+                }
+              }
+            },
+            "qaDecisions": {
+              "type": "object",
+              "description": "Q&A decisions per story, keyed by story ID (e.g., {'US-001': {'1': 'A', '2': 'C'}})",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              }
+            },
+            "lastSessionId": {
+              "type": "string",
+              "description": "Session ID that last updated this state"
+            },
+            "lastUpdatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Timestamp of last update"
+            }
+          }
         }
       }
     },
@@ -275,6 +343,11 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of last update (auto-updated via moddatetime trigger)"
+        },
+        "planner_reviewed_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Timestamp when planner walkthrough completed for this story. Set when the story passes through the per-story walkthrough and is approved."
         }
       }
     }

@@ -157,6 +157,39 @@ initSession(sessionId, agentType: "builder")
 
 This registers the session with Helm and enables progress tracking.
 
+**Check `initSession` response for rotation context:**
+- If `isRotatedSession: true` — this session is continuing work from a prior session that was rotated out
+- If `priorSummary` is present — read it silently to understand what was done before
+
+**On rotated session:**
+1. Read `priorSummary` to understand the prior session's progress
+2. Orient yourself silently — do NOT ask the user about prior work
+3. Continue from where the prior session left off
+4. The thread maintains continuity; you are picking up the same work
+
+### Thread Checkout Verification
+
+After `initSession`, defensively verify thread checkout ownership:
+
+```
+query_active_checkout(threadId)
+```
+
+- If this session owns the checkout → proceed normally
+- If another session owns the checkout → warn and defer:
+  ```
+  ⚠️ THREAD CHECKOUT CONFLICT
+  
+  This thread is currently checked out by another session.
+  Session: [other session ID]
+  
+  Options:
+  [W] Wait — check again in a moment
+  [F] Force — take over the checkout (use with caution)
+  ```
+
+This prevents concurrent sessions from working on the same thread.
+
 ### During Work
 
 Call `heartbeat` periodically to signal activity:
@@ -166,6 +199,16 @@ heartbeat(sessionId, currentAction: "Implementing user authentication")
 
 Call every few minutes of active work, or when transitioning between major tasks.
 
+### Progress Summary (~70% Checkpoint)
+
+At approximately 70% completion of the current work (or when significant progress has been made), call `summarizeAndSave` with a progress summary:
+
+```
+summarizeAndSave(sessionId, summary: "Implemented user login form and validation. Auth API integration in progress. Remaining: error handling and tests.")
+```
+
+This summary is written to `helm_threads.last_summary`, enabling session rotation to pick up context if this session is rotated out. Call this proactively — don't wait until the session ends.
+
 ### Session End
 
 **LAST action** — before the session ends:
@@ -174,6 +217,19 @@ completeSession(sessionId, summary: "Completed US-001: User login flow")
 ```
 
 This signals to Helm that the session is complete and triggers any post-session workflows.
+
+### Thread Completion (Build Complete)
+
+When build work is complete and ready for QA or human review, signal the thread:
+
+```
+thread.markReadyForReview(threadId, summary: "Implemented US-001 through US-003. All tests passing. Ready for QA verification.")
+```
+
+This:
+- Sets the thread status to `ready_for_review`
+- Writes the final summary to `helm_threads.last_summary`
+- Signals that the build thread is done and ready for the next phase
 
 ### Task Status Lifecycle
 
@@ -215,9 +271,20 @@ Builder uses these MCP tools (served by the Helm app's MCP server):
 
 | Tool | Purpose |
 |------|---------|
-| `initSession` | FIRST action at every session start — registers session with Helm |
+| `initSession` | FIRST action at every session start — registers session with Helm; returns `priorSummary` and `isRotatedSession` for rotation context |
 | `completeSession` | LAST action at session end — signals completion to Helm |
 | `heartbeat` | Call periodically during work to signal activity |
+| `summarizeAndSave` | Write progress summary to thread's `last_summary` (~70% checkpoint) |
+
+**Thread tools (helm_threads model):**
+
+| Tool | Purpose |
+|------|---------|
+| `query_thread` | Get a thread by ID with checkout info |
+| `query_task_threads` | Get all threads for a task (plan/build/qa) |
+| `query_active_checkout` | Get active checkout for a thread (verify ownership) |
+| `thread.markReadyForReview` | Mark thread as ready for review with summary |
+| `task.addToThread` | Add a task to an existing spec Build thread mid-session |
 
 **Query tools (read-only):**
 

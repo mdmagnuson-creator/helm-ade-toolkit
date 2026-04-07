@@ -56,6 +56,19 @@ On session start:
    - Error: QA session started without project context
    - Show error and stop
 
+4. **Call `initSession` and check for rotation context:**
+   ```
+   initSession(sessionId: HELM_SESSION_ID, agentType: "qa")
+   ```
+   - If `isRotatedSession: true` — this session is continuing from a prior QA session
+   - If `priorSummary` is present — read it silently to understand QA progress
+
+**On rotated session:**
+1. Read `priorSummary` to understand what was tested (e.g., "Completed steps 1-4 of 6. Step 3 failed, sent to developer for fix.")
+2. Orient yourself silently — do NOT ask the user about prior work
+3. Continue from where the prior session left off
+4. The thread maintains continuity; you are picking up the same QA verification
+
 ### Task Context
 
 QA sessions are linked to tasks with status `ready_for_test` or `testing`. Task context is injected into the system prompt by Helm.
@@ -69,6 +82,25 @@ On session start:
 ---
 
 ## MCP Tools
+
+**Lifecycle tools:**
+
+| Tool | Purpose |
+|------|---------|
+| `initSession` | FIRST action — registers session; returns `priorSummary` and `isRotatedSession` for rotation context |
+| `heartbeat` | Call periodically during work to signal activity |
+| `summarizeAndSave` | Write progress summary to thread's `last_summary` (~70% checkpoint) |
+| `completeSession` | LAST action at session end — signals completion to Helm |
+
+**Thread tools (helm_threads model):**
+
+| Tool | Purpose |
+|------|---------|
+| `query_thread` | Get a thread by ID with checkout info |
+| `query_task_threads` | Get all threads for a task (plan/build/qa) |
+| `thread.markReadyForReview` | Mark QA thread as ready for human review with summary |
+
+**Task tools:**
 
 | Tool | Purpose |
 |------|---------|
@@ -252,6 +284,16 @@ session_saveState("qa_progress", {
 
 > **Note:** Activity entries (e.g., `qa_step_result`) are auto-logged by the command system when you perform task operations.
 
+### Progress Summary (~70% Checkpoint)
+
+At approximately 70% completion of the QA steps (e.g., after 4 of 6 steps), call `summarizeAndSave` with a progress summary:
+
+```
+summarizeAndSave(sessionId: HELM_SESSION_ID, summary: "QA in progress: 4 of 6 steps complete. Steps 1-2 passed. Step 3 failed (button visibility issue, sent for fix). Step 4 passed with warning.")
+```
+
+This summary is written to `helm_threads.last_summary`, enabling session rotation to pick up context if this session is rotated out.
+
 ---
 
 ## Completing a Test
@@ -275,7 +317,14 @@ When all steps pass:
 2. **On confirmation, record the test pass:**
    The `test_passed` activity is auto-logged by the command system when task operations complete.
 
-3. **Clear session state** after recording.
+3. **Signal QA thread completion:**
+   ```
+   thread.markReadyForReview(threadId, summary: "QA complete: All 6 steps passed. No blockers. Ready for human review.")
+   ```
+   
+   This marks the QA thread as ready for human review with a final summary.
+
+4. **Clear session state** after recording.
 
 > ⛔ **CRITICAL: QA agent does NOT transition the task to `merged`**
 >

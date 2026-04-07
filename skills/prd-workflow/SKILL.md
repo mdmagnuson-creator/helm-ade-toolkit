@@ -35,6 +35,15 @@ PRD mode implements features from PRDs stored in Supabase. Each PRD story maps t
 └─────────────────────┘     └─────────────────────┘     └─────────────────────┘
 ```
 
+### Rotation Context
+
+When entering PRD workflow, check if this is a rotated session:
+
+- If `initSession` returned `isRotatedSession: true` and `priorSummary` is present
+- Read `priorSummary` to understand which stories were already completed
+- Orient silently — do NOT ask the user about prior work
+- Continue from where the prior session left off (next incomplete story)
+
 ## MCP Tools Reference
 
 | Tool | Purpose |
@@ -50,6 +59,15 @@ PRD mode implements features from PRDs stored in Supabase. Each PRD story maps t
 | `task_saveComment` | Leave notes/questions on a task |
 | `session_saveState` | Persist session state (fix loop counts, verification state) |
 | `query_session_state` | Read session state |
+
+**Thread tools (helm_threads model):**
+
+| Tool | Purpose |
+|------|---------|
+| `query_thread` | Get a thread by ID with checkout info |
+| `query_prd_threads` | Get all threads linked to a PRD |
+| `thread.markReadyForReview` | Mark thread as ready for review with summary |
+| `summarizeAndSave` | Write progress summary to thread's `last_summary` (~70% checkpoint) |
 
 ---
 
@@ -323,7 +341,20 @@ prd_updateProgress({
 
 Note: PRD remains `in_progress` until PR is merged.
 
-### Step 4: Hand Off to Builder Completion Flow
+### Step 4: Signal Thread Completion
+
+When all stories in the PRD are complete and quality gates pass:
+
+```
+thread.markReadyForReview(threadId, summary: "PRD implementation complete: All 5 stories implemented and verified. Quality gates passed. Ready for QA verification.")
+```
+
+This:
+- Sets the thread status to `ready_for_review`
+- Writes the final summary to `helm_threads.last_summary`
+- Signals that the PRD build work is done and ready for QA
+
+### Step 5: Hand Off to Builder Completion Flow
 
 > ⚓ **Builder agent (US-009): Session Completion & Merge**
 >

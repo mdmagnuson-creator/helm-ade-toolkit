@@ -48,6 +48,16 @@ Build analysis handles direct user requests by tracking work through Helm's nati
 | `session_saveState` | Persist session state to Supabase |
 | `query_session_state` | Read session state from Supabase |
 
+**Thread tools (helm_threads model):**
+
+| Tool | Purpose |
+|------|---------|
+| `query_thread` | Get a thread by ID with checkout info |
+| `query_task_threads` | Get all threads for a task (plan/build/qa) |
+| `query_active_checkout` | Get active checkout for a thread (verify ownership) |
+| `thread.markReadyForReview` | Mark thread as ready for review with summary |
+| `summarizeAndSave` | Write progress summary to thread's `last_summary` (~70% checkpoint) |
+
 ---
 
 ## Context Loading (CRITICAL — Do This First)
@@ -65,6 +75,12 @@ Build analysis handles direct user requests by tracking work through Helm's nati
 2. Read `docs/CONVENTIONS.md` in full — do NOT summarize or compress it. Keep the full content in session context and pass it to sub-agents via context blocks. If CONVENTIONS.md contains a `## TL;DR for Agents` section, use it as a quick-reference anchor but do NOT treat it as a substitute for the full file.
 
 3. Store this context for the session — pass it to @developer via context blocks
+
+4. **Check for rotated session context:**
+   - If `initSession` returned `isRotatedSession: true` and `priorSummary` is present
+   - Read `priorSummary` to understand what work was already done
+   - Orient silently — do NOT ask the user about prior work
+   - Continue from where the prior session left off
 
 ---
 
@@ -220,6 +236,19 @@ Activity logging is handled automatically by Helm's CommandLogSubscriber. No man
 > 3. Create PR if configured (respecting `git.agentWorkflow.createPrTo`)
 
 Builder handles git operations per the project's git configuration. See the main Builder agent for the complete git workflow.
+
+### Step 5: Signal Thread Completion
+
+When build analysis work is complete and ready for QA or review:
+
+```
+thread.markReadyForReview(threadId, summary: "Implemented loading spinner on submit button. All quality checks passed. Ready for QA verification.")
+```
+
+This:
+- Sets the thread status to `ready_for_review`
+- Writes the final summary to `helm_threads.last_summary`
+- Signals that build work is done and ready for the next phase
 
 ---
 

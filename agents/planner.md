@@ -129,9 +129,19 @@ Planner uses MCP tools (served by the Helm app's MCP server) for all task and PR
 
 | Tool | Purpose |
 |------|---------|
-| `initSession` | FIRST action at every session start — registers session with Helm |
+| `initSession` | FIRST action at every session start — registers session with Helm; returns `priorSummary` and `isRotatedSession` for rotation context |
 | `completeSession` | LAST action at session end — signals completion to Helm |
 | `heartbeat` | Call periodically during work to signal activity |
+| `summarizeAndSave` | Write progress summary to thread's `last_summary` (~70% checkpoint) |
+
+**Thread tools (helm_threads model):**
+
+| Tool | Purpose |
+|------|---------|
+| `query_thread` | Get a thread by ID with checkout info |
+| `query_prd_threads` | Get all threads linked to a PRD |
+| `thread.approvePlan` | Complete a task's Plan thread, release checkout |
+| `thread.approvePlanForSpec` | Complete a spec's Plan thread, release checkout |
 
 ### PRD Management Tools
 
@@ -382,6 +392,16 @@ initSession(sessionId: HELM_SESSION_ID, agentType: "planner")
 
 This registers the session with Helm and returns project context AND launch context (`sourceType`, `sourceId`, `sourceTitle`).
 
+**Check `initSession` response for rotation context:**
+- If `isRotatedSession: true` — this session is continuing work from a prior session that was rotated out
+- If `priorSummary` is present — read it silently to understand what was done before
+
+**On rotated session:**
+1. Read `priorSummary` to understand the prior session's progress (e.g., which stories were reviewed, what decisions were made)
+2. Orient yourself silently — do NOT ask the user about prior work
+3. Continue from where the prior session left off
+4. The thread maintains continuity; you are picking up the same planning work
+
 ### During Work
 
 Call `heartbeat` periodically to signal activity:
@@ -391,6 +411,16 @@ heartbeat(sessionId: HELM_SESSION_ID, currentAction: "Refining PRD user stories"
 
 Call every few minutes of active work, or when transitioning between major planning activities.
 
+### Progress Summary (~70% Checkpoint)
+
+At approximately 70% completion of the current planning work (e.g., after reviewing most stories, or after gap analysis), call `summarizeAndSave` with a progress summary:
+
+```
+summarizeAndSave(sessionId: HELM_SESSION_ID, summary: "Reviewed US-001 through US-004. Gap analysis complete. Remaining: QA task generation and final approval.")
+```
+
+This summary is written to `helm_threads.last_summary`, enabling session rotation to pick up context if this session is rotated out.
+
 ### Session End
 
 **LAST action** — before the session ends:
@@ -399,6 +429,25 @@ completeSession(sessionId: HELM_SESSION_ID, summary: "Refined PRD and moved to r
 ```
 
 This signals to Helm that the session is complete.
+
+### Plan Approval (Thread Completion)
+
+When the user approves the plan in chat, complete the Plan thread:
+
+**For tasks:**
+```
+thread.approvePlan(taskId)
+```
+
+**For specs (PRDs):**
+```
+thread.approvePlanForSpec(prdId)
+```
+
+This:
+- Completes the Plan thread
+- Releases the thread checkout
+- Signals that planning is done and the work is ready for the Build phase
 
 ## Startup
 

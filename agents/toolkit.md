@@ -882,7 +882,7 @@ Regenerate the manifest to reflect your changes:
 3. **If you added/removed/modified a skill:**
    - Categorize by rules:
      - In `skills/meta/` → "meta"
-     - prd, prd-workflow, prd-to-json, adhoc-workflow, session-log, post-completion, test-flow → "workflow"
+     - prd, prd-workflow, prd-to-json, build-analysis, session-log, post-completion, test-flow → "workflow"
      - screenshot, product-screenshots, marketing-copy, public-page → "content"
      - project-bootstrap, project-scaffold, spec-analyzer, stack-advisor, agent-onboard, agent-audit → "project"
      - Everything else → "utilities"

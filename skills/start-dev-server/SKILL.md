@@ -276,7 +276,7 @@ fi
 | Tauri | `npm run tauri dev` | `pkill -f "tauri"` |
 | React Native | N/A (mobile) | N/A |
 
-**Note:** For `hybrid` apps, the calling workflow (e.g., adhoc-workflow) should:
+**Note:** For `hybrid` apps, the calling workflow (e.g., build-analysis) should:
 1. Start the dev server using this skill
 2. Then launch the desktop app separately
 3. The app will load content from the local dev server

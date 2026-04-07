@@ -1,17 +1,17 @@
 ---
-name: adhoc-workflow
-description: "Ad-hoc mode workflow for Builder. Use when handling direct requests without a PRD, quick fixes, or one-off tasks. Triggers on: ad-hoc mode, quick fix, direct request, one-off task."
+name: build-analysis
+description: "Build analysis and implementation workflow for Builder. Use when handling task-based requests, quick fixes, or one-off tasks. Triggers on: build analysis, task implementation, quick fix, direct request, one-off task."
 ---
 
-# Ad-hoc Workflow
+# Build Analysis
 
-> Load this skill when: handling direct requests without a PRD, ad-hoc mode, quick fixes, one-off tasks.
+> Load this skill when: handling task-based requests, build analysis, quick fixes, one-off tasks.
 
 ## Prerequisites
 
 > ⛔ **CRITICAL: This skill requires MCP connection to Helm.**
 >
-> Before performing any ad-hoc task operations, verify the MCP task tools are available.
+> Before performing any task operations, verify the MCP task tools are available.
 > If tools are not available, STOP and report:
 > ```
 > ⛔ MCP tools not available. Cannot perform task operations 
@@ -23,7 +23,7 @@ description: "Ad-hoc mode workflow for Builder. Use when handling direct request
 
 ## Overview
 
-Ad-hoc mode handles direct user requests without requiring a PRD. Work is tracked through Helm's native task system via MCP tools.
+Build analysis handles direct user requests by tracking work through Helm's native task system via MCP tools.
 
 ```
 ┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
@@ -52,9 +52,9 @@ Ad-hoc mode handles direct user requests without requiring a PRD. Work is tracke
 
 ## Context Loading (CRITICAL — Do This First)
 
-> ⚠️ **Ad-hoc tasks fail when project context is missing or stale.**
+> ⚠️ **Tasks fail when project context is missing or stale.**
 
-**On entering ad-hoc mode:**
+**On entering build analysis mode:**
 
 1. Read `docs/project.json` and note:
    - `stack` — framework/language
@@ -68,24 +68,11 @@ Ad-hoc mode handles direct user requests without requiring a PRD. Work is tracke
 
 ---
 
-## Session Context Detection
-
-Builder detects session type from the system prompt:
-
-| Session Type | Detection | Behavior |
-|--------------|-----------|----------|
-| **Task-linked** | Task context injected in system prompt | Work on injected tasks |
-| **Ad-hoc** | No task context injected | Work on user's direct request, auto-create task on completion |
-
-In ad-hoc mode, Builder receives the user's request directly and implements it without pre-existing task context.
-
----
-
 ## Implementation Flow
 
 ### Step 1: Delegate to @developer
 
-When user provides an ad-hoc request, delegate immediately to `@developer` with project context:
+When user provides a task request, delegate immediately to `@developer` with project context:
 
 ```yaml
 <context>
@@ -100,7 +87,7 @@ conventions:
   summary: |
     {2-5 sentence summary from CONVENTIONS.md}
 currentWork:
-  mode: adhoc
+  mode: task
   request: "{user's original request}"
 </context>
 
@@ -119,57 +106,12 @@ Requirements:
 > Load the `test-flow` skill for the complete quality check pipeline.
 > It includes typecheck/lint/test/rebuild/critic/Playwright.
 >
-> **Ad-hoc context:**
-> - `mode: "adhoc"` — 3-attempt retry strategy (vs PRD's 5-attempt)
+> **Task context:**
+> - `mode: "task"` — 3-attempt retry strategy (vs PRD's 5-attempt)
 >
 > **Failure behavior:** If any check fails after 3 fix attempts, STOP and report to user.
 
 After `@developer` completes work, run the quality check pipeline. Activity logging is handled automatically by Helm's CommandLogSubscriber — no manual activity recording needed.
-
----
-
-## Task Auto-Creation
-
-When Builder completes a logical unit of work in an ad-hoc session, it auto-creates a task for traceability.
-
-### Auto-Creation Flow
-
-1. **Create task via `task_create`:**
-   ```
-   task_create({
-     title: "Add loading spinner to submit button",  // derived from work done
-     description: "Added visual loading feedback during form submission with spinner icon and disabled state to prevent double-submit",
-     labels: ["frontend", "ui"],  // inferred from file types touched
-     status: "agent_build_complete"
-   })
-   ```
-
-2. **Save todoTaskLinks with the new task's UUID:** After task creation, save the link between the todo content and the created task:
-   ```
-   session_saveState({
-     todoTaskLinks: [
-       {
-         todoContent: 'Add loading spinner to submit button',
-         taskId: '{created_task_id}'  // link todo to the auto-created task
-       }
-     ]
-   })
-   ```
-
-3. **Activity logging** — handled automatically by Helm's CommandLogSubscriber. No manual activity recording needed.
-
-4. **Story assignment** — handled server-side by `task_create`. The MCP server performs semantic matching against story embeddings to auto-assign the task to the best-matching story. If no match meets the similarity threshold, a new story is auto-created. Builder does not query embeddings directly for story assignment.
-
-### Multiple Units of Work
-
-If Builder completes multiple logical units in one ad-hoc session, each gets its own task:
-
-```
-User: "Fix the login bug and also add a loading spinner to the dashboard"
-
-→ Task 1: "Fix login authentication bug" (agent_build_complete)
-→ Task 2: "Add loading spinner to dashboard" (agent_build_complete)
-```
 
 ---
 
@@ -324,7 +266,7 @@ session_saveState({
 
 **Setting `taskId`:**
 - **Task-linked session:** Use the task UUID from `query_session_tasks` results
-- **Ad-hoc session (no linked tasks):** Use `null` — the task will be auto-created on completion
+- **Session without linked tasks:** Use `null` — the task will be auto-created on completion
 - **Session-level todos** (e.g., "Run tests"): Use `null`
 
 > ⛔ **CRITICAL: `todoContent` must be the exact same string passed to `todowrite`.** No trimming, no rewording, no normalization. The macOS app content-matches this to resolve task_id for UI grouping.
@@ -353,7 +295,7 @@ session_saveState({
 // Save current work state
 session_saveState({
   currentWork: {
-    mode: 'adhoc',
+    mode: 'task',
     taskId: 'task-abc123',
     filesModified: ['src/components/Button.tsx', 'src/components/Button.test.tsx'],
     qualityChecks: { typecheck: 'passed', lint: 'passed', tests: 'passed' }

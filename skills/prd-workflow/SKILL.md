@@ -363,7 +363,7 @@ If user makes an ad-hoc request while a PRD is active:
    - If it's unrelated → run as ad-hoc (separate from PRD)
 
 2. **For unrelated ad-hoc requests:**
-   - Load `adhoc-workflow` skill
+   - Load `build-analysis` skill
    - **⚠️ PRD PROTECTION: Do NOT modify PRD state during ad-hoc work**
    - Commit separately from PRD work
    - Return to PRD work when done

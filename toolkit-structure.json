@@ -360,9 +360,9 @@
         "description": "Workflow and lifecycle skills",
         "skills": [
           {
-            "name": "adhoc-workflow",
-            "path": "skills/adhoc-workflow/SKILL.md",
-            "description": "Ad-hoc mode workflow for Builder. Use when handling direct requests without a PRD, quick fixes, or one-off tasks. Triggers on: ad-hoc mode, quick fix, direct request, one-off task."
+            "name": "build-analysis",
+            "path": "skills/build-analysis/SKILL.md",
+            "description": "Build analysis and implementation workflow for Builder. Use when handling task-based requests, quick fixes, or one-off tasks. Triggers on: build analysis, task implementation, quick fix, direct request, one-off task."
           },
           {
             "name": "session-log",

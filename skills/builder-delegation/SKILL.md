@@ -248,7 +248,7 @@ console.log(`Analysis gate check: analysisCompleted=${analysisCompleted}`);
 
 1. Do NOT proceed with delegation
 2. Output: `"⛔ Analysis gate not passed. Must show ANALYSIS COMPLETE dashboard and receive [G] before delegating."`
-3. Run Phase 0 from `adhoc-workflow` skill
+3. Run Phase 0 from `build-analysis` skill
 4. After receiving [G], update state: `session_saveState({ currentAction: { analysisCompleted: true } })`
 5. Re-run the check (should now pass)
 

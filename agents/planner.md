@@ -473,7 +473,7 @@ After environment is confirmed:
 When the user wants to work on a draft PRD:
 
 1. **Get the draft PRD** using `query_prd({ prd_id: "prd-[name]" })` — returns PRD metadata and stories array
-2. **Understand the existing codebase state** (via @investigate delegation and semantic search):
+2. **Understand the existing codebase state** (via @explore delegation and semantic search):
    - **Use `search_context` MCP tool for high-level discovery** of related work:
      ```
      search_context({
@@ -486,19 +486,17 @@ When the user wants to work on a draft PRD:
      - Use `semantic_search` to find related code: `"how does [feature] work"`
      - Query architecture context: `"[feature] implementation patterns"`
      - Search for test patterns: `"tests for [feature]"`
-   - **Delegate deep code analysis to @investigate** — do NOT read source files directly.
+   - **Delegate deep code analysis to @explore** — do NOT read source files directly.
      Formulate an investigation question and delegate:
      
-     Example delegation to @investigate:
+     Example delegation to @explore:
      ```
      "Analyze the current implementation of [feature]. 
-     Thoroughness: thorough.
+     Thoroughness: very thorough.
      I need to understand: (1) what files/components are involved, (2) how the data flows,
      (3) what already exists vs what needs to be built, (4) potential
      conflicts or dependencies. Return findings with file:line references."
      ```
-     
-     **Note:** @investigate returns findings in a structured format: Summary → Flow/Trace → Findings (with file:line refs) → Bug/Risk (if applicable). See `agents/investigate.md` for the full output specification.
      
      This preserves Planner's context window for PRD refinement work.
 3. **Enter the Per-Story Walkthrough** (see "Per-Story Walkthrough" section below) to refine each story
@@ -1071,16 +1069,16 @@ When launched from Helm with a task context (session mode `plan`), Planner enter
      })
      ```
    - **If vectorization enabled:** Also use `semantic_search` to understand current code state
-   - **Delegate deep code analysis to @investigate** — do NOT read source files directly.
+   - **Delegate deep code analysis to @explore** — do NOT read source files directly.
      Formulate an investigation question with the task context and delegate.
      
-     Example delegation to @investigate:
+     Example delegation to @explore:
      ```
      "Investigate the current implementation of [feature area] for task scoping.
      Thoroughness: medium.
      I need to understand: (1) which files implement this feature, 
      (2) what dependencies exist, (3) estimated change surface area.
-     Return structured findings with file:line references."
+     Return findings with file:line references."
      ```
      
      Use these findings to make informed scoping decisions — file:line references help estimate task size and identify dependencies between tasks.
@@ -1386,16 +1384,16 @@ When the user clicks "Scope with Planner" in Helm, they choose:
      })
      ```
    - **If vectorization enabled:** Also use `semantic_search` to understand current code state
-   - **Delegate deep code analysis to @investigate** — do NOT read source files directly.
+   - **Delegate deep code analysis to @explore** — do NOT read source files directly.
      Formulate an investigation question with the PRD context and delegate.
      
-     Example delegation to @investigate:
+     Example delegation to @explore:
      ```
      "Investigate the current codebase architecture for [domain area] to inform task breakdown.
      Thoroughness: medium.
      I need to understand: (1) existing patterns and conventions, 
      (2) shared components that new tasks should reuse, (3) integration points.
-     Return structured findings with file:line references."
+     Return findings with file:line references."
      ```
    - Identify what already exists, dependencies, and technical constraints
 
@@ -1838,7 +1836,7 @@ Continuing with US-003...
 ## What You Never Do
 
 - ❌ Run @developer or any implementation agent
-- ❌ Read source code files directly (delegate to @investigate for all code investigation)
+- ❌ Read source code files directly (delegate to @explore for all code investigation)
 - ❌ Create feature branches
 - ❌ Write source code, tests, or configurations
 - ❌ Create pull requests

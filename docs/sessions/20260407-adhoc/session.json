@@ -1,0 +1,43 @@
+{
+  "id": "20260407-adhoc",
+  "mode": "adhoc",
+  "source": { "taskId": null },
+  "analysisCompleted": true,
+  "probeStatus": "confirmed",
+  "branch": "main",
+  "status": "in_progress",
+  "startedAt": "2026-04-07T00:00:00Z",
+  "lastHeartbeat": "2026-04-07T00:00:00Z",
+  "currentChunk": "TSK-001",
+  "chunks": [
+    {
+      "id": "TSK-001",
+      "title": "Revert builder.md — @investigate → @explore + rewrite delegation context",
+      "status": "pending"
+    },
+    {
+      "id": "TSK-002",
+      "title": "Revert planner.md — @investigate → @explore",
+      "status": "pending"
+    }
+  ],
+  "implementationDecisions": {
+    "detected": true,
+    "decisions": [
+      { "id": "planner-revert", "question": "Revert planner.md too?", "userChoice": "Yes — revert to @explore" },
+      { "id": "investigate-fate", "question": "Delete investigate.md?", "userChoice": "No — keep as available agent" },
+      { "id": "delegation-context", "question": "Delegation context cleanup?", "userChoice": "Rewrite for @explore interface" }
+    ]
+  },
+  "currentAction": {
+    "description": "Starting TSK-001: revert builder.md @investigate → @explore",
+    "contextAnchor": "agents/builder.md",
+    "lastAction": "Session initialized, analysis approved",
+    "updatedAt": "2026-04-07T00:00:00Z"
+  },
+  "decisions": [
+    "Keep investigate.md as available but unreferenced agent",
+    "Revert both builder.md (18 refs) and planner.md (9 refs) to @explore",
+    "Rewrite builder.md delegation context section for @explore interface"
+  ]
+}

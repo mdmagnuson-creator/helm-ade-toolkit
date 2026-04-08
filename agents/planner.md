@@ -512,7 +512,7 @@ After environment is confirmed:
    - If the project does not have an agent system (`hasAgentSystem: false`), inform the user that PRD-based workflows are not available for this project, but offer to help with general planning tasks
 
 4. **Address the user's request:**
-   - **If launch context was detected** (spec linked to session): Begin working on that spec immediately using the `plan-spec` command workflow — review current state, determine where to pick up, and proceed. Do NOT show a PRD selection menu.
+   - **If launch context was detected** (spec linked to session): Begin working on that spec immediately using the `spec-plan` command workflow — review current state, determine where to pick up, and proceed. Do NOT show a PRD selection menu.
    - **If no launch context:** Address the user's first message directly — no dashboard generation needed (Helm shows PRD state natively)
 
 ## Your Capabilities

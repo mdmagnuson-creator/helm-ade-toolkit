@@ -1,5 +1,5 @@
 ---
-description: Scope a task with technical approach and effort estimate
+description: Plan and scope a task with technical approach and effort estimate
 agent: planner
 ---
 

@@ -101,7 +101,7 @@ On session start, Builder reads project context from the `HELM_PROJECT_PATH` env
 When a session is linked to tasks, Builder receives task context through one of two paths:
 
 1. **Context injection** — Helm's context injection provides task details at session start
-2. **`/build-tasks` directive** — Helm sends `/build-tasks` as the first message; Builder discovers linked tasks via `query_tasks` (see "Task-Driven Build Directive" section below)
+2. **`/task-build` directive** — Helm sends `/task-build` as the first message; Builder discovers linked tasks via `query_tasks` (see "Task-Driven Build Directive" section below)
 
 Both paths lead to the same execution flow — Builder works on the linked tasks using the same delegation, testing, and completion patterns.
 
@@ -432,13 +432,13 @@ Builder always delegates to `@developer` → specialists (never writes code dire
 
 ---
 
-## Task-Driven Build Directive (`/build-tasks`)
+## Task-Driven Build Directive (`/task-build`)
 
-When Helm ADE's "Build from task" flow is used, the app creates a session with linked tasks and sends `/build-tasks` as the first message instead of a verbose task description.
+When Helm ADE's "Build from task" flow is used, the app creates a session with linked tasks and sends `/task-build` as the first message instead of a verbose task description.
 
 ### Detection
 
-On receiving `/build-tasks` as the first message in a session:
+On receiving `/task-build` as the first message in a session:
 
 1. **Recognize the directive** — this is a task-driven build request, a machine-generated directive from the Helm ADE app (as opposed to a user typing directly in the chat)
 2. **Skip startup UI** — project selection, workflow choice, and startup dashboards are already handled by Helm
@@ -646,7 +646,7 @@ This applies to both single-task and multi-task sessions. The user should be abl
 
 ### Comparison with Existing Paths
 
-| Aspect | System Prompt Injection | `/build-tasks` Directive |
+| Aspect | System Prompt Injection | `/task-build` Directive |
 |--------|------------------------|--------------------------|
 | Task discovery | Tasks in system prompt | Tasks via `query_tasks` |
 | Startup UI | Skipped (Helm manages) | Skipped (Helm manages) |
@@ -655,7 +655,38 @@ This applies to both single-task and multi-task sessions. The user should be abl
 | Completion | `session_updateTaskStatus` | `session_updateTaskStatus` |
 | Bulk support | Yes (multi-task sessions) | Yes (one todo per task) |
 
-The `/build-tasks` path and the system prompt injection path converge at the same execution flow — they differ only in how task context is discovered.
+The `/task-build` path and the system prompt injection path converge at the same execution flow — they differ only in how task context is discovered.
+
+---
+
+## Spec-Driven Build Directive (`/spec-build`)
+
+When Helm ADE's "Build from spec" flow is used, the app creates a session with a linked PRD and sends `/spec-build` as the first message.
+
+### Detection
+
+On receiving `/spec-build` as the first message in a session:
+
+1. **Recognize the directive** — this is a spec-driven build request from the Helm ADE app
+2. **Skip startup UI** — project selection, workflow choice, and startup dashboards are already handled by Helm
+3. **Proceed directly to spec discovery and Phase 0 analysis**
+
+### Spec Discovery
+
+1. **Check system prompt** for "Active Spec Context" with linked PRD
+2. **Fetch spec details** via `query_prd` for the linked PRD
+3. **Fetch stories** via `query_prd_stories` to understand implementation scope
+4. **Fetch tasks** via `query_tasks` with prd_id filter for implementation tasks
+
+### Execution Flow
+
+The spec-build path follows the same execution pipeline as task-build:
+- Full Phase 0 analysis per story/task
+- Standard implementation pipeline
+- Per-task status updates via `task_changeStatus`
+- Completion reporting
+
+The key difference is scope discovery — spec-build works from stories down to tasks, while task-build works directly from individual tasks.
 
 ---
 

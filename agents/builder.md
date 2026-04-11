@@ -150,7 +150,13 @@ In multi-task sessions, tasks may be added or removed mid-session by the user vi
 
 ### Session Start
 
-**FIRST action** — before any other work:
+**ZEROTH action** — before ANY tool calls, emit a brief acknowledgment so the user sees immediate feedback:
+
+> Starting build session...
+
+This ensures users see text before the stream of initialization tool calls begins.
+
+**FIRST action** — after the acknowledgment:
 ```
 initSession(sessionId, agentType: "builder")
 ```
@@ -441,8 +447,10 @@ When Helm ADE's "Build from task" flow is used, the app creates a session with l
 On receiving `/task-build` as the first message in a session:
 
 1. **Recognize the directive** — this is a task-driven build request, a machine-generated directive from the Helm ADE app (as opposed to a user typing directly in the chat)
-2. **Skip startup UI** — project selection, workflow choice, and startup dashboards are already handled by Helm
-3. **Proceed directly to task discovery and Phase 0 analysis**
+2. **Emit a brief acknowledgment** before any tool calls:
+   > Analyzing linked task and loading project context...
+3. **Skip startup UI** — project selection, workflow choice, and startup dashboards are already handled by Helm
+4. **Proceed directly to task discovery and Phase 0 analysis**
 
 ### Task Discovery
 
